@@ -1,6 +1,22 @@
+/* client/src/index.css */
+
 @import "tailwindcss";
 
-:root {
+@theme {
+  /* 🍒 ТВОЇ ОСНОВНІ КОЛЬОРИ CHERRY */
+  --color-cherry-500: #be123c; /* Яскравий акцент (Cherry Pop) */
+  --color-cherry-700: #9f1239; /* Основний акцент (Cherry Blood) */
+  --color-cherry-900: #881337; /* Глибокий тон для тіней/рамок */
+
+  /* 🧛 ГОТИЧНА ПАЛІТРА */
+  --color-vampire-950: #0d010e; /* Майже чорний, але з відтінком червоного */
+  --color-slate-900: #1a1520;  /* Темний фон для карток */
+  --color-bone-200: #d6d3d1;   /* Світлий акцент/текст (Bone) */
+  --font-gothic: "Playfair Display", serif; /* Готичний шрифт для заголовків (якщо підключиш) */
+}
+
+
+/* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -14,6 +30,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
 
 a {
   font-weight: 500;
@@ -67,4 +84,4 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
-}
+}  */
