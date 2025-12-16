@@ -6,6 +6,7 @@ const db = require('./config/db');
 
 // 👇 1. ІМПОРТУЄМО РОУТИ (Краще робити це зверху)
 const authRoutes = require('./routes/authRoutes');
+const sessionRoutes = require('./routes/sessionRoutes')
 const artworkRoutes = require('./routes/artworkRoutes'); // <--- ДОДАЛИ ЦЕ!
 
 const app = express();
@@ -20,7 +21,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // 👇 2. ПІДКЛЮЧАЄМО МАРШРУТИ (Важливо це робити ДО app.listen)
 app.use('/api/auth', authRoutes);
 app.use('/api/artworks', artworkRoutes); // <--- ДОДАЛИ ЦЕ! (Тепер сервер бачить /api/artworks)
-
+app.use('/api/sessions', sessionRoutes);
 
 // Тестові маршрути
 app.get('/api', (req, res) => {

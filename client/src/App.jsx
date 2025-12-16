@@ -3,6 +3,7 @@ import AuthPage from './pages/AuthPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import ProtectedRoute from './components/ProtectedRoute'; 
+import SessionPage from './pages/SessionPage';
 import Layout from './components/Layout';// <--- Імпорт
 
 function App() {
@@ -30,6 +31,15 @@ function App() {
                   </Layout>
         </ProtectedRoute>
     } 
+    />
+
+<Route 
+        path="/projects/:id/session" 
+        element={
+            <ProtectedRoute>
+                 <SessionPage />
+            </ProtectedRoute>
+        } 
     />
      
       
