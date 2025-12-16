@@ -1,0 +1,16 @@
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use(express.json());
+
+// Твій тестовий маршрут
+app.get('/', (req, res) => {
+    res.json({ message: 'Привіт! Сервер працює і готовий до роботи 🍒' });
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Сервер запущено на http://localhost:${PORT}`);
+});
