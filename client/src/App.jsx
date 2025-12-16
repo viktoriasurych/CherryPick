@@ -1,17 +1,24 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
+import ProjectsPage from './pages/ProjectsPage';
+import ProtectedRoute from './components/ProtectedRoute'; // <--- Імпорт
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Головна сторінка ("/") тепер показує AuthPage */}
-        <Route path="/" element={<AuthPage />} />
-        
-        {/* Будь-яка інша адреса перекидає на головну */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/" element={<AuthPage />} />
+      
+      {/* Захищений маршрут */}
+      <Route 
+        path="/gallery" 
+        element={
+          <ProtectedRoute>
+            <ProjectsPage />
+          </ProtectedRoute>
+        } 
+      />
+    </Routes>
   );
 }
 
