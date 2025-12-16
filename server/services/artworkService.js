@@ -15,6 +15,26 @@ class ArtworkService {
         return await artworkDAO.findAllByUserId(userId);
     }
 
+    // GET /api/artworks/:id
+    async getOne(req, res) {
+        try {
+            const artworkId = req.params.id;
+            // Використовуємо сервіс, щоб знайти роботу (цей метод у тебе вже має бути в DAO, зараз перевіримо сервіс)
+            const artwork = await artworkService.getArtworkById(artworkId);
+            res.json(artwork);
+        } catch (e) {
+            res.status(404).json({ message: 'Роботу не знайдено' });
+        }
+    }
+
+    async getArtworkById(id) {
+        const artwork = await artworkDAO.findById(id);
+        if (!artwork) {
+            throw new Error('Проект не знайдено.');
+        }
+        return artwork;
+    }
+
     async updateArtwork(id, userId, data) {
         // Спочатку перевіряємо, чи існує такий проект
         const existing = await artworkDAO.findById(id);

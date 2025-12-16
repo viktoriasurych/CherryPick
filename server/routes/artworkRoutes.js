@@ -18,4 +18,8 @@ router.put('/:id', authMiddleware, upload.single('image'), artworkController.upd
 // 4. Видалити (Тільки Токен)
 router.delete('/:id', authMiddleware, artworkController.delete);
 
+// 👇 ДОДАЙ ЦЕЙ НОВИЙ РОУТ 👇
+router.get('/:id', authMiddleware, artworkController.getOne); 
+
+
 module.exports = router;

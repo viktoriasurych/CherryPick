@@ -37,7 +37,15 @@ class ArtworkController {
     }
 
     // ... інші методи (getAll, update, delete) залишай як були
-    
+    async getOne(req, res) {
+        try {
+            const artworkId = req.params.id;
+            const artwork = await artworkService.getArtworkById(artworkId);
+            res.json(artwork);
+        } catch (e) {
+            res.status(404).json({ message: 'Роботу не знайдено' });
+        }
+    }
     async getAll(req, res) {
         try {
             const userId = req.user.id;
@@ -54,7 +62,7 @@ class ArtworkController {
             const userId = req.user.id;
             const artworkId = req.params.id;
             // Тут теж треба ловити файл, якщо ми його оновлюємо
-            const image_path = req.file ? req.file.path : undefined; 
+            const image_path = req.file ? 'uploads/' + req.file.filename : undefined; 
             
             const updateData = { ...req.body };
             if (image_path) updateData.image_path = image_path;

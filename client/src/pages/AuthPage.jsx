@@ -43,7 +43,7 @@ const AuthPage = () => {
                 // <--- 3. ЗАМІНИЛИ НА ЦЕ:
                 login(response.data.token, response.data.user); 
 
-                navigate('/gallery');
+                navigate('/projects');
             } else {
                 // Якщо це була реєстрація
                 setIsLogin(true);

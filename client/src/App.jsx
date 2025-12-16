@@ -1,7 +1,9 @@
 import { Routes, Route } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import ProjectsPage from './pages/ProjectsPage';
-import ProtectedRoute from './components/ProtectedRoute'; // <--- Імпорт
+import ProjectDetailsPage from './pages/ProjectDetailsPage';
+import ProtectedRoute from './components/ProtectedRoute'; 
+import Layout from './components/Layout';// <--- Імпорт
 
 function App() {
   return (
@@ -9,15 +11,28 @@ function App() {
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/" element={<AuthPage />} />
       
-      {/* Захищений маршрут */}
-      <Route 
-        path="/gallery" 
-        element={
-          <ProtectedRoute>
-            <ProjectsPage />
-          </ProtectedRoute>
-        } 
-      />
+    <Route 
+    path="/projects" 
+    element={
+        <ProtectedRoute>
+            <Layout> {/* <--- ТУТ */}
+                      <ProjectsPage />
+                  </Layout> {/* <--- І ТУТ */}
+        </ProtectedRoute>
+    } 
+    />
+    <Route 
+    path="/projects/:id" 
+    element={
+        <ProtectedRoute>
+            <Layout> {/* <--- ТУТ ТЕЖ */}
+                      <ProjectDetailsPage />
+                  </Layout>
+        </ProtectedRoute>
+    } 
+    />
+     
+      
     </Routes>
   );
 }
