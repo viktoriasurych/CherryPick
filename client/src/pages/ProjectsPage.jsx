@@ -1,17 +1,18 @@
-// client/src/pages/ProjectsPage.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import artworkService from '../services/artworkService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import ConfirmModal from '../components/ConfirmModal'; // <--- 1. ІМПОРТУЄМО МОДАЛКУ
+import ConfirmModal from '../components/ConfirmModal';
+import DictSelect from '../components/ui/DictSelect';      // Для одного (Жанр, Стиль)
+import MultiDictSelect from '../components/ui/MultiDictSelect'; // Для багатьох (Матеріали, Теги)
 
 const ProjectsPage = () => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
 
-    // 👇 2. СТАНИ ДЛЯ МОДАЛЬНОГО ВІКНА
+    // Модальне вікно видалення
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState(null);
 
@@ -19,7 +20,11 @@ const ProjectsPage = () => {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        image: null
+        image: null,
+        style_id: '',
+        genre_id: '',
+        material_ids: [], // Масив
+        tag_ids: []       // Масив
     });
 
     const loadProjects = async () => {
@@ -42,7 +47,14 @@ const ProjectsPage = () => {
         e.preventDefault();
         try {
             await artworkService.create(formData);
-            setFormData({ title: '', description: '', image: null });
+            
+            // Очищення форми
+            setFormData({ 
+                title: '', description: '', image: null,
+                style_id: '', genre_id: '',
+                material_ids: [], tag_ids: []
+            });
+            
             setShowForm(false);
             loadProjects(); 
         } catch (error) {
@@ -50,33 +62,26 @@ const ProjectsPage = () => {
         }
     };
 
-    // 👇 3. НОВА ЛОГІКА ВИДАЛЕННЯ
-    
-    // Крок А: Юзер натиснув кнопку "Видалити" -> Просто відкриваємо вікно
     const handleRequestDelete = (id) => {
-        setProjectToDelete(id);      // Запам'ятовуємо, що видаляти
-        setDeleteModalOpen(true);    // Показуємо вікно
+        setProjectToDelete(id);
+        setDeleteModalOpen(true);
     };
 
-    // Крок Б: Юзер натиснув "Так" у вікні -> Робимо запит на сервер
     const confirmDelete = async () => {
         if (!projectToDelete) return;
-        
         try {
             await artworkService.delete(projectToDelete);
-            setDeleteModalOpen(false); // Закриваємо вікно
-            setProjectToDelete(null);  // Чистимо ID
-            loadProjects();            // Оновлюємо список
+            setDeleteModalOpen(false);
+            setProjectToDelete(null);
+            loadProjects();
         } catch (error) {
             alert('Не вдалося видалити');
         }
     };
 
     return (
-        // 👇 Тут ми прибрали зовнішні класи bg-vampire..., бо вони вже є в Layout
         <div className="p-8"> 
             <div className="max-w-6xl mx-auto">
-                {/* Хедер */}
                 <div className="flex justify-between items-center mb-8 border-b border-cherry-900 pb-4">
                     <h1 className="text-3xl font-bold text-cherry-500">Архів Робіт</h1>
                     <button 
@@ -87,7 +92,7 @@ const ProjectsPage = () => {
                     </button>
                 </div>
 
-                {/* Форма додавання */}
+                {/* ФОРМА СТВОРЕННЯ */}
                 {showForm && (
                     <div className="bg-slate-900 p-6 rounded-lg mb-8 border border-slate-700 animate-fade-in">
                         <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
@@ -96,11 +101,41 @@ const ProjectsPage = () => {
                                 value={formData.title}
                                 onChange={(e) => setFormData({...formData, title: e.target.value})}
                             />
+
+                            {/* БЛОК ВИБОРУ */}
+                            <div className="pt-2 border-t border-slate-800">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <DictSelect 
+                                        type="genres" label="Жанр" 
+                                        value={formData.genre_id} 
+                                        onChange={(val) => setFormData({...formData, genre_id: val})} 
+                                    />
+                                    <DictSelect 
+                                        type="styles" label="Стиль" 
+                                        value={formData.style_id} 
+                                        onChange={(val) => setFormData({...formData, style_id: val})} 
+                                    />
+                                </div>
+                                
+                                <MultiDictSelect 
+                                    type="materials" label="Матеріали" 
+                                    selectedIds={formData.material_ids} 
+                                    onChange={(ids) => setFormData({...formData, material_ids: ids})} 
+                                />
+
+                                <MultiDictSelect 
+                                    type="tags" label="Теги" 
+                                    selectedIds={formData.tag_ids} 
+                                    onChange={(ids) => setFormData({...formData, tag_ids: ids})} 
+                                />
+                            </div>
+
                             <Input 
                                 label="Опис" 
                                 value={formData.description}
                                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                             />
+                            
                             <input 
                                 type="file" 
                                 onChange={(e) => setFormData({...formData, image: e.target.files[0]})}
@@ -111,7 +146,7 @@ const ProjectsPage = () => {
                     </div>
                 )}
 
-                {/* Сітка проєктів */}
+                {/* СІТКА ПРОЄКТІВ */}
                 {loading ? <p>Завантаження...</p> : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {projects.map(art => (
@@ -138,7 +173,7 @@ const ProjectsPage = () => {
                                     <button 
                                         onClick={(e) => {
                                             e.preventDefault(); 
-                                            handleRequestDelete(art.id); // <--- 4. ТУТ ВИКЛИКАЄМО НОВУ ФУНКЦІЮ
+                                            handleRequestDelete(art.id); 
                                         }}
                                         className="mt-4 text-xs text-red-500 hover:underline z-10 relative"
                                     >
@@ -150,7 +185,6 @@ const ProjectsPage = () => {
                     </div>
                 )}
 
-                {/* 👇 5. ВСТАВЛЯЄМО КОМПОНЕНТ МОДАЛКИ В КІНЦІ */}
                 <ConfirmModal 
                     isOpen={isDeleteModalOpen}
                     onClose={() => setDeleteModalOpen(false)}
@@ -158,7 +192,6 @@ const ProjectsPage = () => {
                     title="Видалити роботу?"
                     message="Цю дію неможливо скасувати. Проєкт буде видалено з архіву назавжди."
                 />
-
             </div>
         </div>
     );

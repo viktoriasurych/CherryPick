@@ -1,30 +1,18 @@
-// server/services/artworkService.js
-const artworkDAO = require('../dao/artworkDAO');
+const artworkDAO = require('../dao/artworkDAO'); // Перевір шлях, зазвичай це database/artworkDAO
 
 class ArtworkService {
     
     async createArtwork(userId, data) {
-        // Перевірка обов'язкових полів
         if (!data.title) {
             throw new Error('Назва проекту є обов’язковою.');
         }
         return await artworkDAO.create(userId, data);
     }
 
+    // 👇 ВИПРАВЛЕНО ТУТ
     async getUserGallery(userId) {
-        return await artworkDAO.findAllByUserId(userId);
-    }
-
-    // GET /api/artworks/:id
-    async getOne(req, res) {
-        try {
-            const artworkId = req.params.id;
-            // Використовуємо сервіс, щоб знайти роботу (цей метод у тебе вже має бути в DAO, зараз перевіримо сервіс)
-            const artwork = await artworkService.getArtworkById(artworkId);
-            res.json(artwork);
-        } catch (e) {
-            res.status(404).json({ message: 'Роботу не знайдено' });
-        }
+        // У DAO метод називається getAll, а не findAllByUserId
+        return await artworkDAO.getAll(userId);
     }
 
     async getArtworkById(id) {
@@ -36,25 +24,26 @@ class ArtworkService {
     }
 
     async updateArtwork(id, userId, data) {
-        // Спочатку перевіряємо, чи існує такий проект
         const existing = await artworkDAO.findById(id);
         if (!existing) {
             throw new Error('Проект не знайдено.');
         }
-        // Перевіряємо, чи це проект цього користувача
         if (existing.user_id !== userId) {
             throw new Error('Ви не маєте прав редагувати цей проект.');
         }
 
-        // Якщо все ок, оновлюємо
-        // Зберігаємо старі дані, якщо нові не прийшли
+        // 👇 ВИПРАВЛЕНО ТУТ (Додали нові поля)
         const updateData = {
             title: data.title || existing.title,
-            description: data.description || existing.description,
+            description: data.description !== undefined ? data.description : existing.description,
             status: data.status || existing.status,
             image_path: data.image_path || existing.image_path,
-            style_id: data.style_id || existing.style_id,
-            material_id: data.material_id || existing.material_id,
+            
+            // Нові поля (передаємо те, що прийшло, або undefined, щоб DAO розібрався)
+            style_id: data.style_id, 
+            genre_id: data.genre_id,
+            material_ids: data.material_ids,
+            tag_ids: data.tag_ids
         };
 
         await artworkDAO.update(id, userId, updateData);
@@ -63,10 +52,15 @@ class ArtworkService {
 
     async deleteArtwork(id, userId) {
         const changes = await artworkDAO.delete(id, userId);
-        if (changes === 0) {
+        // changes.changes для sqlite, але ми в DAO повертаємо об'єкт { message, changes }
+        if (changes.changes === 0) {
             throw new Error('Проект не знайдено або ви не є його власником.');
         }
         return { message: 'Проект видалено.' };
+    }
+
+    async updateStatus(id, userId, status) {
+        return await artworkDAO.updateStatus(id, userId, status);
     }
 }
 

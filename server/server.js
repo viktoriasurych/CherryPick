@@ -8,6 +8,7 @@ const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const sessionRoutes = require('./routes/sessionRoutes')
 const artworkRoutes = require('./routes/artworkRoutes'); // <--- ДОДАЛИ ЦЕ!
+const dictionaryRoutes = require('./routes/dictionaryRoutes');
 
 const app = express();
 const PORT = 3000;
@@ -22,6 +23,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/artworks', artworkRoutes); // <--- ДОДАЛИ ЦЕ! (Тепер сервер бачить /api/artworks)
 app.use('/api/sessions', sessionRoutes);
+app.use('/api/dict', dictionaryRoutes);
 
 // Тестові маршрути
 app.get('/api', (req, res) => {

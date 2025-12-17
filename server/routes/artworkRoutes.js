@@ -21,5 +21,9 @@ router.delete('/:id', authMiddleware, artworkController.delete);
 // 👇 ДОДАЙ ЦЕЙ НОВИЙ РОУТ 👇
 router.get('/:id', authMiddleware, artworkController.getOne); 
 
+// ...
+router.patch('/:id/status', authMiddleware, artworkController.updateStatus); // <--- НОВЕ
+// ...
+
 
 module.exports = router;
