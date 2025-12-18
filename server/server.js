@@ -25,6 +25,7 @@ app.use('/api/artworks', artworkRoutes); // <--- ДОДАЛИ ЦЕ! (Тепер 
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/dict', dictionaryRoutes);
 
+
 // Тестові маршрути
 app.get('/api', (req, res) => {
     res.json({ message: 'Вітаю! Сервер CherryPick працює 🍒' });

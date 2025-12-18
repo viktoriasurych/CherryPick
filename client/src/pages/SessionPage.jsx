@@ -24,7 +24,7 @@ const SessionPage = () => {
 
     return (
         <div className="min-h-screen bg-black text-bone-200 flex flex-col">
-            {/* Мікро-хедер, щоб повернутися */}
+            {/* Хедер */}
             <div className="p-4 border-b border-slate-900 flex justify-between items-center bg-slate-900/30">
                 <div className="flex items-center gap-4">
                     <Link to={`/projects/${id}`} className="text-slate-500 hover:text-white transition">
@@ -36,9 +36,8 @@ const SessionPage = () => {
 
             {/* Робоча зона */}
             <div className="grow flex flex-col md:flex-row h-full">
-                
-                {/* ЛІВА ЧАСТИНА: Референс (Картина) */}
-                <div className="w-full md:w-1/2 p-6 flex items-center justify-center bg-vampire-950 border-r border-slate-900">
+                {/* ЛІВА ЧАСТИНА: Референс */}
+                <div className="w-full md:w-1/2 p-6 flex items-center justify-center bg-[#0a0a0a] border-r border-slate-900">
                     {artwork.image_path ? (
                         <img 
                             src={artworkService.getImageUrl(artwork.image_path)} 
@@ -55,10 +54,7 @@ const SessionPage = () => {
                     <div className="w-full max-w-md">
                         <SessionTimer 
                             artworkId={id} 
-                            onSessionSaved={() => {
-                                // Коли зберегли — повертаємось назад на сторінку деталей
-                                navigate(`/projects/${id}`);
-                            }} 
+                            onSessionSaved={() => navigate(`/projects/${id}`)} 
                         />
                     </div>
                 </div>

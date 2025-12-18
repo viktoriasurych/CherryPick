@@ -123,6 +123,15 @@ db.serialize(() => {
         FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
     )`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS artwork_gallery (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        artwork_id INTEGER NOT NULL,
+        image_path TEXT NOT NULL,
+        description TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+    )`);
+
     // 7. ПОЧАТКОВЕ ЗАПОВНЕННЯ (Global Data)
     const seedDict = (table, items) => {
         db.get(`SELECT count(*) as count FROM ${table}`, (err, row) => {

@@ -1,5 +1,5 @@
-
 const artworkDAO = require('../dao/artworkDAO');
+const { deleteFile } = require('../utils/fileUtils');
 
 class ArtworkService {
     
@@ -8,9 +8,8 @@ class ArtworkService {
         return await artworkDAO.create(userId, data);
     }
 
-    async getUserGallery(userId) {
-        // DAO метод називається getAll
-        return await artworkDAO.getAll(userId);
+    async getAll(userId, filters) {
+        return await artworkDAO.getAll(userId, filters);
     }
 
     async getArtworkById(id) {
@@ -24,6 +23,19 @@ class ArtworkService {
         if (!existing) throw new Error('Проект не знайдено.');
         if (existing.user_id !== userId) throw new Error('Ви не маєте прав редагувати цей проект.');
 
+        // 👇 ЛОГІКА ЗБЕРЕЖЕННЯ СТАРОЇ ОБКЛАДИНКИ В ГАЛЕРЕЮ (БЕЗ ДУБЛІКАТІВ)
+        // Якщо прийшла НОВА картинка і вона відрізняється від СТАРОЇ...
+        if (data.image_path && existing.image_path && data.image_path !== existing.image_path) {
+            
+            // 1. Перевіряємо через БД, чи це фото вже є в галереї
+            const isAlreadyInGallery = await artworkDAO.checkGalleryImageExists(id, existing.image_path);
+            
+            if (!isAlreadyInGallery) {
+                // 2. Якщо немає — додаємо стару обкладинку в архів деталей
+                await artworkDAO.addGalleryImage(id, existing.image_path, 'Колишня обкладинка');
+            }
+        }
+
         const updateData = {
             title: data.title || existing.title,
             description: data.description !== undefined ? data.description : existing.description,
@@ -35,7 +47,6 @@ class ArtworkService {
             material_ids: data.material_ids,
             tag_ids: data.tag_ids,
 
-            // Дати
             started_year: data.started_year,
             started_month: data.started_month,
             started_day: data.started_day,
@@ -49,15 +60,51 @@ class ArtworkService {
     }
 
     async deleteArtwork(id, userId) {
+        const artwork = await artworkDAO.findById(id);
+        if (!artwork) throw new Error('Проект не знайдено.');
+        if (artwork.user_id !== userId) throw new Error('Ви не маєте прав видаляти цей проект.');
+
         const result = await artworkDAO.delete(id, userId);
-        if (result.changes === 0) throw new Error('Проект не знайдено.');
+        
+        // Видаляємо файл з диска тільки при повному видаленні проєкту.
+        // Фото з історії (sessions) залишаться на диску, щоб не ламати історію, якщо вони там використовуються.
+        if (result.changes > 0 && artwork.image_path) {
+            deleteFile(artwork.image_path);
+        }
+
         return { message: 'Проект видалено.' };
     }
 
-    // 👇 ВИПРАВЛЕНИЙ МЕТОД UPDATE STATUS
-    // Він просто передає дані в DAO, без req/res
     async updateStatus(id, userId, status, finishedData) {
         return await artworkDAO.updateStatus(id, userId, status, finishedData);
+    }
+
+    async addGalleryImage(artworkId, imagePath, description) {
+        if (!artworkId) throw new Error('ID проекту обов’язкове.');
+        if (!imagePath) throw new Error('Файл зображення обов’язковий.');
+        
+        return await artworkDAO.addGalleryImage(artworkId, imagePath, description);
+    }
+
+    // 👇 Видалення конкретної фотки з галереї
+    async removeGalleryImage(imageId, userId) {
+        // 1. Знаходимо картинку в базі
+        const image = await artworkDAO.getGalleryImageById(imageId);
+        if (!image) throw new Error('Зображення не знайдено');
+
+        // 2. Перевіряємо права
+        const artwork = await artworkDAO.findById(image.artwork_id);
+        if (artwork.user_id !== userId) {
+            throw new Error('Ви не маєте прав видаляти це фото.');
+        }
+
+        // 3. Видаляємо файл з диска 🗑️
+        deleteFile(image.image_path);
+
+        // 4. Видаляємо запис з таблиці
+        await artworkDAO.deleteGalleryImage(imageId);
+
+        return { message: 'Фото видалено' };
     }
 }
 

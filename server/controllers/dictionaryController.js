@@ -1,4 +1,4 @@
-const dictionaryService = require('../services/dictionaryService'); // <--- ТЕПЕР ТАК
+const dictionaryService = require('../services/dictionaryService');
 
 class DictionaryController {
     
@@ -35,18 +35,18 @@ class DictionaryController {
         }
     }
 
+    // DELETE /api/dict/:type/:id
     async delete(req, res) {
         try {
             const userId = req.user.id;
             const { type, id } = req.params;
+            
             await dictionaryService.delete(type, id, userId);
             res.json({ message: "Deleted" });
         } catch (e) {
-            res.status(500).json({ message: e.message });
+            res.status(400).json({ message: e.message }); // 400, бо це помилка логіки (не можна видаляти чуже)
         }
     }
-
-    
 }
 
 module.exports = new DictionaryController();

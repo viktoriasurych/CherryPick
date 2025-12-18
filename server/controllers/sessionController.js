@@ -18,9 +18,12 @@ class SessionController {
     async finish(req, res) {
         try {
             const sessionId = req.params.id;
-            const { duration, content } = req.body;
+            const userId = req.user.id; // <--- Беремо ID юзера з токена
             
-            // Обробка файлу (якщо завантажили фото прогресу)
+            // Читаємо дані з форми
+            // updateCover приходить як рядок "true"/"false", треба конвертувати
+            const { duration, content, artworkId, updateCover } = req.body; 
+            
             const photo_path = req.file ? 'uploads/' + req.file.filename : null;
 
             const noteData = {
@@ -28,7 +31,18 @@ class SessionController {
                 photo_path: photo_path
             };
 
-            const result = await sessionService.finishSession(sessionId, duration, noteData);
+            // Перетворюємо рядок "true" в булеве значення
+            const isUpdateCover = updateCover === 'true';
+
+            const result = await sessionService.finishSession(
+                sessionId, 
+                duration, 
+                noteData, 
+                userId, 
+                artworkId, 
+                isUpdateCover
+            );
+            
             res.json(result);
         } catch (e) {
             console.error(e);

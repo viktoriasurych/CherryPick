@@ -9,6 +9,7 @@ router.get('/:type', authMiddleware, dictionaryController.getAll);
 // Додати свій варіант
 router.post('/:type', authMiddleware, dictionaryController.create);
 
+// Видалити свій варіант
 router.delete('/:type/:id', authMiddleware, dictionaryController.delete);
 
 module.exports = router;

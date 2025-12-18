@@ -1,9 +1,17 @@
-// client/src/services/artworkService.js
 import api from '../api/axios';
 
 const artworkService = {
     getAll: async (filters = {}) => {
-        const response = await api.get('/artworks', { params: filters });
+        const params = new URLSearchParams();
+        Object.keys(filters).forEach(key => {
+            const value = filters[key];
+            if (Array.isArray(value) && value.length > 0) {
+                params.append(key, value.join(',')); 
+            } else if (value && !Array.isArray(value)) {
+                params.append(key, value);
+            }
+        });
+        const response = await api.get('/artworks', { params });
         return response.data;
     },
 
@@ -15,18 +23,31 @@ const artworkService = {
         return await artworkService._sendData(`/artworks/${id}`, 'put', data);
     },
 
-    // 👇 УНІВЕРСАЛЬНА ФУНКЦІЯ ВІДПРАВКИ (Щоб не дублювати код)
+    addGalleryImage: async (id, file, description = '') => {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('description', description);
+        
+        const response = await api.post(`/artworks/${id}/gallery`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return response.data;
+    },
+
+    deleteGalleryImage: async (imgId) => {
+        const response = await api.delete(`/artworks/gallery/${imgId}`);
+        return response.data;
+    },
+
     _sendData: async (url, method, data) => {
         const formData = new FormData();
         
         formData.append('title', data.title);
         formData.append('description', data.description || '');
         if (data.status) formData.append('status', data.status);
-
         if (data.style_id) formData.append('style_id', data.style_id);
         if (data.genre_id) formData.append('genre_id', data.genre_id);
 
-        // Масиви
         if (data.material_ids && data.material_ids.length > 0) {
             formData.append('material_ids', data.material_ids.join(','));
         }
@@ -34,22 +55,21 @@ const artworkService = {
             formData.append('tag_ids', data.tag_ids.join(','));
         }
 
-        // Фото
+        // 👇 ВИПРАВЛЕНО: Тільки один блок обробки фото
         if (data.image instanceof File) {
-            formData.append('image', data.image);
-        } else if (method === 'post' && data.image) {
-             formData.append('image', data.image);
+            // Це новий файл (об'єкт File)
+            formData.append('image', data.image); 
+        } else if (typeof data.image === 'string' && data.image.startsWith('uploads/')) {
+            // Це старий шлях (string), передаємо як текст, щоб сервер знав
+            formData.append('image_path', data.image);
         }
 
-        // 👇 ВИПРАВЛЕНА ЛОГІКА ДАТ
-        // Ми передаємо поля, навіть якщо вони пусті ('' або null), 
-        // щоб бекенд міг їх оновити.
+        // Дати
         if (data.started) {
             formData.append('started_year', data.started.year || '');
             formData.append('started_month', data.started.month || '');
             formData.append('started_day', data.started.day || '');
         }
-
         if (data.finished) {
             formData.append('finished_year', data.finished.year || '');
             formData.append('finished_month', data.finished.month || '');
@@ -72,26 +92,16 @@ const artworkService = {
         return response.data;
     },
 
-  // client/src/services/artworkService.js
-
-    // ...
-
     updateStatus: async (id, status, finishedData = null) => {
         const body = { status };
-        
-        // Якщо є дані про дату, додаємо їх окремими полями
         if (finishedData) {
             body.finished_year = finishedData.year;
             body.finished_month = finishedData.month;
             body.finished_day = finishedData.day;
         }
-        
-        // Використовуємо PATCH
         const response = await api.patch(`/artworks/${id}/status`, body);
         return response.data;
     },
-
-    // ...
 
     getImageUrl: (path) => {
         if (!path) return null;

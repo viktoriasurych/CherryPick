@@ -25,5 +25,11 @@ router.get('/:id', authMiddleware, artworkController.getOne);
 router.patch('/:id/status', authMiddleware, artworkController.updateStatus); // <--- НОВЕ
 // ...
 
+// 👇 НОВИЙ РОУТ ДЛЯ ГАЛЕРЕЇ
+router.post('/:id/gallery', authMiddleware, upload.single('image'), artworkController.uploadGalleryImage);
+
+// ...
+// 👇 Новий маршрут для видалення однієї фотки з галереї
+router.delete('/gallery/:imgId', authMiddleware, artworkController.deleteGalleryImage);
 
 module.exports = router;
