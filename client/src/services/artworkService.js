@@ -1,8 +1,10 @@
 import api from '../api/axios';
 
 const artworkService = {
-    getAll: async (filters = {}) => {
+    getAll: async (filters = {}, sort = { by: 'updated', dir: 'DESC' }) => { // Додали sort
         const params = new URLSearchParams();
+        
+        // ... (код обробки фільтрів) ...
         Object.keys(filters).forEach(key => {
             const value = filters[key];
             if (Array.isArray(value) && value.length > 0) {
@@ -11,6 +13,11 @@ const artworkService = {
                 params.append(key, value);
             }
         });
+
+        // 👇 ДОДАЄМО СОРТУВАННЯ В ЗАПИТ
+        params.append('sortBy', sort.by);
+        params.append('sortDir', sort.dir);
+
         const response = await api.get('/artworks', { params });
         return response.data;
     },

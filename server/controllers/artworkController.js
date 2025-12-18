@@ -90,41 +90,38 @@ class ArtworkController {
 }
 
     // GET /api/artworks (Фільтри)
-    async getAll(req, res) {
-        try {
-            const userId = req.user.id;
-            
-            // Helper 1: Для Стрічок (Статуси)
-            const parseStringArray = (input) => {
-                if (!input) return [];
-                if (Array.isArray(input)) return input;
-                return input.split(',');
-            };
+   // GET /api/artworks
+   async getAll(req, res) {
+    try {
+        const userId = req.user.id;
+        
+        const parseStringArray = (input) => { /* ... (твій код) ... */ if (!input) return []; if (Array.isArray(input)) return input; return input.split(','); };
+        const parseNumberArray = (input) => { /* ... (твій код) ... */ if (!input) return []; if (Array.isArray(input)) return input.map(Number); return input.split(',').map(Number).filter(n => !isNaN(n)); };
 
-            // Helper 2: Для Чисел (ID)
-            const parseNumberArray = (input) => {
-                if (!input) return [];
-                if (Array.isArray(input)) return input.map(Number);
-                return input.split(',').map(Number).filter(n => !isNaN(n));
-            };
+        const filters = {
+            status: req.query.status ? parseStringArray(req.query.status) : [],
+            genre_ids: req.query.genre_ids ? parseNumberArray(req.query.genre_ids) : [],
+            style_ids: req.query.style_ids ? parseNumberArray(req.query.style_ids) : [],
+            material_ids: req.query.material_ids ? parseNumberArray(req.query.material_ids) : [],
+            tag_ids: req.query.tag_ids ? parseNumberArray(req.query.tag_ids) : [],
+            yearFrom: req.query.yearFrom || null,
+            yearTo: req.query.yearTo || null
+        };
 
-            const filters = {
-                status: req.query.status ? parseStringArray(req.query.status) : [],
-                genre_ids: req.query.genre_ids ? parseNumberArray(req.query.genre_ids) : [],
-                style_ids: req.query.style_ids ? parseNumberArray(req.query.style_ids) : [],
-                material_ids: req.query.material_ids ? parseNumberArray(req.query.material_ids) : [],
-                tag_ids: req.query.tag_ids ? parseNumberArray(req.query.tag_ids) : [],
-                yearFrom: req.query.yearFrom || null,
-                yearTo: req.query.yearTo || null
-            };
+        // 👇 ОТРИМУЄМО ПАРАМЕТРИ СОРТУВАННЯ
+        const sort = {
+            by: req.query.sortBy || 'updated', // За замовчуванням "Останні оновлення"
+            dir: req.query.sortDir || 'DESC'
+        };
 
-            const projects = await artworkService.getAll(userId, filters);
-            res.status(200).json(projects);
-        } catch (error) {
-            console.error('Error fetching projects:', error.message);
-            res.status(500).json({ message: 'Не вдалося завантажити проєкти.' });
-        }
+        // Передаємо filters та sort у сервіс
+        const projects = await artworkService.getAll(userId, filters, sort);
+        res.status(200).json(projects);
+    } catch (error) {
+        console.error('Error fetching projects:', error.message);
+        res.status(500).json({ message: 'Не вдалося завантажити проєкти.' });
     }
+}
 
     async getOne(req, res) {
         try {

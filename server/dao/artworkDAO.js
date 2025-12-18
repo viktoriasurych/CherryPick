@@ -39,13 +39,15 @@ class ArtworkDAO {
         });
     }
 
-    getAll(userId, filters = {}) {
+    // 👇 ОНОВЛЕНИЙ getAll З СОРТУВАННЯМ
+    getAll(userId, filters = {}, sort = { by: 'created', dir: 'DESC' }) {
         return new Promise((resolve, reject) => {
             let sql = `
                 SELECT 
                     a.*,
                     s.name as style_name,
-                    g.name as genre_name
+                    g.name as genre_name,
+                    (SELECT MAX(start_time) FROM sessions WHERE artwork_id = a.id) as last_session_date
                 FROM artworks a
                 LEFT JOIN art_styles s ON a.style_id = s.id
                 LEFT JOIN art_genres g ON a.genre_id = g.id
@@ -89,7 +91,18 @@ class ArtworkDAO {
                 params.push(filters.yearTo);
             }
 
-            sql += ` ORDER BY a.created_date DESC`;
+            // --- СОРТУВАННЯ ---
+            const sortMap = {
+                'title': 'a.title',
+                'created': 'a.created_date',
+                'updated': 'COALESCE(last_session_date, a.created_date)', // Останній актив або створення
+                'status': 'a.status'
+            };
+
+            const sortBy = sortMap[sort.by] || 'a.created_date';
+            const sortDir = sort.dir === 'ASC' ? 'ASC' : 'DESC';
+
+            sql += ` ORDER BY ${sortBy} ${sortDir}`;
 
             db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
@@ -98,7 +111,6 @@ class ArtworkDAO {
         });
     }
 
-    // 👇 ОНОВЛЕНИЙ findById: Тепер завантажує і Галерею
     findById(id) {
         return new Promise((resolve, reject) => {
             const sql = `
@@ -117,21 +129,17 @@ class ArtworkDAO {
                 if (err) return reject(err);
                 if (!artwork) return resolve(null);
 
-                // Перетворення ID масивів
                 artwork.material_ids = artwork.material_ids ? artwork.material_ids.toString().split(',').map(Number) : [];
                 artwork.tag_ids = artwork.tag_ids ? artwork.tag_ids.toString().split(',').map(Number) : [];
 
-                // 👇 ДОДАТКОВИЙ ЗАПИТ: Отримати фото галереї
                 db.all(`SELECT * FROM artwork_gallery WHERE artwork_id = ? ORDER BY id DESC`, [id], (err, gallery) => {
                     if (err) return reject(err);
-                    artwork.gallery = gallery || []; // Додаємо поле gallery до об'єкта
+                    artwork.gallery = gallery || [];
                     resolve(artwork);
                 });
             });
         });
     }
-
-    // 👇 МЕТОДИ ДЛЯ ГАЛЕРЕЇ (НОВІ)
 
     addGalleryImage(artworkId, imagePath, description = '') {
         return new Promise((resolve, reject) => {
@@ -161,18 +169,15 @@ class ArtworkDAO {
         });
     }
 
-    // 👇 ПЕРЕВІРКА ДУБЛІКАТІВ (Щоб не зберігати одну фотку двічі)
     checkGalleryImageExists(artworkId, imagePath) {
         return new Promise((resolve, reject) => {
             const sql = `SELECT id FROM artwork_gallery WHERE artwork_id = ? AND image_path = ?`;
             db.get(sql, [artworkId, imagePath], (err, row) => {
                 if (err) reject(err);
-                else resolve(!!row); // true, якщо знайшли
+                else resolve(!!row);
             });
         });
     }
-
-    // -----------------------------------------------------
 
     update(id, userId, data) {
         return new Promise((resolve, reject) => {

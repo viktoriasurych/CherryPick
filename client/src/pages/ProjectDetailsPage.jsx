@@ -26,9 +26,7 @@ const ProjectDetailsPage = () => {
             const artworkData = await artworkService.getById(id);
             setArtwork(artworkData);
             
-            // Логіка вибору фото:
-            // Якщо це перше завантаження (!isSilent) і нічого не вибрано (!selectedImage) -> ставимо обкладинку.
-            // Якщо це "тихе" оновлення (наприклад, змінили статус), ми НЕ чіпаємо те, що користувач зараз роздивляється.
+            // Логіка вибору фото: ставимо обкладинку, якщо нічого не вибрано
             if (!isSilent && !selectedImage) {
                 setSelectedImage(artworkData.image_path);
             }
@@ -36,8 +34,7 @@ const ProjectDetailsPage = () => {
             const historyData = await sessionService.getHistory(id);
             setHistory(historyData);
         } catch (error) {
-            console.error("Помилка:", error);
-            // navigate('/projects'); 
+            console.error("Помилка завантаження даних:", error);
         } finally {
             setLoading(false);
         }
@@ -48,7 +45,6 @@ const ProjectDetailsPage = () => {
     // 2. ЗМІНА СТАТУСУ (Швидка)
     const handleQuickStatusChange = async (newStatus) => {
         try {
-            // Оптимістичне оновлення інтерфейсу
             setArtwork(prev => ({ ...prev, status: newStatus }));
             
             let finishedData = null;
@@ -60,7 +56,7 @@ const ProjectDetailsPage = () => {
             }
             
             await artworkService.updateStatus(id, newStatus, finishedData);
-            fetchAllData(true); // Тихе оновлення даних
+            fetchAllData(true); 
         } catch (error) {
             console.error(error);
             alert("Помилка оновлення статусу");
@@ -74,7 +70,7 @@ const ProjectDetailsPage = () => {
 
         try {
             await artworkService.addGalleryImage(id, file, 'Деталь');
-            fetchAllData(true); // Оновлюємо стрічку
+            fetchAllData(true);
         } catch (error) {
             alert('Не вдалося завантажити фото');
         }
@@ -113,11 +109,10 @@ const ProjectDetailsPage = () => {
     if (loading) return <div className="text-center text-bone-200 mt-20">Завантаження...</div>;
     if (!artwork) return null;
 
-    // 👇 ФОРМУВАННЯ СТРІЧКИ (ТІЛЬКИ Обкладинка + Галерея)
+    // 👇 ФОРМУВАННЯ СТРІЧКИ ЗОБРАЖЕНЬ (Тільки Обкладинка + Галерея)
     const allImages = [];
-    const addedPaths = new Set(); // Щоб слідкувати за унікальністю
+    const addedPaths = new Set();
 
-    // 1. Обкладинка (Завжди перша)
     if (artwork.image_path) {
         allImages.push({
             id: 'cover_main',
@@ -128,10 +123,8 @@ const ProjectDetailsPage = () => {
         addedPaths.add(artwork.image_path);
     }
 
-    // 2. Галерея (Деталі + Старі обкладинки, якщо ми їх туди зберегли)
     if (artwork.gallery) {
         artwork.gallery.forEach(img => {
-            // Додаємо в список, якщо цього шляху ще немає (щоб не дублювати поточну обкладинку)
             if (!addedPaths.has(img.image_path)) {
                 allImages.push({
                     id: `gal_${img.id}`,
@@ -143,12 +136,22 @@ const ProjectDetailsPage = () => {
         });
     }
 
-    // ❌ ІСТОРІЮ ТУТ НЕ ДОДАЄМО (Вона залишається внизу)
-
-    // Визначаємо поточне фото для відображення
     const currentSrc = selectedImage || artwork.image_path;
-    // Знаходимо об'єкт для бейджика
     const currentImageObj = allImages.find(img => img.src === currentSrc) || { type: 'IMG' };
+
+    // 👇 ЛОГІКА ДАТИ ДЛЯ ПРАВОЇ КОЛОНКИ
+    const isFinishedOrDropped = ['FINISHED', 'DROPPED'].includes(artwork.status);
+    const lastSession = history.length > 0 ? history[0] : null;
+    
+    let completionLabel = "Завершення";
+    let completionValue = renderFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day);
+    let completionColor = artwork.finished_year ? 'text-green-400' : 'text-slate-600';
+
+    if (!isFinishedOrDropped && lastSession) {
+        completionLabel = "Останній актив";
+        completionValue = formatDate(lastSession.start_time);
+        completionColor = 'text-cherry-400 font-mono text-sm';
+    }
 
     return (
         <div className="p-4 md:p-8 relative min-h-screen">
@@ -160,7 +163,6 @@ const ProjectDetailsPage = () => {
                     {/* 👇 ЛІВА КОЛОНКА: КІНОТЕАТР */}
                     <div className="lg:col-span-2 space-y-4">
                         
-                        {/* ЕКРАН */}
                         <div className="bg-black rounded-xl border border-slate-800 overflow-hidden shadow-2xl relative group h-[500px] flex items-center justify-center">
                             {currentSrc ? (
                                 <img 
@@ -172,14 +174,12 @@ const ProjectDetailsPage = () => {
                                 <div className="text-slate-600">Немає зображень</div>
                             )}
                             
-                            {/* Інфо-бейдж */}
                             {currentSrc && (
                                 <div className="absolute top-4 left-4 bg-cherry-900/80 backdrop-blur px-3 py-1 rounded text-xs text-white border border-cherry-500/50 uppercase font-bold tracking-wider shadow-lg">
                                     {currentImageObj.type} {currentImageObj.date ? `• ${currentImageObj.date}` : ''}
                                 </div>
                             )}
 
-                            {/* Статус */}
                             <div className="absolute top-4 right-4">
                                 <select 
                                     value={artwork.status}
@@ -193,21 +193,17 @@ const ProjectDetailsPage = () => {
                             </div>
                         </div>
 
-                        {/* СТРІЧКА (Тільки Галерея) */}
+                        {/* СТРІЧКА ТУМБНЕЙЛІВ */}
                         <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-700 p-1">
-                            
-                            {/* Кнопка + (Фрагмент) */}
                             <div 
                                 onClick={() => fileInputRef.current.click()}
                                 className="min-w-[80px] h-[80px] bg-slate-900 border border-dashed border-slate-600 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:text-cherry-500 hover:border-cherry-500 transition shrink-0 cursor-pointer group"
-                                title="Додати фото деталі"
                             >
                                 <span className="text-2xl group-hover:scale-110 transition">+</span>
                                 <span className="text-[10px] uppercase font-bold">Фрагмент</span>
                                 <input type="file" ref={fileInputRef} onChange={handleGalleryUpload} className="hidden" />
                             </div>
 
-                            {/* Картинки */}
                             {allImages.map((img) => (
                                 <div 
                                     key={img.id} 
@@ -217,14 +213,8 @@ const ProjectDetailsPage = () => {
                                         ${currentSrc === img.src ? 'border-cherry-500 scale-105 z-10 shadow-lg shadow-cherry-900/50' : 'border-transparent opacity-60 hover:opacity-100'}
                                     `}
                                 >
-                                    <img 
-                                        src={artworkService.getImageUrl(img.src)} 
-                                        alt={img.type} 
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className={`absolute bottom-0 w-full text-[8px] text-center text-white py-0.5 font-bold uppercase truncate px-1
-                                        ${img.type.includes('ОБКЛАДИНКА') ? 'bg-cherry-700' : 'bg-slate-800/90'}
-                                    `}>
+                                    <img src={artworkService.getImageUrl(img.src)} alt={img.type} className="w-full h-full object-cover" />
+                                    <div className={`absolute bottom-0 w-full text-[8px] text-center text-white py-0.5 font-bold uppercase truncate px-1 ${img.type === 'ОБКЛАДИНКА' ? 'bg-cherry-700' : 'bg-slate-800/90'}`}>
                                         {img.type}
                                     </div>
                                 </div>
@@ -254,17 +244,19 @@ const ProjectDetailsPage = () => {
                                 <span className="text-slate-500 text-xs uppercase block mb-1">Початок</span>
                                 <span className="text-bone-200">{renderFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day)}</span>
                             </div>
+                            
                             <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">
-                                <span className="text-slate-500 text-xs uppercase block mb-1">Завершення</span>
-                                <span className={`text-lg ${artwork.finished_year ? 'text-green-400' : 'text-slate-600'}`}>
-                                    {renderFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day)}
+                                <span className="text-slate-500 text-xs uppercase block mb-1">{completionLabel}</span>
+                                <span className={`text-lg ${completionColor}`}>
+                                    {completionValue}
                                 </span>
                             </div>
+
                             <div className="bg-slate-900 p-4 rounded-lg border border-slate-800 col-span-2">
                                 <span className="text-slate-500 text-xs uppercase block mb-2">Матеріали</span>
-                                <span className="text-bone-200 leading-relaxed">
+                                <span className="text-bone-200 leading-relaxed text-sm">
                                     {artwork.material_names ? artwork.material_names.split(',').map((m, i) => (
-                                        <span key={i} className="inline-block bg-slate-800 px-2 py-1 rounded mr-2 mb-1 text-sm border border-slate-700">{m.trim()}</span>
+                                        <span key={i} className="inline-block bg-slate-800 px-2 py-1 rounded mr-2 mb-1 border border-slate-700">{m.trim()}</span>
                                     )) : '—'}
                                 </span>
                             </div>
@@ -292,7 +284,6 @@ const ProjectDetailsPage = () => {
                         <span>📜</span> Історія та Процес
                     </h2>
 
-                    {/* ЗЕЛЕНА КНОПКА ТУТ */}
                     <div className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-xl p-8 text-center mb-12 shadow-2xl relative overflow-hidden group">
                         <div className="relative z-10">
                             <p className="text-slate-400 mb-6 text-lg">Готові продовжити роботу над шедевром?</p>
@@ -312,30 +303,23 @@ const ProjectDetailsPage = () => {
                                     <div className="text-slate-500 text-sm mt-1">{formatDate(session.start_time)}</div>
                                 </div>
                                 <div className="grow">
-                                    <p className="text-bone-200 whitespace-pre-wrap">{session.note_content || <span className="text-slate-600 italic">Без нотаток</span>}</p>
+                                    <p className="text-bone-200 whitespace-pre-wrap leading-relaxed">{session.note_content || <span className="text-slate-600 italic">Без нотаток</span>}</p>
                                 </div>
                                 {session.note_photo && (
                                     <div 
                                         className="w-32 h-32 shrink-0 bg-black rounded border border-slate-700 overflow-hidden cursor-pointer group/zoom"
                                         onClick={() => {
-                                            // Клік по фото в історії відкриває його на "Сцені"
                                             setSelectedImage(session.note_photo);
                                             window.scrollTo({ top: 0, behavior: 'smooth' });
                                         }}
                                     >
-                                        <img 
-                                            src={artworkService.getImageUrl(session.note_photo)} 
-                                            className="w-full h-full object-cover group-hover/zoom:scale-110 transition duration-500" 
-                                            alt="Progress" 
-                                        />
+                                        <img src={artworkService.getImageUrl(session.note_photo)} className="w-full h-full object-cover group-hover/zoom:scale-110 transition duration-500" alt="Progress" />
                                     </div>
                                 )}
                             </div>
                         ))}
                         {history.length === 0 && (
-                            <div className="text-slate-500 italic p-8 border border-dashed border-slate-800 rounded text-center">
-                                Історія поки порожня. Почніть першу сесію!
-                            </div>
+                            <div className="text-slate-500 italic p-8 border border-dashed border-slate-800 rounded text-center">Історія поки порожня. Почніть першу сесію!</div>
                         )}
                     </div>
                 </div>

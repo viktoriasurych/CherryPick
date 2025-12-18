@@ -8,8 +8,8 @@ class ArtworkService {
         return await artworkDAO.create(userId, data);
     }
 
-    async getAll(userId, filters) {
-        return await artworkDAO.getAll(userId, filters);
+    async getAll(userId, filters, sort) { // Додали sort
+        return await artworkDAO.getAll(userId, filters, sort);
     }
 
     async getArtworkById(id) {
