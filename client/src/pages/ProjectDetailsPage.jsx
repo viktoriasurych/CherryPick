@@ -2,10 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import artworkService from '../services/artworkService';
 import sessionService from '../services/sessionService';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import DictSelect from '../components/ui/DictSelect';       
-import MultiDictSelect from '../components/ui/MultiDictSelect'; // <--- Важливо
 
 const ProjectDetailsPage = () => {
     const { id } = useParams();
@@ -14,54 +10,70 @@ const ProjectDetailsPage = () => {
     const [artwork, setArtwork] = useState(null);
     const [loading, setLoading] = useState(true);
     const [history, setHistory] = useState([]);
-    
-    // Стан для редагування
-    const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({ 
-        title: '', 
-        description: '', 
-        image: null,
-        style_id: '',
-        genre_id: '',
-        material_ids: [],
-        tag_ids: []
-    });
-    const [error, setError] = useState('');
 
-    const fetchAllData = async () => {
+    // 👇 ТУТ ЗМІНА: Додали параметр isSilent
+    const fetchAllData = async (isSilent = false) => {
         try {
+            // Вмикаємо спінер, тільки якщо це НЕ тихе оновлення
+            if (!isSilent) setLoading(true);
+            
             const artworkData = await artworkService.getById(id);
             setArtwork(artworkData);
-            
-            // Заповнюємо форму даними з бази
-            setEditForm({ 
-                title: artworkData.title, 
-                description: artworkData.description, 
-                image: null,
-                style_id: artworkData.style_id || '',
-                genre_id: artworkData.genre_id || '',
-                material_ids: artworkData.material_ids || [], // Беремо масив ID
-                tag_ids: artworkData.tag_ids || []           // Беремо масив ID
-            });
 
             const historyData = await sessionService.getHistory(id);
             setHistory(historyData);
-
         } catch (error) {
             console.error("Помилка:", error);
             navigate('/projects');
         } finally {
+            // Вимикаємо спінер завжди (якщо він був увімкнений, він вимкнеться, якщо ні - нічого страшного)
             setLoading(false);
         }
     };
 
+    // Перше завантаження - гучне (зі спінером)
     useEffect(() => {
         fetchAllData();
     }, [id]);
 
-    const formatDuration = (seconds) => {
-         const h = Math.floor(seconds / 3600);
-         const m = Math.floor((seconds % 3600) / 60);
+    const handleQuickStatusChange = async (newStatus) => {
+        try {
+            // 1. Оптимістичне оновлення UI (миттєва реакція)
+            setArtwork(prev => ({ ...prev, status: newStatus }));
+
+            let finishedData = null;
+
+            // 2. Якщо вибрали "Завершено" або "Покинуто" -> ставимо СЬОГОДНІШНЮ дату
+            if (newStatus === 'FINISHED' || newStatus === 'DROPPED') {
+                const t = new Date();
+                finishedData = {
+                    year: t.getFullYear(),
+                    month: t.getMonth() + 1, // Місяці в JS від 0 до 11
+                    day: t.getDate()
+                };
+            } 
+            // 3. Якщо повернули "В процесі" -> передаємо пусті рядки, щоб стерти дату
+            else {
+                finishedData = { year: '', month: '', day: '' };
+            }
+
+            // 4. Відправляємо на сервер
+            await artworkService.updateStatus(id, newStatus, finishedData);
+            
+            // 5. Оновлюємо дані з сервера ТИХО (без блимання екрану)
+            // 👇 ТУТ ЗМІНА: передаємо true
+            fetchAllData(true); 
+        } catch (error) {
+            console.error(error);
+            alert("Помилка оновлення статусу");
+        }
+    };
+
+    // --- Допоміжні функції ---
+    
+    const formatDuration = (s) => {
+         const h = Math.floor(s / 3600);
+         const m = Math.floor((s % 3600) / 60);
          if (h > 0) return `${h} год ${m} хв`;
          return `${m} хв`;
     };
@@ -72,26 +84,13 @@ const ProjectDetailsPage = () => {
          });
     };
 
-    const handleUpdate = async (e) => {
-        e.preventDefault();
-        setError('');
-        try {
-            await artworkService.update(id, editForm);
-            setIsEditing(false);
-            fetchAllData(); 
-        } catch (error) {
-            setError("Не вдалося оновити: " + (error.response?.data?.message || error.message));
-        }
-    };
-
-    const handleStatusChange = async (newStatus) => {
-        try {
-            setArtwork({ ...artwork, status: newStatus });
-            await artworkService.updateStatus(id, newStatus);
-        } catch (error) {
-            alert("Помилка зміни статусу");
-            fetchAllData();
-        }
+    const renderFuzzyDate = (y, m, d) => {
+        if (!y) return '—';
+        const months = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+        let str = `${y}`;
+        if (m) str = `${months[m-1]} ${str}`;
+        if (d) str = `${d}, ${str}`;
+        return str;
     };
 
     const STATUSES = {
@@ -107,15 +106,18 @@ const ProjectDetailsPage = () => {
     if (!artwork) return null;
 
     return (
-        <div className="p-8 relative">
+        <div className="p-4 md:p-8 relative min-h-screen">
             <div className="max-w-6xl mx-auto">
-                <Link to="/projects" className="text-slate-500 hover:text-cherry-500 mb-6 inline-block">
-                    &larr; Назад до архіву
+                
+                {/* Кнопка Назад */}
+                <Link to="/projects" className="text-slate-500 hover:text-cherry-500 mb-6 inline-flex items-center gap-2 transition group">
+                    <span className="group-hover:-translate-x-1 transition-transform">&larr;</span> Назад до архіву
                 </Link>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-                    {/* Фото */}
-                    <div className="bg-black rounded-lg border border-slate-800 overflow-hidden shadow-2xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-16">
+                    
+                    {/* ЛІВА КОЛОНКА: Зображення + Статус */}
+                    <div className="bg-black rounded-lg border border-slate-800 overflow-hidden shadow-2xl relative group">
                         {artwork.image_path ? (
                             <img 
                                 src={artworkService.getImageUrl(artwork.image_path)} 
@@ -125,160 +127,152 @@ const ProjectDetailsPage = () => {
                         ) : (
                             <div className="h-64 flex items-center justify-center text-slate-600">Немає зображення</div>
                         )}
+                        
+                        {/* Швидкий статус */}
+                        <div className="absolute top-4 right-4">
+                            <select 
+                                value={artwork.status}
+                                onChange={(e) => handleQuickStatusChange(e.target.value)}
+                                className="appearance-none bg-black/80 backdrop-blur border border-slate-700 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg cursor-pointer hover:bg-cherry-900/80 hover:border-cherry-500 transition focus:outline-none text-center"
+                            >
+                                {Object.entries(STATUSES).map(([key, label]) => (
+                                    <option key={key} value={key}>{label}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    {/* Інфо */}
-                    <div className="space-y-6">
+                    {/* ПРАВА КОЛОНКА: Інформація */}
+                    <div className="space-y-8">
                         <div>
-                            <h1 className="text-4xl font-pixel text-cherry-500 mb-2">{artwork.title}</h1>
-                            <div className="inline-block relative group">
-                                <select
-                                    value={artwork.status}
-                                    onChange={(e) => handleStatusChange(e.target.value)}
-                                    className="appearance-none bg-slate-800 text-xs px-4 py-1 rounded-full border border-slate-700 text-cherry-300 font-bold cursor-pointer hover:bg-slate-700 hover:border-cherry-500 transition focus:outline-none pr-8"
-                                >
-                                    {Object.entries(STATUSES).map(([key, label]) => (
-                                        <option key={key} value={key}>{label}</option>
-                                    ))}
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-cherry-500">
-                                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                </div>
+                            <h1 className="text-3xl md:text-5xl font-bold text-cherry-500 mb-4 font-pixel tracking-wide leading-tight">
+                                {artwork.title}
+                            </h1>
+                            
+                            <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800 shadow-inner">
+                                <h3 className="text-slate-500 text-xs uppercase tracking-widest mb-3 font-bold">Опис проєкту</h3>
+                                <p className="text-lg leading-relaxed text-bone-100 whitespace-pre-wrap">
+                                    {artwork.description || <span className="text-slate-600 italic">Опис відсутній...</span>}
+                                </p>
                             </div>
                         </div>
 
-                        <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-800">
-                            <h3 className="text-slate-400 text-sm uppercase tracking-widest mb-2">Опис</h3>
-                            <p className="text-lg leading-relaxed text-bone-100 whitespace-pre-wrap">
-                                {artwork.description || "Опис відсутній."}
-                            </p>
-                        </div>
-
-                        {/* ВИВІД МЕТАДАНИХ */}
+                        {/* Сітка характеристик */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-slate-900 p-3 rounded border border-slate-800">
-                                <span className="text-slate-500 text-xs uppercase block">Жанр</span>
-                                <span className="text-cherry-400 font-bold">{artwork.genre_name || '—'}</span>
+                            <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">
+                                <span className="text-slate-500 text-xs uppercase block mb-1">Жанр</span>
+                                <span className="text-cherry-300 font-bold text-lg">{artwork.genre_name || '—'}</span>
                             </div>
-                            <div className="bg-slate-900 p-3 rounded border border-slate-800">
-                                <span className="text-slate-500 text-xs uppercase block">Стиль</span>
-                                <span className="text-bone-200">{artwork.style_name || '—'}</span>
+                            <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">
+                                <span className="text-slate-500 text-xs uppercase block mb-1">Стиль</span>
+                                <span className="text-bone-200 text-lg">{artwork.style_name || '—'}</span>
                             </div>
-                            <div className="bg-slate-900 p-3 rounded border border-slate-800 col-span-2">
-                                <span className="text-slate-500 text-xs uppercase block mb-1">Матеріали</span>
-                                <span className="text-bone-200">{artwork.material_names || '—'}</span>
+                            
+                            <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">
+                                <span className="text-slate-500 text-xs uppercase block mb-1">Початок</span>
+                                <span className="text-bone-200">{renderFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day)}</span>
+                            </div>
+                            
+                            <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">
+                                <span className="text-slate-500 text-xs uppercase block mb-1">Завершення</span>
+                                <span className={`text-lg ${artwork.finished_year ? 'text-green-400' : 'text-slate-600'}`}>
+                                    {renderFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day)}
+                                </span>
+                            </div>
+
+                            <div className="bg-slate-900 p-4 rounded-lg border border-slate-800 col-span-2">
+                                <span className="text-slate-500 text-xs uppercase block mb-2">Матеріали</span>
+                                <span className="text-bone-200 leading-relaxed">
+                                    {artwork.material_names ? artwork.material_names.split(',').map((m, i) => (
+                                        <span key={i} className="inline-block bg-slate-800 px-2 py-1 rounded mr-2 mb-1 text-sm border border-slate-700">
+                                            {m.trim()}
+                                        </span>
+                                    )) : '—'}
+                                </span>
                             </div>
                         </div>
 
                         {/* Теги */}
                         {artwork.tag_names && (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {artwork.tag_names.split(', ').map(tag => (
-                                    <span key={tag} className="text-xs bg-slate-800 border border-slate-700 text-slate-400 px-2 py-1 rounded">#{tag}</span>
+                            <div className="flex flex-wrap gap-2">
+                                {artwork.tag_names.split(',').map((tag, idx) => (
+                                    <span key={idx} className="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-400 rounded-full text-sm hover:text-bone-100 transition cursor-default">
+                                        #{tag.trim()}
+                                    </span>
                                 ))}
                             </div>
                         )}
 
-                        <div className="pt-6 border-t border-slate-800 flex gap-4">
-                            <Button text="✎ Редагувати" onClick={() => setIsEditing(true)} className="bg-slate-700 hover:bg-slate-600 flex-1" />
+                        {/* КНОПКА ПЕРЕХОДУ НА РЕДАГУВАННЯ */}
+                        <div className="pt-4 border-t border-slate-800">
+                            <Link 
+                                to={`/projects/${id}/edit`} 
+                                className="block w-full bg-slate-800 hover:bg-slate-700 text-center text-white font-bold py-4 rounded-lg transition border border-slate-700 hover:border-cherry-500 shadow-lg active:scale-[0.98]"
+                            >
+                                ✎ Редагувати дані проєкту
+                            </Link>
                         </div>
                     </div>
                 </div>
 
-                {/* Блок Сесій */}
+                {/* --- БЛОК ІСТОРІЇ (Сесії) --- */}
                 <div className="border-t border-cherry-900/50 pt-12">
-                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-cherry-500">Історія та Процес</h2>
+                     <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-2xl md:text-3xl font-bold text-cherry-500 flex items-center gap-3">
+                            <span>📜</span> Історія та Процес
+                        </h2>
                     </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-8 text-center mb-12 shadow-lg">
-                        <p className="text-slate-400 mb-6 text-lg">Готові продовжити роботу над шедевром?</p>
-                        <Link to={`/projects/${id}/session`}>
-                            <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg shadow-green-900/20 transition transform hover:scale-105 flex items-center gap-3 mx-auto">
-                                <span>🎨</span> Перейти до Малювання
-                            </button>
-                        </Link>
+
+                    <div className="bg-linear-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-xl p-8 text-center mb-12 shadow-2xl relative overflow-hidden group">
+                        <div className="relative z-10">
+                            <p className="text-slate-400 mb-6 text-lg">Готові продовжити роботу над шедевром?</p>
+                            <Link to={`/projects/${id}/session`}>
+                                <button className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-[0_0_20px_rgba(22,163,74,0.4)] transition transform hover:scale-105 flex items-center gap-3 mx-auto">
+                                    <span>🎨</span> Перейти до Малювання
+                                </button>
+                            </Link>
+                        </div>
                     </div>
                     
-                    <h3 className="text-xl font-bold text-slate-400 mb-6">📜 Історія записів ({history.length})</h3>
-                    {history.length === 0 ? (
-                        <div className="text-slate-500 italic p-4 border border-slate-800 border-dashed rounded text-center">
-                            Поки що тут пусто... Почніть перший сеанс!
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {history.map((session) => (
-                                <div key={session.session_id} className="bg-slate-900 border border-slate-800 rounded-lg p-5 flex flex-col md:flex-row gap-6 hover:border-slate-600 transition">
-                                    <div className="min-w-37.5 border-r border-slate-800 pr-6">
-                                        <div className="text-cherry-400 font-bold text-lg">{formatDuration(session.duration_seconds)}</div>
-                                        <div className="text-slate-500 text-sm mt-1">{formatDate(session.start_time)}</div>
-                                    </div>
-                                    <div className="grow">
-                                        <p className="text-bone-200 whitespace-pre-wrap">
-                                            {session.note_content || <span className="text-slate-600 italic">Без нотаток</span>}
-                                        </p>
-                                    </div>
-                                    {session.note_photo && (
-                                        <div className="w-24 h-24 shrink-0 bg-black rounded overflow-hidden border border-slate-700">
-                                            <img src={artworkService.getImageUrl(session.note_photo)} alt="Progress" className="w-full h-full object-cover cursor-pointer hover:scale-110 transition" onClick={() => window.open(artworkService.getImageUrl(session.note_photo), '_blank')} />
+                    <div className="space-y-6">
+                        <h3 className="text-xl font-bold text-slate-400">Записи сеансів ({history.length})</h3>
+                        {history.length === 0 ? (
+                            <div className="text-slate-500 italic p-8 border border-slate-800 border-dashed rounded-lg text-center bg-slate-900/30">
+                                Поки що тут пусто... Почніть перший сеанс, щоб творити історію!
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {history.map((session) => (
+                                    <div key={session.session_id} className="bg-slate-900 border border-slate-800 rounded-lg p-5 flex flex-col md:flex-row gap-6 hover:border-slate-600 transition">
+                                        <div className="md:min-w-40 md:border-r border-slate-800 md:pr-6 flex flex-row md:flex-col justify-between md:justify-start items-center md:items-start border-b md:border-b-0 pb-4 md:pb-0">
+                                            <div className="text-cherry-400 font-bold text-xl font-mono">
+                                                {formatDuration(session.duration_seconds)}
+                                            </div>
+                                            <div className="text-slate-500 text-sm mt-1">
+                                                {formatDate(session.start_time)}
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* МОДАЛЬНЕ ВІКНО РЕДАГУВАННЯ */}
-                {isEditing && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                        <div className="bg-slate-900 border border-cherry-900 p-8 rounded-lg max-w-md w-full shadow-2xl animate-fade-in relative max-h-[90vh] overflow-y-auto">
-                            <h2 className="text-2xl font-bold text-cherry-500 mb-6">Редагування</h2>
-                            {error && <div className="mb-4 p-3 bg-red-900/20 border border-red-900 text-red-400 text-sm rounded">{error}</div>}
-                            
-                            <form onSubmit={handleUpdate} className="space-y-4">
-                                <Input label="Назва" value={editForm.title} onChange={(e) => setEditForm({...editForm, title: e.target.value})} />
-                                
-                                <div className="space-y-4 pt-2 border-t border-slate-800">
-                                    <DictSelect 
-                                        type="genres" label="Жанр" 
-                                        value={editForm.genre_id} 
-                                        onChange={(val) => setEditForm({...editForm, genre_id: val})} 
-                                    />
-                                    <DictSelect 
-                                        type="styles" label="Стиль" 
-                                        value={editForm.style_id} 
-                                        onChange={(val) => setEditForm({...editForm, style_id: val})} 
-                                    />
-                                    <MultiDictSelect 
-                                        type="materials" label="Матеріали" 
-                                        selectedIds={editForm.material_ids} 
-                                        onChange={(ids) => setEditForm({...editForm, material_ids: ids})} 
-                                    />
-                                    <MultiDictSelect 
-                                        type="tags" label="Теги" 
-                                        selectedIds={editForm.tag_ids} 
-                                        onChange={(ids) => setEditForm({...editForm, tag_ids: ids})} 
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">Опис</label>
-                                    <textarea rows="4" value={editForm.description} onChange={(e) => setEditForm({...editForm, description: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded p-2 text-bone-200 focus:border-cherry-500 outline-none transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">Замінити фото (необов'язково)</label>
-                                    <input type="file" onChange={(e) => setEditForm({...editForm, image: e.target.files[0]})} className="text-slate-400 text-sm" />
-                                </div>
-                                
-                                <div className="flex gap-4 pt-4">
-                                    <Button text="Зберегти" className="bg-cherry-700 flex-1" />
-                                    <button type="button" onClick={() => setIsEditing(false)} className="bg-transparent border border-slate-600 text-slate-400 hover:text-white hover:border-white px-4 py-2 rounded flex-1 transition">Скасувати</button>
-                                </div>
-                            </form>
-                        </div>
+                                        <div className="grow">
+                                            <p className="text-bone-200 whitespace-pre-wrap leading-relaxed">
+                                                {session.note_content || <span className="text-slate-600 italic text-sm">Без нотаток</span>}
+                                            </p>
+                                        </div>
+                                        {session.note_photo && (
+                                            <div className="w-full md:w-32 h-32 shrink-0 bg-black rounded-lg overflow-hidden border border-slate-700 shadow-md">
+                                                <img 
+                                                    src={artworkService.getImageUrl(session.note_photo)} 
+                                                    alt="Progress" 
+                                                    className="w-full h-full object-cover cursor-zoom-in hover:scale-110 transition duration-300" 
+                                                    onClick={() => window.open(artworkService.getImageUrl(session.note_photo), '_blank')} 
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );

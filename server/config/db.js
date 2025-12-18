@@ -45,14 +45,23 @@ db.serialize(() => {
         description TEXT,
         image_path TEXT,
         status TEXT DEFAULT 'PLANNED',
-        created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        
+        created_date DATETIME DEFAULT CURRENT_TIMESTAMP, -- Системна дата
+        
+        -- 👇 ГНУЧКІ ДАТИ (Початок)
+        started_year INTEGER,
+        started_month INTEGER,
+        started_day INTEGER,
+
+        -- 👇 ГНУЧКІ ДАТИ (Кінець)
+        finished_year INTEGER,
+        finished_month INTEGER,
+        finished_day INTEGER,
         
         user_id INTEGER NOT NULL,
         style_id INTEGER, 
         genre_id INTEGER,
         
-        -- 👇 ВАЖЛИВО: ON DELETE SET NULL
-        -- Це означає: якщо видалити стиль, картина залишиться, просто без стилю.
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (style_id) REFERENCES art_styles(id) ON DELETE SET NULL, 
         FOREIGN KEY (genre_id) REFERENCES art_genres(id) ON DELETE SET NULL

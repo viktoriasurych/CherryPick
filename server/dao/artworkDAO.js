@@ -5,10 +5,18 @@ class ArtworkDAO {
 
     create(userId, data) {
         return new Promise((resolve, reject) => {
-            // ✅ Перевіряємо, чи є genre_id в запиті
-            const sql = `INSERT INTO artworks (title, description, image_path, status, user_id, style_id, genre_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+            const sql = `INSERT INTO artworks (
+                title, description, image_path, status, user_id, style_id, genre_id, 
+                started_year, started_month, started_day,
+                finished_year, finished_month, finished_day
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             
-            db.run(sql, [data.title, data.description, data.image_path, data.status || 'PLANNED', userId, data.style_id, data.genre_id], function(err) {
+            db.run(sql, [
+                data.title, data.description, data.image_path, data.status || 'PLANNED', userId, 
+                data.style_id, data.genre_id, 
+                data.started_year, data.started_month, data.started_day,     // <---
+                data.finished_year, data.finished_month, data.finished_day   // <---
+            ], function(err) {
                 if (err) return reject(err);
                 
                 const artworkId = this.lastID;
@@ -31,7 +39,7 @@ class ArtworkDAO {
                 addLinks('artwork_materials_link', 'material_id', data.material_ids);
                 addLinks('artwork_tags_link', 'tag_id', data.tag_ids);
                 
-                resolve({ id: artworkId, ...data });
+                resolve({ id: this.lastID, ...data });
             });
         });
     }
@@ -82,11 +90,20 @@ class ArtworkDAO {
     update(id, userId, data) {
         return new Promise((resolve, reject) => {
             // 1. Оновлюємо інфо
-            const sql = `UPDATE artworks SET title=?, description=?, style_id=?, genre_id=? WHERE id=? AND user_id=?`;
-            db.run(sql, [data.title, data.description, data.style_id, data.genre_id, id, userId], function(err) {
+            const sql = `UPDATE artworks SET 
+                title=?, description=?, style_id=?, genre_id=?, status=?,
+                started_year=?, started_month=?, started_day=?,
+                finished_year=?, finished_month=?, finished_day=?
+                WHERE id=? AND user_id=?`;
+            
+            db.run(sql, [
+                data.title, data.description, data.style_id, data.genre_id, data.status,
+                data.started_year, data.started_month, data.started_day,
+                data.finished_year, data.finished_month, data.finished_day,
+                id, userId
+            ], function(err) {
                 if (err) return reject(err);
-                
-                // Якщо є нове фото
+
                 if (data.image_path) {
                     db.run(`UPDATE artworks SET image_path=? WHERE id=?`, [data.image_path, id]);
                 }
@@ -157,10 +174,35 @@ class ArtworkDAO {
         });
     }
     
-     updateStatus(id, userId, status) {
+   // server/database/artworkDAO.js
+
+    // ... (інші методи)
+
+    updateStatus(id, userId, status, finishedData = null) {
         return new Promise((resolve, reject) => {
-            const sql = `UPDATE artworks SET status = ? WHERE id = ? AND user_id = ?`;
-            db.run(sql, [status, id, userId], function(err) {
+            let sql = `UPDATE artworks SET status = ? WHERE id = ? AND user_id = ?`;
+            let params = [status, id, userId];
+
+            // Якщо передали об'єкт дати (навіть з пустими значеннями, щоб очистити)
+            if (finishedData) {
+                sql = `UPDATE artworks SET 
+                    status = ?, 
+                    finished_year = ?, 
+                    finished_month = ?, 
+                    finished_day = ? 
+                    WHERE id = ? AND user_id = ?`;
+                
+                params = [
+                    status, 
+                    finishedData.year || null, 
+                    finishedData.month || null, 
+                    finishedData.day || null, 
+                    id, 
+                    userId
+                ];
+            }
+
+            db.run(sql, params, function(err) {
                 if (err) reject(err);
                 else resolve({ id, status });
             });

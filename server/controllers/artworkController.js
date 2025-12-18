@@ -26,7 +26,15 @@ class ArtworkController {
             genre_id: req.body.genre_id ? Number(req.body.genre_id) : null, // ✅ Жанр
             material_ids: parseIds(req.body.material_ids), // ✅ Масиви
             tag_ids: parseIds(req.body.tag_ids),           // ✅ Масиви
-            image_path: image_path
+            image_path: image_path,
+            started_year: req.body.started_year || null,
+        started_month: req.body.started_month || null,
+        started_day: req.body.started_day || null,
+        
+        finished_year: req.body.finished_year || null,
+        finished_month: req.body.finished_month || null,
+        finished_day: req.body.finished_day || null,
+            
         };
 
         const artwork = await artworkService.createArtwork(userId, artworkData);
@@ -60,6 +68,13 @@ async update(req, res) {
             genre_id: req.body.genre_id ? Number(req.body.genre_id) : null,
             material_ids: parseIds(req.body.material_ids),
             tag_ids: parseIds(req.body.tag_ids),
+            started_year: req.body.started_year || null,
+        started_month: req.body.started_month || null,
+        started_day: req.body.started_day || null,
+        
+        finished_year: req.body.finished_year || null,
+        finished_month: req.body.finished_month || null,
+        finished_day: req.body.finished_day || null,
         };
 
         if (image_path) updateData.image_path = image_path;
@@ -107,30 +122,34 @@ async update(req, res) {
 
     // ... інші методи ...
 
-    // PATCH /api/artworks/:id/status
+   // server/controllers/artworkController.js
+
+    // ...
+
     async updateStatus(req, res) {
         try {
+            // Читаємо нові поля з тіла запиту
+            const { status, finished_year, finished_month, finished_day } = req.body;
             const userId = req.user.id;
             const artworkId = req.params.id;
-            const { status } = req.body;
-
-            const allowedStatuses = ['PLANNED', 'SKETCH', 'IN_PROGRESS', 'FINISHED', 'ON_HOLD', 'DROPPED'];
-            if (!allowedStatuses.includes(status)) {
-                return res.status(400).json({ message: "Невірний статус" });
+            
+            // Формуємо об'єкт для DAO
+            let finishedData = null;
+            
+            // Якщо у запиті є хоч якась згадка про рік (навіть null), значить треба оновити дату
+            if (finished_year !== undefined) {
+                finishedData = { 
+                    year: finished_year, 
+                    month: finished_month, 
+                    day: finished_day 
+                };
             }
 
-            // Оновлюємо тільки статус (і перевіряємо, чи це картина юзера)
-            // Використовуємо сервіс або DAO (тут для швидкості SQL, але краще через сервіс)
-            const sql = `UPDATE artworks SET status = ? WHERE id = ? AND user_id = ?`;
-            
-            // Тут нам треба доступ до db, якщо ми не через сервіс. 
-            // Але давай зробимо "як профі" і додамо метод в Service/DAO.
-            // Припустимо, ти додаси це в artworkService:
-            const result = await artworkService.updateStatus(artworkId, userId, status);
-            
+            const result = await artworkService.updateStatus(artworkId, userId, status, finishedData);
             res.json(result);
         } catch (e) {
-            res.status(400).json({ message: e.message });
+            console.error(e);
+            res.status(500).json({ message: e.message });
         }
     }
 }
