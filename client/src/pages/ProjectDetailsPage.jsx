@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { BookmarkIcon } from '@heroicons/react/24/outline'; // Іконка закладки
 import artworkService from '../services/artworkService';
 import sessionService from '../services/sessionService';
+import AddToCollectionModal from '../components/AddToCollectionModal'; // Імпорт модалки
 
 const ProjectDetailsPage = () => {
     const { id } = useParams();
@@ -15,6 +17,9 @@ const ProjectDetailsPage = () => {
     // Стан перегляду (Яке фото зараз велике на сцені)
     const [selectedImage, setSelectedImage] = useState(null);
     
+    // Стан модалки колекцій
+    const [isCollectionModalOpen, setCollectionModalOpen] = useState(false);
+
     // Реф для прихованого інпуту (кнопка +)
     const fileInputRef = useRef(null);
 
@@ -270,11 +275,28 @@ const ProjectDetailsPage = () => {
                             </div>
                         )}
 
+                        {/* Кнопка РЕДАГУВАТИ */}
                         <div className="pt-4 border-t border-slate-800">
                             <Link to={`/projects/${id}/edit`} className="block w-full bg-slate-800 hover:bg-slate-700 text-center text-white font-bold py-3 rounded-lg border border-slate-700 hover:border-cherry-500 transition shadow-lg">
                                 ✎ Редагувати дані
                             </Link>
                         </div>
+
+                        {/* 👇 КНОПКА ДОДАТИ В КОЛЕКЦІЮ (Тільки для завершених) */}
+                        {artwork.status === 'FINISHED' && (
+                            <div className="mt-4">
+                                <button 
+                                    onClick={() => setCollectionModalOpen(true)}
+                                    className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-cherry-400 border border-slate-800 hover:border-cherry-900/50 py-3 rounded-lg transition group shadow-lg"
+                                >
+                                    <BookmarkIcon className="w-5 h-5 group-hover:scale-110 transition" />
+                                    <span className="font-bold">Додати в колекцію</span>
+                                </button>
+                                <p className="text-[10px] text-center text-slate-600 mt-2">
+                                    Доступно, бо проєкт має статус "Завершено"
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -324,6 +346,16 @@ const ProjectDetailsPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* 👇 МОДАЛКА КОЛЕКЦІЙ (Рендериться тут, щоб бути поверх всього) */}
+            {artwork && (
+                <AddToCollectionModal 
+                    isOpen={isCollectionModalOpen}
+                    onClose={() => setCollectionModalOpen(false)}
+                    artworkId={artwork.id}
+                    artworkImage={artworkService.getImageUrl(artwork.image_path)}
+                />
+            )}
         </div>
     );
 };

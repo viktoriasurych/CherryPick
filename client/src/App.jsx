@@ -2,9 +2,13 @@ import { Routes, Route } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
-// 👇 1. ДОДАЙ ІМПОРТИ НОВИХ СТОРІНОК
 import ProjectCreatePage from './pages/ProjectCreatePage'; 
 import ProjectEditPage from './pages/ProjectEditPage';
+
+// 👇 ВИПРАВЛЕНІ ІМПОРТИ
+import CollectionsPage from './pages/CollectionsPage';
+import CollectionDetailsPage from './pages/CollectionDetailsPage';
+import CollectionEditPage from './pages/CollectionEditPage';
 
 import ProtectedRoute from './components/ProtectedRoute'; 
 import SessionPage from './pages/SessionPage';
@@ -28,7 +32,7 @@ function App() {
         } 
       />
 
-      {/* 👇 2. СТВОРЕННЯ (Ставимо ПЕРЕД :id, щоб не плуталось) */}
+      {/* Створення проєкту */}
       <Route 
         path="/projects/new" 
         element={
@@ -40,7 +44,7 @@ function App() {
         } 
       />
 
-      {/* 👇 3. РЕДАГУВАННЯ */}
+      {/* Редагування проєкту */}
       <Route 
         path="/projects/:id/edit" 
         element={
@@ -52,7 +56,7 @@ function App() {
         } 
       />
 
-      {/* Деталі одного проєкту */}
+      {/* Деталі проєкту */}
       <Route 
         path="/projects/:id" 
         element={
@@ -64,7 +68,45 @@ function App() {
         } 
       />
 
-      {/* Сесія малювання (без Layout, як і було) */}
+      {/* --- КОЛЕКЦІЇ --- */}
+      
+      {/* Список всіх колекцій */}
+      <Route 
+        path="/collections"
+        element={
+            <ProtectedRoute>
+                <Layout>
+                    <CollectionsPage />
+                </Layout>
+            </ProtectedRoute>
+        } 
+      />
+
+      {/* Перегляд однієї колекції */}
+      <Route 
+        path="/collections/:id"
+        element={
+            <ProtectedRoute>
+                <Layout>
+                    <CollectionDetailsPage />
+                </Layout>
+            </ProtectedRoute>
+        } 
+      />
+
+      {/* Редагування колекції (додали цей роут!) */}
+      <Route 
+        path="/collections/:id/edit"
+        element={
+            <ProtectedRoute>
+                <Layout>
+                    <CollectionEditPage />
+                </Layout>
+            </ProtectedRoute>
+        } 
+      />
+
+      {/* Сесія малювання */}
       <Route 
         path="/projects/:id/session" 
         element={

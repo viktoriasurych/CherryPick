@@ -1,21 +1,15 @@
-const collectionService = require('../services/collectionService'); // 👇 ТУТ ЗМІНА (був DAO)
+const collectionService = require('../services/collectionService');
 
 class CollectionController {
     
-    // POST /api/collections
     async create(req, res) {
         try {
             const userId = req.user.id;
             const { title, description, type } = req.body;
-
-            // Валідація вхідних даних (HTTP рівень)
             if (!['MOODBOARD', 'SERIES', 'EXHIBITION'].includes(type)) {
                 return res.status(400).json({ message: "Невірний тип колекції" });
             }
-
-            // 👇 Викликаємо СЕРВІС
             const newCollection = await collectionService.createCollection(userId, { title, description, type });
-            
             res.status(201).json(newCollection);
         } catch (e) {
             console.error(e);
@@ -23,11 +17,9 @@ class CollectionController {
         }
     }
 
-    // GET /api/collections
     async getAll(req, res) {
         try {
             const userId = req.user.id;
-            // 👇 Викликаємо СЕРВІС
             const collections = await collectionService.getUserCollections(userId);
             res.json(collections);
         } catch (e) {
@@ -36,25 +28,116 @@ class CollectionController {
         }
     }
 
-    // DELETE /api/collections/:id
     async delete(req, res) {
         try {
             const userId = req.user.id;
             const collectionId = req.params.id;
-
-            // 👇 Викликаємо СЕРВІС
             await collectionService.deleteCollection(collectionId, userId);
-            
             res.json({ message: "Колекцію видалено" });
         } catch (e) {
             console.error(e);
-            // Якщо помилка "не знайдено", повертаємо 404, інакше 500
             if (e.message.includes('не знайдено')) {
                 res.status(404).json({ message: e.message });
             } else {
                 res.status(500).json({ message: e.message });
             }
         }
+    }
+
+    async addItem(req, res) {
+        try {
+            const userId = req.user.id;
+            const collectionId = req.params.id;
+            const { artworkId } = req.body;
+            await collectionService.addItemToCollection(collectionId, artworkId, userId);
+            res.json({ message: "Додано" });
+        } catch (e) {
+            res.status(500).json({ message: e.message });
+        }
+    }
+
+    async removeItem(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id: collectionId, artId: artworkId } = req.params;
+            await collectionService.removeItemFromCollection(collectionId, artworkId, userId);
+            res.json({ message: "Видалено" });
+        } catch (e) {
+            res.status(500).json({ message: e.message });
+        }
+    }
+
+    async getByArtwork(req, res) {
+        try {
+            const userId = req.user.id;
+            const artworkId = req.params.id;
+            const ids = await collectionService.getCollectionsByArtwork(artworkId, userId);
+            res.json(ids);
+        } catch (e) {
+            res.status(500).json({ message: e.message });
+        }
+    }
+
+    async getOne(req, res) {
+        try {
+            const userId = req.user.id;
+            const collection = await collectionService.getCollectionDetails(req.params.id, userId);
+            res.json(collection);
+        } catch (e) {
+            res.status(404).json({ message: e.message });
+        }
+    }
+
+    // 👇 ОСЬ ТУТ БУЛА ПОМИЛКА:
+    // Ми змінили collectionDAO.update -> collectionService.updateCollection
+    async update(req, res) {
+        try {
+            await collectionService.updateCollection(req.params.id, req.user.id, req.body);
+            res.json({ message: "Оновлено" });
+        } catch(e) { 
+            console.error(e);
+            res.status(500).json({message: e.message}); 
+        }
+    }
+
+    // 👇 І ТУТ ТЕЖ:
+    // Ми змінили collectionDAO.updateItem -> collectionService.updateCollectionItem
+    async updateItem(req, res) {
+        try {
+            await collectionService.updateCollectionItem(req.params.itemId, req.body);
+            res.json({ message: "Елемент оновлено" });
+        } catch(e) { 
+            console.error(e);
+            res.status(500).json({message: e.message}); 
+        }
+    }
+
+    // ...
+
+    // PUT /api/collections/:id/batch
+    async updateBatch(req, res) {
+        try {
+            const { meta, items } = req.body; // meta = {title, desc}, items = [{id, sort_order...}]
+            await collectionService.saveCollectionChanges(req.params.id, req.user.id, meta, items);
+            res.json({ message: "Збережено успішно" });
+        } catch(e) { res.status(500).json({message: e.message}); }
+    }
+
+    // POST /api/collections/:id/cover
+    async uploadCover(req, res) {
+        try {
+            if (!req.file) return res.status(400).json({ message: "Файл не обрано" });
+            await collectionService.uploadCover(req.params.id, req.user.id, req.file);
+            res.json({ message: "Обкладинку оновлено" });
+        } catch(e) { res.status(500).json({message: e.message}); }
+    }
+
+    // DELETE /api/collections/:id/cover
+    async deleteCover(req, res) {
+        try {
+            await collectionService.removeCover(req.params.id, req.user.id);
+            res.json({ message: "Обкладинку видалено" });
+        } catch(e) { res.status(500).json({message: e.message}); }
     }
 }
 
