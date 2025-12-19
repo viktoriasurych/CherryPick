@@ -9,6 +9,8 @@ const authRoutes = require('./routes/authRoutes');
 const sessionRoutes = require('./routes/sessionRoutes')
 const artworkRoutes = require('./routes/artworkRoutes'); // <--- ДОДАЛИ ЦЕ!
 const dictionaryRoutes = require('./routes/dictionaryRoutes');
+const collectionRoutes = require('./routes/collectionRoutes');
+
 
 const app = express();
 const PORT = 3000;
@@ -24,6 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/artworks', artworkRoutes); // <--- ДОДАЛИ ЦЕ! (Тепер сервер бачить /api/artworks)
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/dict', dictionaryRoutes);
+app.use('/api/collections', collectionRoutes);
 
 
 // Тестові маршрути

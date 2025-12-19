@@ -85,22 +85,40 @@ db.serialize(() => {
         FOREIGN KEY (material_id) REFERENCES art_materials(id) ON DELETE CASCADE
     )`);
 
-    // 4. КОЛЕКЦІЇ
-    db.run(`CREATE TABLE IF NOT EXISTS collections (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        description TEXT,
-        cover_image TEXT,
-        user_id INTEGER NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )`);
+   // 4. КОЛЕКЦІЇ (ОНОВЛЕНО)
+   db.run(`CREATE TABLE IF NOT EXISTS collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    type TEXT NOT NULL CHECK(type IN ('MOODBOARD', 'SERIES', 'EXHIBITION')) DEFAULT 'MOODBOARD',
+    cover_image TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+)`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS collection_items (
-        collection_id INTEGER,
-        artwork_id INTEGER,
-        FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
-        FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
-    )`);
+db.run(`CREATE TABLE IF NOT EXISTS collection_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    collection_id INTEGER NOT NULL,
+    artwork_id INTEGER NOT NULL,
+    
+    -- 👇 Для порядку (Важливо для "Серії" та "Виставки")
+    sort_order INTEGER DEFAULT 0,
+    
+    -- 👇 Для "Виставки" (CENTER, LEFT_TEXT, RIGHT_TEXT)
+    layout_type TEXT DEFAULT 'CENTER',
+    
+    -- 👇 Унікальний опис картини саме для цієї збірки
+    context_description TEXT,
+    
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY(collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+    FOREIGN KEY(artwork_id) REFERENCES artworks(id) ON DELETE CASCADE,
+    
+    -- Щоб одну картину не додали двічі в ту саму збірку
+    UNIQUE(collection_id, artwork_id)
+)`);
 
     // 5. СЕСІЇ
     db.run(`CREATE TABLE IF NOT EXISTS sessions (
