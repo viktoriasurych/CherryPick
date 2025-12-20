@@ -5,15 +5,36 @@ class CollectionController {
     async create(req, res) {
         try {
             const userId = req.user.id;
-            const { title, description, type } = req.body;
+            // Додали is_public
+            const { title, description, type, is_public } = req.body; 
+            
             if (!['MOODBOARD', 'SERIES', 'EXHIBITION'].includes(type)) {
                 return res.status(400).json({ message: "Невірний тип колекції" });
             }
-            const newCollection = await collectionService.createCollection(userId, { title, description, type });
+            
+            const newCollection = await collectionService.createCollection(userId, { 
+                title, description, type, is_public 
+            });
             res.status(201).json(newCollection);
         } catch (e) {
             console.error(e);
             res.status(400).json({ message: e.message });
+        }
+    }
+
+    // 👇 НОВИЙ МЕТОД
+    async getPublic(req, res) {
+        try {
+            // Якщо ми хочемо подивитися публічні колекції конкретного юзера
+            // Ми маємо передати userId.
+            // Поки що, для твого профілю, візьмемо req.user.id
+            // Але в майбутньому це може бути req.params.userId
+            
+            const userId = req.user.id; 
+            const collections = await collectionService.getPublicCollections(userId);
+            res.json(collections);
+        } catch (e) {
+            res.status(500).json({ message: e.message });
         }
     }
 

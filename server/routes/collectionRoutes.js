@@ -21,4 +21,7 @@ router.delete('/:id/cover', authMiddleware, collectionController.deleteCover);
 // Get collections by artwork
 router.get('/artwork/:id', authMiddleware, collectionController.getByArtwork);
 
+router.get('/public', authMiddleware, collectionController.getPublic); // 👈 Тільки мої публічні (для профілю)
+// ...
+
 module.exports = router;

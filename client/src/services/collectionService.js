@@ -1,70 +1,54 @@
 import api from '../api/axios';
 
 const collectionService = {
-    // Отримати всі колекції (для списку)
     getAll: async () => {
         const response = await api.get('/collections');
         return response.data;
     },
 
-    // Отримати одну колекцію за ID
     getById: async (id) => {
         const response = await api.get(`/collections/${id}`);
         return response.data;
     },
 
-    // Створити нову колекцію
+    // 👇 is_public передається всередині data
     create: async (data) => {
         const response = await api.post('/collections', data);
         return response.data;
     },
 
-    // 👇 ОНОВЛЕНО: Редагувати саму колекцію (Назва, Опис)
     update: async (id, data) => {
-        // PUT /api/collections/:id
         const response = await api.put(`/collections/${id}`, data);
         return response.data;
     },
 
-    // Видалити колекцію
     delete: async (id) => {
         const response = await api.delete(`/collections/${id}`);
         return response.data;
     },
 
-    // --- РОБОТА З ЕЛЕМЕНТАМИ (ITEMS) ---
-
-    // Додати картину в колекцію
     addItem: async (collectionId, artworkId) => {
         const response = await api.post(`/collections/${collectionId}/items`, { artworkId });
         return response.data;
     },
 
-    // Видалити картину з колекції
     removeItem: async (collectionId, artworkId) => {
         const response = await api.delete(`/collections/${collectionId}/items/${artworkId}`);
         return response.data;
     },
 
-    // 👇 ОНОВЛЕНО: Редагувати налаштування елемента (Порядок, Макет, Контекстний опис)
     updateItem: async (itemId, data) => {
-        // PUT /api/collections/items/:itemId
-        // itemId - це ID запису в таблиці collection_items (link_id), а не ID картини!
         const response = await api.put(`/collections/items/${itemId}`, data);
         return response.data;
     },
 
-    // Отримати список ID колекцій, де є ця картина (для галочок в модалці)
     getCollectionsByArtwork: async (artworkId) => {
         const response = await api.get(`/collections/artwork/${artworkId}`);
         return response.data; 
     },
 
-    // ...
-    
-    // Зберегти ВСЕ за раз
+    // 👇 ВАЖЛИВО: meta містить { title, description, is_public }
     saveAll: async (id, meta, items) => {
-        // items має містити: { id (це link_id), sort_order, layout_type, context_description }
         const response = await api.put(`/collections/${id}/batch`, { meta, items });
         return response.data;
     },
@@ -80,6 +64,13 @@ const collectionService = {
 
     deleteCover: async (id) => {
         const response = await api.delete(`/collections/${id}/cover`);
+        return response.data;
+    },
+
+    // 👇 Додаємо метод для публічних (знадобиться для профілю)
+    getPublicCollections: async (userId) => {
+        // Якщо бекенд чекає userId в параметрах запиту
+        const response = await api.get('/collections/public', { params: { userId } }); 
         return response.data;
     }
 };

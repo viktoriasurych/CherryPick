@@ -99,13 +99,16 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
         FOREIGN KEY (material_id) REFERENCES art_materials(id) ON DELETE CASCADE
     )`);
 
-   // 4. КОЛЕКЦІЇ (ОНОВЛЕНО)
-   db.run(`CREATE TABLE IF NOT EXISTS collections (
+  // 4. КОЛЕКЦІЇ (ОНОВЛЕНО: Додано is_public)
+  db.run(`CREATE TABLE IF NOT EXISTS collections (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
     type TEXT NOT NULL CHECK(type IN ('MOODBOARD', 'SERIES', 'EXHIBITION')) DEFAULT 'MOODBOARD',
+    
+    is_public BOOLEAN DEFAULT 0, -- 👈 НОВЕ ПОЛЕ (0 = Приватна, 1 = Публічна)
+    
     cover_image TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE

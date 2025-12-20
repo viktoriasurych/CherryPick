@@ -36,8 +36,17 @@ class CollectionService {
     }
 
     async getCollectionDetails(id, userId) {
-        const collection = await collectionDAO.getById(id, userId);
+        // 👇 Викликаємо без userId, бо DAO тепер просто шукає по ID
+        const collection = await collectionDAO.getById(id); 
+        
         if (!collection) throw new Error("Колекцію не знайдено");
+
+        // 👇 ТУТ ПЕРЕВІРКА ПРАВ (БЕЗПЕКА)
+        // Якщо це НЕ моя колекція І вона НЕ публічна -> Помилка
+        if (collection.user_id !== userId && !collection.is_public) {
+             throw new Error("У вас немає доступу до цієї колекції");
+        }
+
         const items = await collectionDAO.getCollectionItems(id);
         return { ...collection, items };
     }
@@ -83,6 +92,10 @@ class CollectionService {
     async removeCover(id, userId) {
         // Ставимо NULL, щоб повернулась логіка "останнього фото"
         return await collectionDAO.updateCover(id, userId, null); 
+    }
+
+    async getPublicCollections(userId) {
+        return await collectionDAO.getPublic(userId);
     }
 }
 

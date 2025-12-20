@@ -4,13 +4,18 @@ import {
     PlusIcon, 
     Squares2X2Icon, 
     QueueListIcon, 
-    SparklesIcon 
+    SparklesIcon,
+    GlobeAltIcon,
+    LockClosedIcon
 } from '@heroicons/react/24/outline';
 import collectionService from '../services/collectionService';
 import artworkService from '../services/artworkService';
 import CollectionCreateModal from '../components/CollectionCreateModal';
 import CollectionToolbar from '../components/CollectionToolbar';
 import Pagination from '../components/ui/Pagination';
+
+// 👇 ІМПОРТ ДЕФОЛТНОГО ФОТО (Переконайся, що файл існує в assets)
+import defaultCollectionImg from '../assets/default-collection.png'; 
 
 const CollectionsPage = () => {
     // Дані
@@ -149,10 +154,20 @@ const CollectionsPage = () => {
                     ) : (
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500">
-                                {/* Рендеримо тільки поточну сторінку */}
                                 {currentItems.map(col => {
-                                    // Пріоритет: Власна обкладинка -> Остання робота -> Нічого
-                                    const coverSrc = col.cover_image || col.latest_image;
+                                    
+                                    // 👇 ЛОГІКА ОБКЛАДИНКИ:
+                                    // 1. Є своя обкладинка -> Беремо її
+                                    // 2. Є остання робота -> Беремо її
+                                    // 3. Нічого немає -> Беремо defaultCollectionImg
+                                    
+                                    let coverSrc = defaultCollectionImg;
+
+                                    if (col.cover_image) {
+                                        coverSrc = artworkService.getImageUrl(col.cover_image);
+                                    } else if (col.latest_image) {
+                                        coverSrc = artworkService.getImageUrl(col.latest_image);
+                                    }
 
                                     return (
                                         <Link 
@@ -162,20 +177,22 @@ const CollectionsPage = () => {
                                         >
                                             {/* Обкладинка */}
                                             <div className="h-48 bg-black relative flex items-center justify-center overflow-hidden">
-                                                {coverSrc ? (
-                                                    <img 
-                                                        src={artworkService.getImageUrl(coverSrc)} 
-                                                        alt={col.title} 
-                                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition duration-700 ease-in-out" 
-                                                    />
-                                                ) : (
-                                                    <div className="flex flex-col items-center gap-2 text-slate-700">
-                                                        <Squares2X2Icon className="w-8 h-8 opacity-20" />
-                                                        <span className="text-[10px] uppercase tracking-widest font-bold">Пусто</span>
-                                                    </div>
-                                                )}
+                                                <img 
+                                                    src={coverSrc} 
+                                                    alt={col.title} 
+                                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition duration-700 ease-in-out" 
+                                                />
                                                 
-                                                <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-[10px] text-white border border-white/10 font-mono">
+                                                {/* Статус (Публічна/Приватна) */}
+                                                <div className="absolute top-2 left-2 bg-black/70 backdrop-blur p-1.5 rounded-full border border-white/10 text-white z-10">
+                                                    {col.is_public ? (
+                                                        <GlobeAltIcon className="w-3 h-3 text-green-400" title="Публічна" />
+                                                    ) : (
+                                                        <LockClosedIcon className="w-3 h-3 text-slate-400" title="Приватна" />
+                                                    )}
+                                                </div>
+
+                                                <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-[10px] text-white border border-white/10 font-mono z-10">
                                                     {col.item_count} items
                                                 </div>
                                             </div>
@@ -199,7 +216,7 @@ const CollectionsPage = () => {
                                                     <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold">
                                                         {getTypeLabel(col.type)}
                                                     </span>
-                                                    <span className="text-[10px] text-slate-600">
+                                                    <span className="text-[10px] text-slate-600 group-hover:text-cherry-400 transition">
                                                         Переглянути &rarr;
                                                     </span>
                                                 </div>
