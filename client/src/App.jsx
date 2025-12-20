@@ -1,29 +1,69 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom'; // 👈 ДОДАЛИ Navigate
+import { useAuth } from './hooks/useAuth';
+
+import HomePage from './pages/HomePage'; 
 import AuthPage from './pages/AuthPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage'; 
 import ProjectEditPage from './pages/ProjectEditPage';
-
 import StatsPage from './pages/StatsPage';
-
-// 👇 ВИПРАВЛЕНІ ІМПОРТИ
 import CollectionsPage from './pages/CollectionsPage';
 import CollectionDetailsPage from './pages/CollectionDetailsPage';
 import CollectionEditPage from './pages/CollectionEditPage';
-
 import ProtectedRoute from './components/ProtectedRoute'; 
 import SessionPage from './pages/SessionPage';
 import Layout from './components/Layout';
-
+import ProfilePage from './pages/ProfilePage';
+import ProfileEditPage from './pages/ProfileEditPage';
 
 
 function App() {
+  const { user } = useAuth(); // Дістаємо юзера
+
   return (
     <Routes>
-      <Route path="/auth" element={<AuthPage />} />
-      <Route path="/" element={<AuthPage />} />
+
+      {/* 👇 ГОЛОВНА: Якщо є юзер -> кидаємо в Проєкти, якщо ні -> показуємо Лендінг */}
+      <Route 
+        path="/" 
+        element={user ? <Navigate to="/projects" replace /> : <HomePage />} 
+      />
+
+      {/* 👇 АВТОРИЗАЦІЯ: Якщо є юзер -> кидаємо в Проєкти */}
+      <Route 
+        path="/auth" 
+        element={user ? <Navigate to="/projects" replace /> : <AuthPage />} 
+      />
       
+      {/* ❌ ТУТ БУЛИ ДУБЛІКАТИ РОУТІВ, Я ЇХ ПРИБРАВ.
+          Ми вже оголосили "/" та "/auth" вище з логікою перенаправлення.
+      */}
+
+      {/* ПРОФІЛЬ КОРИСТУВАЧА */}
+      <Route 
+        path="/profile"
+        element={
+            <ProtectedRoute>
+                <Layout>
+                    <ProfilePage />
+                </Layout>
+            </ProtectedRoute>
+        } 
+      />
+
+      {/* 👇 НОВИЙ РОУТ: РЕДАГУВАННЯ */}
+      <Route 
+        path="/profile/edit"
+        element={
+            <ProtectedRoute>
+                <Layout>
+                    <ProfileEditPage />
+                </Layout>
+            </ProtectedRoute>
+        } 
+      />
+
       {/* Список проєктів */}
       <Route 
         path="/projects" 
@@ -74,7 +114,6 @@ function App() {
 
       {/* --- КОЛЕКЦІЇ --- */}
       
-      {/* Список всіх колекцій */}
       <Route 
         path="/collections"
         element={
@@ -86,7 +125,6 @@ function App() {
         } 
       />
 
-      {/* Перегляд однієї колекції */}
       <Route 
         path="/collections/:id"
         element={
@@ -98,7 +136,6 @@ function App() {
         } 
       />
 
-      {/* Редагування колекції (додали цей роут!) */}
       <Route 
         path="/collections/:id/edit"
         element={
@@ -110,7 +147,8 @@ function App() {
         } 
       />
 
-<Route 
+      {/* СТАТИСТИКА */}
+      <Route 
         path="/stats"
         element={
             <ProtectedRoute>

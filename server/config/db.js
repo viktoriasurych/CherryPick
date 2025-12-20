@@ -11,15 +11,29 @@ const db = new sqlite3.Database(dbPath, (err) => {
 db.serialize(() => {
     db.run("PRAGMA foreign_keys = ON");
 
-    // 1. КОРИСТУВАЧІ
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nickname TEXT,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
+// 1. КОРИСТУВАЧІ (ОНОВЛЕНО: nickname UNIQUE)
+db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nickname TEXT UNIQUE,       -- 👈 ТЕПЕР ВОНИ НЕ МОЖУТЬ ПОВТОРЮВАТИСЬ
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    
+    avatar_url TEXT,
+    bio TEXT,
+    location TEXT,
+    
+    contact_email TEXT,
+    social_telegram TEXT,
+    social_instagram TEXT,
+    social_twitter TEXT,
+    social_artstation TEXT,
+    social_behance TEXT,
+    social_website TEXT,
 
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+
+// ...
     // 2. ДОВІДНИКИ (З підтримкою особистих записів)
     // user_id NULL = Загальне для всіх
     // user_id NOT NULL = Особисте

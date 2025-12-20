@@ -10,29 +10,27 @@ const SECRET_KEY = process.env.JWT_SECRET || 'fallback_secret';
 class AuthService {
     
     async register(nickname, email, password) {
-        // --- НОВІ ПЕРЕВІРКИ ---
-        
-        // 1. Перевірка формату Email
-        if (!validateEmail(email)) {
-            throw new Error('Некоректний формат Email (має бути @)');
-        }
-
-        // 2. Перевірка складності Пароля
-        if (!validatePassword(password)) {
-            throw new Error('Пароль занадто легкий! Треба: 8+ символів, 1 велику літеру, 1 цифру.');
-        }
-        // -----------------------
+        // ... твої валідації ...
 
         const existingUser = await userDAO.findByEmail(email);
-        if (existingUser) {
-            throw new Error('Цей email вже зайнятий!');
-        }
+        if (existingUser) throw new Error('Цей email вже зайнятий!');
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await userDAO.create(nickname, email, hashedPassword);
-        return newUser;
-    }
 
+        // 👇 ГЕНЕРУЄМО ТОКЕН ОДРАЗУ
+        const token = jwt.sign(
+            { id: newUser.id, email: newUser.email }, 
+            process.env.JWT_SECRET || 'secret', 
+            { expiresIn: '24h' }
+        );
+
+        // Повертаємо формат, який чекає фронтенд: token + user
+        return { 
+            token, 
+            user: { id: newUser.id, nickname: newUser.nickname, email: newUser.email } 
+        };
+    }
     // ЛОГІКА ВХОДУ
     async login(email, password) {
         // 1. Знайти юзера
