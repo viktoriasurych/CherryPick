@@ -1,113 +1,44 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import dictionaryService from '../../services/dictionaryService';
+import SearchableSelect from './SearchableSelect'; // 👈 Імпортуємо базу
 
 const DictSelect = ({ type, value, onChange, label }) => {
     const [items, setItems] = useState([]);
-    const [inputValue, setInputValue] = useState('');
-    const [showDropdown, setShowDropdown] = useState(false);
-    const wrapperRef = useRef(null);
 
-    // Завантаження
+    // 1. Завантажуємо дані
     useEffect(() => {
-        loadItems();
+        const load = async () => {
+            try {
+                const data = await dictionaryService.getAll(type);
+                // Перетворюємо у формат { value, label } для нашого компонента
+                setItems(data.map(d => ({ value: d.id, label: d.name })));
+            } catch (error) { console.error(error); }
+        };
+        load();
     }, [type]);
 
-    // Коли ззовні приходить value (ID), треба знайти його Name для інпута
-    useEffect(() => {
-        if (items.length > 0) {
-            const selected = items.find(i => i.id == value);
-            if (selected) setInputValue(selected.name);
-            else if (!value) setInputValue('');
-        }
-    }, [value, items]);
-
-    // Закриття при кліку повз
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-                setShowDropdown(false);
-                // Якщо ми вийшли з поля і нічого не вибрали валидного -> скидаємо текст
-                const selected = items.find(i => i.id == value);
-                if (selected) setInputValue(selected.name);
-                else setInputValue('');
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [value, items]);
-
-    const loadItems = async () => {
+    // 2. Логіка створення
+    const handleCreate = async (name) => {
         try {
-            const data = await dictionaryService.getAll(type);
-            setItems(data);
-        } catch (error) { console.error(error); }
-    };
-
-    // Вибір елемента зі списку
-    const handleSelect = (item) => {
-        onChange(item.id);
-        setInputValue(item.name);
-        setShowDropdown(false);
-    };
-
-    // Створення нового
-    const handleCreate = async () => {
-        if (!inputValue.trim()) return;
-        try {
-            const newItem = await dictionaryService.create(type, inputValue);
-            setItems([...items, newItem]); // Додаємо в список
-            handleSelect(newItem); // Одразу вибираємо
+            const newItem = await dictionaryService.create(type, name);
+            const formattedItem = { value: newItem.id, label: newItem.name };
+            setItems(prev => [...prev, formattedItem]);
+            onChange(newItem.id); // Одразу вибираємо
         } catch (error) {
-            alert("Помилка створення: " + error.message);
+            alert("Помилка: " + error.message);
         }
     };
-
-    // Фільтрація
-    const filteredItems = items.filter(item => 
-        item.name.toLowerCase().includes(inputValue.toLowerCase())
-    );
 
     return (
-        <div className="mb-4 relative" ref={wrapperRef}>
+        <div className="mb-4">
             <label className="block text-sm font-medium text-slate-400 mb-1">{label}</label>
-            
-            <input 
-                type="text"
-                value={inputValue}
-                onChange={(e) => {
-                    setInputValue(e.target.value);
-                    setShowDropdown(true);
-                    // Якщо стерли текст -> скидаємо ID
-                    if (e.target.value === '') onChange(''); 
-                }}
-                onFocus={() => setShowDropdown(true)}
-                placeholder={`Оберіть або введіть...`}
-                className="w-full bg-slate-950 border border-slate-700 rounded p-2 text-bone-200 focus:border-cherry-500 outline-none transition"
+            <SearchableSelect 
+                options={items}
+                value={value}
+                onChange={onChange}
+                onCreate={handleCreate} // 👇 Передаємо можливість створювати
+                placeholder="Оберіть..."
             />
-
-            {showDropdown && (
-                <div className="absolute z-10 w-full bg-slate-900 border border-slate-700 rounded shadow-xl mt-1 max-h-60 overflow-y-auto">
-                    {filteredItems.map(item => (
-                        <div 
-                            key={item.id}
-                            onClick={() => handleSelect(item)}
-                            className={`p-2 hover:bg-slate-800 cursor-pointer text-sm ${item.id == value ? 'text-cherry-400 font-bold' : 'text-bone-200'}`}
-                        >
-                            {item.name}
-                        </div>
-                    ))}
-
-                    {/* Якщо немає збігів і є текст -> показати кнопку створення */}
-                    {inputValue && filteredItems.length === 0 && (
-                        <div 
-                            onClick={handleCreate}
-                            className="p-2 border-t border-slate-800 text-cherry-400 hover:bg-slate-800 cursor-pointer text-sm"
-                        >
-                            + Створити "{inputValue}"
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     );
 };

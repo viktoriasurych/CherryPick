@@ -5,6 +5,8 @@ import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage'; 
 import ProjectEditPage from './pages/ProjectEditPage';
 
+import StatsPage from './pages/StatsPage';
+
 // 👇 ВИПРАВЛЕНІ ІМПОРТИ
 import CollectionsPage from './pages/CollectionsPage';
 import CollectionDetailsPage from './pages/CollectionDetailsPage';
@@ -13,6 +15,8 @@ import CollectionEditPage from './pages/CollectionEditPage';
 import ProtectedRoute from './components/ProtectedRoute'; 
 import SessionPage from './pages/SessionPage';
 import Layout from './components/Layout';
+
+
 
 function App() {
   return (
@@ -101,6 +105,17 @@ function App() {
             <ProtectedRoute>
                 <Layout>
                     <CollectionEditPage />
+                </Layout>
+            </ProtectedRoute>
+        } 
+      />
+
+<Route 
+        path="/stats"
+        element={
+            <ProtectedRoute>
+                <Layout>
+                    <StatsPage />
                 </Layout>
             </ProtectedRoute>
         } 

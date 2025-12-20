@@ -10,6 +10,7 @@ const sessionRoutes = require('./routes/sessionRoutes')
 const artworkRoutes = require('./routes/artworkRoutes'); // <--- ДОДАЛИ ЦЕ!
 const dictionaryRoutes = require('./routes/dictionaryRoutes');
 const collectionRoutes = require('./routes/collectionRoutes');
+const statsRoutes = require('./routes/statsRoutes'); // 👈 ДОДАЛИ
 
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/artworks', artworkRoutes); // <--- ДОДАЛИ ЦЕ! (Тепер 
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/dict', dictionaryRoutes);
 app.use('/api/collections', collectionRoutes);
+app.use('/api/stats', statsRoutes); // 👈 ПІДКЛЮЧИЛИ
 
 
 // Тестові маршрути

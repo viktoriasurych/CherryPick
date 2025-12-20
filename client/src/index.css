@@ -51,6 +51,24 @@
   scrollbar-width: none;  /* Firefox */
 }
 
+/* ... твої стилі скролбару ... */
+
+/* 👇 HEATMAP STYLES (GitHub Style) */
+.react-calendar-heatmap text {
+  font-size: 10px;
+  fill: #64748b; /* slate-500 */
+}
+
+.react-calendar-heatmap .color-empty { fill: #1e293b; } /* slate-800 (пустий день) */
+
+/* Градація активності (від 1 до 4) */
+.react-calendar-heatmap .color-scale-1 { fill: #4c0519; } /* cherry-950 (мало) */
+.react-calendar-heatmap .color-scale-2 { fill: #9f1239; } /* cherry-800 */
+.react-calendar-heatmap .color-scale-3 { fill: #e11d48; } /* cherry-600 */
+.react-calendar-heatmap .color-scale-4 { fill: #ff4d6d; } /* cherry-400 (багато) */
+
+.react-calendar-heatmap rect:hover { stroke: #fff; stroke-width: 1px; }
+
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
