@@ -14,7 +14,42 @@
   --color-bone-200: #d6d3d1;   /* Світлий акцент/текст (Bone) */
   --font-gothic: "Playfair Display", serif; /* Готичний шрифт для заголовків (якщо підключиш) */
 }
+::-webkit-scrollbar {
+  width: 14px; /* Робимо зону ширшою, щоб було зручно влучити мишкою... */
+}
 
+::-webkit-scrollbar-track {
+  background-color: transparent; /* ...але фон робимо прозорим */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #475569;     /* Колір самого овальчика (Slate-600) */
+  border-radius: 20px;           /* Повністю круглі краї */
+  border: 4px solid transparent; /* 🔥 Прозорий відступ навколо овальчика */
+  background-clip: content-box;  /* Малюємо колір тільки всередині, не чіпаючи відступи */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;     /* Світлішає при наведенні (Slate-400) */
+}
+
+/* Для Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 transparent;
+}
+
+/* ... твій попередній код ... */
+
+/* 👇 СПЕЦІАЛЬНИЙ КЛАС ДЛЯ ПРИХОВУВАННЯ СКРОЛУ (Але скрол працює) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important; /* Ховає для Chrome/Safari */
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
 
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
