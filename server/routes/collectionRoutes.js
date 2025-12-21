@@ -4,27 +4,47 @@ const collectionController = require('../controllers/collectionController');
 const authMiddleware = require('../middleware/authMiddleware');
 const upload = require('../middleware/fileUpload');
 
-router.use(authMiddleware); // Захист для всіх роутів
+// ============================================
+// 1. СПОЧАТКУ КОНКРЕТНІ МАРШРУТИ (Specific)
+// ============================================
 
-// 1. Спочатку статичні/конкретні роути
-router.post('/', collectionController.create);
-router.get('/', collectionController.getAll); // Всі мої
-router.get('/public', collectionController.getPublic); // 👈 ПЕРЕМІСТИЛИ СЮДИ (перед /:id)
-router.put('/reorder', collectionController.reorder); // 👈 Це теж краще вище
+// 🔓 Публічні колекції юзера
+router.get('/public', collectionController.getPublic);
 
-// 2. Роути для Artwork
-router.get('/artwork/:id', collectionController.getByArtwork);
+// 🔐 Отримати список ID колекцій для конкретної картини 
+// (Це має бути ВИЩЕ, ніж /:id, інакше "artwork" сприйметься як id)
+router.get('/artwork/:id', authMiddleware, collectionController.getByArtwork);
 
-// 3. Потім динамічні роути (з параметрами :id)
-router.get('/:id', collectionController.getOne); // 👈 Цей "з'їдає" все, що схоже на ID
-router.delete('/:id', collectionController.delete);
-router.put('/:id', collectionController.update); // Просте оновлення
+// 🔐 Отримати ВСІ свої колекції
+router.get('/', authMiddleware, collectionController.getAll);
 
-// 4. Вкладені роути
-router.post('/:id/items', collectionController.addItem);
-router.delete('/:id/items/:artId', collectionController.removeItem);
-router.put('/:id/batch', collectionController.updateBatch);
-router.post('/:id/cover', upload.single('image'), collectionController.uploadCover);
-router.delete('/:id/cover', collectionController.deleteCover);
+// 🔐 Створити нову
+router.post('/', authMiddleware, collectionController.create);
+
+// 🔐 Змінити порядок (Це PUT, тому не конфліктує з GET /:id, але краще тримати зверху)
+router.put('/reorder', authMiddleware, collectionController.reorder);
+
+
+// ============================================
+// 2. МАРШРУТИ З ПАРАМЕТРОМ :id (Dynamic)
+// ============================================
+
+// 🔐 Робота з елементами (Sub-resources)
+router.post('/:id/items', authMiddleware, collectionController.addItem);
+router.delete('/:id/items/:artId', authMiddleware, collectionController.removeItem);
+
+// 🔐 Batch update & Cover
+router.put('/:id/batch', authMiddleware, collectionController.updateBatch);
+router.post('/:id/cover', authMiddleware, upload.single('image'), collectionController.uploadCover);
+router.delete('/:id/cover', authMiddleware, collectionController.deleteCover);
+
+// 🔐 Видалення / Редагування самої колекції
+router.delete('/:id', authMiddleware, collectionController.delete);
+router.put('/:id', authMiddleware, collectionController.update);
+
+// 👇 ВАЖЛИВО: Цей маршрут ловить ВСЕ, що схоже на ID. 
+// Тому він має бути ОСТАННІМ серед GET запитів.
+// 🔓 Отримати деталі однієї колекції
+router.get('/:id', collectionController.getOne);
 
 module.exports = router;

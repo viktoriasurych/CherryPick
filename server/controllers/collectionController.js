@@ -99,10 +99,18 @@ class CollectionController {
 
     async getOne(req, res) {
         try {
-            const userId = req.user.id;
+            // 👇 ВИПРАВЛЕННЯ:
+            // Якщо є req.user (авторизований), беремо ID. 
+            // Якщо ні (гість) — ставимо null.
+            const userId = req.user ? req.user.id : null; 
+
+            // Передаємо null у сервіс. Сервіс має зрозуміти:
+            // "Якщо ID юзера немає, показуй колекцію ТІЛЬКИ якщо вона is_public=true"
             const collection = await collectionService.getCollectionDetails(req.params.id, userId);
+            
             res.json(collection);
         } catch (e) {
+            // Якщо сервіс викинув помилку (наприклад "Доступ заборонено"), повертаємо 403 або 404
             res.status(404).json({ message: e.message });
         }
     }

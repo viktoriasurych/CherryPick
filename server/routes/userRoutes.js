@@ -4,21 +4,15 @@ const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const upload = require('../middleware/fileUpload');
 
-// ВАЖЛИВО: Всі ці маршрути захищені. Без токена сюди не пустить.
-router.use(authMiddleware);
+// 1. СПОЧАТКУ КОНКРЕТНІ МАРШРУТИ
+// 🔐 Отримати "Мій" профіль
+router.get('/me', authMiddleware, userController.getProfile);
+router.put('/me', authMiddleware, userController.updateProfile);
+router.post('/me/avatar', authMiddleware, upload.single('avatar'), userController.uploadAvatar);
+router.delete('/me/avatar', authMiddleware, userController.deleteAvatar);
 
-// GET /api/users/me -> Отримати мій профіль
-router.get('/me', userController.getProfile);
-
-// PUT /api/users/me -> Оновити текстові поля (нік, біо, інста...)
-router.put('/me', userController.updateProfile);
-
-// POST /api/users/me/avatar -> Завантажити нову фотку
-// 'avatar' - це name="avatar" у FormData на фронтенді
-router.post('/me/avatar', upload.single('avatar'), userController.uploadAvatar);
-
-router.delete('/me/avatar', userController.deleteAvatar);
-
+// 2. ПОТІМ ДИНАМІЧНІ (Wildcards)
+// 🔓 Отримати дані будь-якого художника за ID (Це має бути останнім get)
 router.get('/:id', userController.getById);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'; // 👈 ДОДАЛИ Navigate
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 
 import HomePage from './pages/HomePage'; 
@@ -17,53 +17,61 @@ import Layout from './components/Layout';
 import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
 
-
 function App() {
-  const { user } = useAuth(); // Дістаємо юзера
+  const { user } = useAuth();
 
   return (
     <Routes>
 
-      {/* 👇 ГОЛОВНА: Якщо є юзер -> кидаємо в Проєкти, якщо ні -> показуємо Лендінг */}
+      {/* --- ПУБЛІЧНІ РОУТИ (Доступні всім) --- */}
+
+      {/* Головна: Якщо залогінений - в проєкти, якщо ні - лендінг */}
       <Route 
         path="/" 
         element={user ? <Navigate to="/projects" replace /> : <HomePage />} 
       />
 
-      {/* 👇 АВТОРИЗАЦІЯ: Якщо є юзер -> кидаємо в Проєкти */}
+      {/* Авторизація */}
       <Route 
         path="/auth" 
         element={user ? <Navigate to="/projects" replace /> : <AuthPage />} 
       />
-      
-      {/* ❌ ТУТ БУЛИ ДУБЛІКАТИ РОУТІВ, Я ЇХ ПРИБРАВ.
-          Ми вже оголосили "/" та "/auth" вище з логікою перенаправлення.
-      */}
 
-      {/* ПРОФІЛЬ КОРИСТУВАЧА */}
+      {/* 👇 ВАЖЛИВО: Публічний перегляд профілю (без ProtectedRoute) */}
+      <Route 
+        path="/user/:id"
+        element={
+            <Layout> {/* Layout залишаємо, щоб була шапка/навігація */}
+                <ProfilePage />
+            </Layout>
+        } 
+      />
+
+      {/* 👇 ВАЖЛИВО: Публічний перегляд колекції (без ProtectedRoute) */}
+      <Route 
+        path="/collections/:id"
+        element={
+            <Layout>
+                <CollectionDetailsPage />
+            </Layout>
+        } 
+      />
+
+
+      {/* --- ПРИВАТНІ РОУТИ (Тільки для своїх) --- */}
+
+      {/* "Мій профіль" (тут можуть бути особисті дані, тому protected) */}
       <Route 
         path="/profile"
         element={
             <ProtectedRoute>
                 <Layout>
-                    <ProfilePage />
+                    <ProfilePage /> {/* Або переадресація на /user/my-id */}
                 </Layout>
             </ProtectedRoute>
         } 
       />
 
-<Route 
-        path="/user/:id"
-        element={
-            <ProtectedRoute>
-                <Layout>
-                    <ProfilePage />
-                </Layout>
-            </ProtectedRoute>
-        } 
-      />
-
-      {/* 👇 НОВИЙ РОУТ: РЕДАГУВАННЯ */}
       <Route 
         path="/profile/edit"
         element={
@@ -75,7 +83,7 @@ function App() {
         } 
       />
 
-      {/* Список проєктів */}
+      {/* Проєкти - це робочий простір, він закритий */}
       <Route 
         path="/projects" 
         element={
@@ -87,7 +95,6 @@ function App() {
         } 
       />
 
-      {/* Створення проєкту */}
       <Route 
         path="/projects/new" 
         element={
@@ -99,7 +106,6 @@ function App() {
         } 
       />
 
-      {/* Редагування проєкту */}
       <Route 
         path="/projects/:id/edit" 
         element={
@@ -111,7 +117,6 @@ function App() {
         } 
       />
 
-      {/* Деталі проєкту */}
       <Route 
         path="/projects/:id" 
         element={
@@ -123,8 +128,7 @@ function App() {
         } 
       />
 
-      {/* --- КОЛЕКЦІЇ --- */}
-      
+      {/* Список своїх колекцій - закритий */}
       <Route 
         path="/collections"
         element={
@@ -136,17 +140,7 @@ function App() {
         } 
       />
 
-      <Route 
-        path="/collections/:id"
-        element={
-            <ProtectedRoute>
-                <Layout>
-                    <CollectionDetailsPage />
-                </Layout>
-            </ProtectedRoute>
-        } 
-      />
-
+      {/* Редагування колекції - закрите */}
       <Route 
         path="/collections/:id/edit"
         element={
@@ -158,7 +152,6 @@ function App() {
         } 
       />
 
-      {/* СТАТИСТИКА */}
       <Route 
         path="/stats"
         element={
@@ -170,7 +163,6 @@ function App() {
         } 
       />
 
-      {/* Сесія малювання */}
       <Route 
         path="/projects/:id/session" 
         element={
@@ -179,7 +171,7 @@ function App() {
             </ProtectedRoute>
         } 
       />
-     
+      
     </Routes>
   );
 }
