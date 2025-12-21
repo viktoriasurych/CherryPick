@@ -131,25 +131,41 @@ class CollectionDAO {
         });
     }
 
-    // Отримати одну за ID (з автором)
-    getById(id) {
-        return new Promise((resolve, reject) => {
-            const sql = `
-                SELECT 
-                    c.*, 
-                    u.nickname as author_name, 
-                    u.avatar_url as author_avatar,
-                    u.id as author_id
-                FROM collections c
-                JOIN users u ON c.user_id = u.id
-                WHERE c.id = ?
-            `;
-            db.get(sql, [id], (err, row) => {
-                if (err) return reject(err);
-                resolve(row);
-            });
+   // 👇 ОНОВЛЕНИЙ МЕТОД getById
+   getById(id, currentUserId = null) {
+    return new Promise((resolve, reject) => {
+        // Формуємо запит динамічно
+        // 1. Якщо є юзер -> перевіряємо чи ВІН зберіг (is_saved)
+        // 2. Рахуємо ЗАГАЛЬНУ кількість збережень (save_count)
+        let sql = `
+            SELECT 
+                c.*, 
+                u.nickname as author_name, 
+                u.avatar_url as author_avatar,
+                u.id as author_id,
+                -- 👇 ПІДРАХУНОК ВСІХ ЗБЕРЕЖЕНЬ
+                (SELECT COUNT(*) FROM saved_collections WHERE collection_id = c.id) as save_count
+                
+                ${currentUserId ? `, (SELECT 1 FROM saved_collections WHERE user_id = ? AND collection_id = c.id) as is_saved` : ''}
+            FROM collections c
+            JOIN users u ON c.user_id = u.id
+            WHERE c.id = ?
+        `;
+        
+        // Якщо є currentUserId, то параметри: [userId, collectionId]
+        // Якщо немає (гість), то параметри: [collectionId]
+        const params = currentUserId ? [currentUserId, id] : [id];
+
+        db.get(sql, params, (err, row) => {
+            if (err) return reject(err);
+            if (row) {
+                // Конвертуємо 1/0 в true/false
+                row.is_saved = !!row.is_saved;
+            }
+            resolve(row);
         });
-    }
+    });
+}
 
     // Видалити
     delete(id, userId) {
@@ -337,6 +353,60 @@ class CollectionDAO {
                 LIMIT 5                            -- Обмеження, щоб не перевантажувати список
             `;
             db.all(sql, [`%${query}%`], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    }
+
+    save(userId, collectionId) {
+        return new Promise((resolve, reject) => {
+            const sql = `INSERT OR IGNORE INTO saved_collections (user_id, collection_id) VALUES (?, ?)`;
+            db.run(sql, [userId, collectionId], function(err) {
+                if (err) return reject(err);
+                resolve({ success: true });
+            });
+        });
+    }
+
+    // Прибрати зі збережених
+    unsave(userId, collectionId) {
+        return new Promise((resolve, reject) => {
+            const sql = `DELETE FROM saved_collections WHERE user_id = ? AND collection_id = ?`;
+            db.run(sql, [userId, collectionId], function(err) {
+                if (err) return reject(err);
+                resolve({ success: true });
+            });
+        });
+    }
+
+    // Отримати список збережених (Для сторінки "Збережене")
+    getSaved(userId) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT 
+                    c.*, 
+                    u.nickname as author_name,
+                    u.avatar_url as author_avatar,
+                    sc.saved_at,
+                    COUNT(ci.id) as item_count,
+                    (
+                        SELECT a.image_path 
+                        FROM collection_items ci_sub
+                        JOIN artworks a ON ci_sub.artwork_id = a.id
+                        WHERE ci_sub.collection_id = c.id
+                        ORDER BY ci_sub.created_at DESC
+                        LIMIT 1
+                    ) as latest_image
+                FROM saved_collections sc
+                JOIN collections c ON sc.collection_id = c.id
+                JOIN users u ON c.user_id = u.id
+                LEFT JOIN collection_items ci ON c.id = ci.collection_id
+                WHERE sc.user_id = ?
+                GROUP BY c.id
+                ORDER BY sc.saved_at DESC
+            `;
+            db.all(sql, [userId], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows);
             });

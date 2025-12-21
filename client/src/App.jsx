@@ -8,9 +8,12 @@ import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage'; 
 import ProjectEditPage from './pages/ProjectEditPage';
 import StatsPage from './pages/StatsPage';
+
 import CollectionsPage from './pages/CollectionsPage';
 import CollectionDetailsPage from './pages/CollectionDetailsPage';
 import CollectionEditPage from './pages/CollectionEditPage';
+import SavedCollectionsPage from './pages/SavedCollectionsPage'; // 👈 1. НОВИЙ ІМПОРТ
+
 import ProtectedRoute from './components/ProtectedRoute'; 
 import SessionPage from './pages/SessionPage';
 import Layout from './components/Layout';
@@ -25,29 +28,27 @@ function App() {
 
       {/* --- ПУБЛІЧНІ РОУТИ (Доступні всім) --- */}
 
-      {/* Головна: Якщо залогінений - в проєкти, якщо ні - лендінг */}
       <Route 
         path="/" 
         element={user ? <Navigate to="/projects" replace /> : <HomePage />} 
       />
 
-      {/* Авторизація */}
       <Route 
         path="/auth" 
         element={user ? <Navigate to="/projects" replace /> : <AuthPage />} 
       />
 
-      {/* 👇 ВАЖЛИВО: Публічний перегляд профілю (без ProtectedRoute) */}
+      {/* Публічний профіль */}
       <Route 
         path="/user/:id"
         element={
-            <Layout> {/* Layout залишаємо, щоб була шапка/навігація */}
+            <Layout>
                 <ProfilePage />
             </Layout>
         } 
       />
 
-      {/* 👇 ВАЖЛИВО: Публічний перегляд колекції (без ProtectedRoute) */}
+      {/* Публічна колекція */}
       <Route 
         path="/collections/:id"
         element={
@@ -60,13 +61,12 @@ function App() {
 
       {/* --- ПРИВАТНІ РОУТИ (Тільки для своїх) --- */}
 
-      {/* "Мій профіль" (тут можуть бути особисті дані, тому protected) */}
       <Route 
         path="/profile"
         element={
             <ProtectedRoute>
                 <Layout>
-                    <ProfilePage /> {/* Або переадресація на /user/my-id */}
+                    <ProfilePage />
                 </Layout>
             </ProtectedRoute>
         } 
@@ -83,7 +83,7 @@ function App() {
         } 
       />
 
-      {/* Проєкти - це робочий простір, він закритий */}
+      {/* Проєкти */}
       <Route 
         path="/projects" 
         element={
@@ -128,7 +128,21 @@ function App() {
         } 
       />
 
-      {/* Список своїх колекцій - закритий */}
+      {/* --- КОЛЕКЦІЇ --- */}
+
+      {/* 2. НОВИЙ РОУТ: ЗБЕРЕЖЕНІ КОЛЕКЦІЇ */}
+      <Route 
+        path="/saved"
+        element={
+            <ProtectedRoute>
+                <Layout>
+                    <SavedCollectionsPage />
+                </Layout>
+            </ProtectedRoute>
+        } 
+      />
+
+      {/* Список МОЇХ колекцій */}
       <Route 
         path="/collections"
         element={
@@ -140,7 +154,6 @@ function App() {
         } 
       />
 
-      {/* Редагування колекції - закрите */}
       <Route 
         path="/collections/:id/edit"
         element={
@@ -151,6 +164,8 @@ function App() {
             </ProtectedRoute>
         } 
       />
+
+      {/* --- ІНШЕ --- */}
 
       <Route 
         path="/stats"

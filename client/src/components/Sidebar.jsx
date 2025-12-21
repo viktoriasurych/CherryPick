@@ -3,10 +3,11 @@ import artworkService from '../services/artworkService';
 import { 
     HomeIcon, 
     RectangleStackIcon, 
-    PhotoIcon, 
+    // PhotoIcon, 
     ChartBarIcon, 
     Squares2X2Icon,
-    PlusIcon
+    PlusIcon,
+    BookmarkIcon 
 } from '@heroicons/react/24/outline';
 
 const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
@@ -15,23 +16,27 @@ const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
     const menuItems = [
         { name: 'Головна', path: '/', icon: HomeIcon },
         { name: 'Архів проєктів', path: '/projects', icon: RectangleStackIcon },
-        { name: 'Галерея', path: '/gallery', icon: PhotoIcon },
         { name: 'Колекції', path: '/collections', icon: Squares2X2Icon },
+        { name: 'Збережене', path: '/saved', icon: BookmarkIcon },
         { name: 'Статистика', path: '/stats', icon: ChartBarIcon },
     ];
 
     return (
         <aside className={`
             fixed lg:sticky top-16 left-0 z-40
-            w-64 h-[calc(100vh-64px)] 
+            h-[calc(100vh-64px)] 
             bg-slate-950 border-r border-slate-800 
-            transition-transform duration-300 ease-in-out
-            ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-            lg:translate-x-0 
-            ${!isOpen && 'lg:hidden'} 
-            shrink-0 overflow-y-auto
+            transition-all duration-300 ease-in-out
+            
+            /* 👇 ВИПРАВЛЕННЯ ТУТ: */
+            /* Тепер ми керуємо шириною (w-64 або w-0) та зсувом. */
+            /* Якщо відкрито: ширина 64, стоїть на місці. */
+            /* Якщо закрито: ширина 0 (щоб не займала місце), ховається вліво. */
+            ${isOpen ? 'w-64 translate-x-0 opacity-100' : 'w-0 -translate-x-full opacity-0 border-none'}
+            
+            shrink-0 overflow-y-auto overflow-x-hidden
         `}>
-            <div className="p-4 flex flex-col h-full">
+            <div className="p-4 flex flex-col h-full w-64"> {/* w-64 тут фіксує ширину контенту, щоб він не плющився при анімації */}
                 {/* Навігація */}
                 <nav className="space-y-1 mb-8">
                     {menuItems.map((item) => {
@@ -40,7 +45,7 @@ const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                onClick={onClose}
+                                onClick={onClose} // Закриває на мобілці, на десктопі можна прибрати якщо хочеш щоб лишалось
                                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all ${
                                     isActive 
                                     ? 'bg-cherry-900/20 text-cherry-400 font-bold border border-cherry-900/50' 
@@ -48,7 +53,7 @@ const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
                                 }`}
                             >
                                 <item.icon className="w-5 h-5" />
-                                {item.name}
+                                <span className="whitespace-nowrap">{item.name}</span>
                             </Link>
                         );
                     })}
@@ -57,7 +62,7 @@ const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
                 {/* Останні проєкти */}
                 <div className="flex flex-col grow overflow-hidden">
                     <div className="flex items-center justify-between px-3 mb-3">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                             Останні проєкти
                         </span>
                         <Link to="/projects/new" className="text-slate-500 hover:text-cherry-500">
@@ -92,7 +97,7 @@ const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
                     </div>
                 </div>
 
-                <div className="mt-auto pt-4 border-t border-slate-900 text-[9px] text-slate-700 uppercase tracking-tighter text-center">
+                <div className="mt-auto pt-4 border-t border-slate-900 text-[9px] text-slate-700 uppercase tracking-tighter text-center whitespace-nowrap">
                     CherryPick v1.0
                 </div>
             </div>

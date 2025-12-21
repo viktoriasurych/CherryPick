@@ -73,33 +73,19 @@ class CollectionService {
 
 
     async getCollectionDetails(id, userId) {
-
-        // 👇 Викликаємо без userId, бо DAO тепер просто шукає по ID
-
-        const collection = await collectionDAO.getById(id);
-
-       
-
+        // userId тут може бути null (якщо гість)
+        const collection = await collectionDAO.getById(id, userId);
+        
         if (!collection) throw new Error("Колекцію не знайдено");
 
-
-
-        // 👇 ТУТ ПЕРЕВІРКА ПРАВ (БЕЗПЕКА)
-
-        // Якщо це НЕ моя колекція І вона НЕ публічна -> Помилка
-
-        if (collection.user_id !== userId && !collection.is_public) {
-
-             throw new Error("У вас немає доступу до цієї колекції");
-
+        // Перевірка приватності
+        // Якщо це приватна колекція І (я не автор), то доступ заборонено
+        if (!collection.is_public && (!userId || collection.user_id !== userId)) {
+             throw new Error("Ця колекція є приватною");
         }
 
-
-
         const items = await collectionDAO.getCollectionItems(id);
-
         return { ...collection, items };
-
     }
 
 
@@ -202,6 +188,30 @@ class CollectionService {
 
         return await collectionDAO.updateCollectionsOrder(items);
 
+    }
+
+    // 👇 НОВІ МЕТОДИ
+    async toggleSave(collectionId, userId) {
+        // Спочатку перевіримо, чи існує колекція
+        const collection = await collectionDAO.getById(collectionId);
+        if (!collection) throw new Error("Колекцію не знайдено");
+
+        // Перевіримо, чи вона вже збережена. 
+        // Але оскільки у нас INSERT OR IGNORE і DELETE, 
+        // можна просто зробити "розумний" метод або два окремих.
+        // Зробимо два окремих для ясності API.
+    }
+
+    async saveCollection(collectionId, userId) {
+        return await collectionDAO.save(userId, collectionId);
+    }
+
+    async unsaveCollection(collectionId, userId) {
+        return await collectionDAO.unsave(userId, collectionId);
+    }
+
+    async getSavedCollections(userId) {
+        return await collectionDAO.getSaved(userId);
     }
 
 

@@ -220,6 +220,36 @@ class CollectionController {
             res.json({ message: "Порядок збережено" });
         } catch(e) { res.status(500).json({message: e.message}); }
     }
+
+    // POST /api/collections/:id/save
+    async save(req, res) {
+        try {
+            await collectionService.saveCollection(req.params.id, req.user.id);
+            res.json({ message: "Колекцію збережено", is_saved: true });
+        } catch (e) {
+            res.status(500).json({ message: e.message });
+        }
+    }
+
+    // DELETE /api/collections/:id/save
+    async unsave(req, res) {
+        try {
+            await collectionService.unsaveCollection(req.params.id, req.user.id);
+            res.json({ message: "Колекцію видалено зі збережених", is_saved: false });
+        } catch (e) {
+            res.status(500).json({ message: e.message });
+        }
+    }
+
+    // GET /api/collections/saved
+    async getSaved(req, res) {
+        try {
+            const collections = await collectionService.getSavedCollections(req.user.id);
+            res.json(collections);
+        } catch (e) {
+            res.status(500).json({ message: e.message });
+        }
+    }
 }
 
 module.exports = new CollectionController();

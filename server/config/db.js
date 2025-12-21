@@ -188,6 +188,21 @@ db.run(`CREATE TABLE IF NOT EXISTS collection_views (
         FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
     )`);
 
+    // 8. ЗБЕРЕЖЕНІ КОЛЕКЦІЇ (Bookmarks)
+    db.run(`CREATE TABLE IF NOT EXISTS saved_collections (
+        user_id INTEGER NOT NULL,
+        collection_id INTEGER NOT NULL,
+        saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        
+        PRIMARY KEY (user_id, collection_id), -- Щоб не зберегти двічі
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        
+        -- 👇 ВАЖЛИВО: Якщо автор видаляє колекцію, вона зникне і зі збережених.
+        -- Це "чистий" підхід (Hard Delete). Якщо хочеш "Soft Delete" (повідомлення "видалено"),
+        -- треба міняти логіку видалення самих колекцій, але для MVP Cascade краще.
+        FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE
+    )`);
+
     // 7. ПОЧАТКОВЕ ЗАПОВНЕННЯ (Global Data)
     const seedDict = (table, items) => {
         db.get(`SELECT count(*) as count FROM ${table}`, (err, row) => {

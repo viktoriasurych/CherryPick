@@ -72,6 +72,24 @@ const collectionService = {
         // Якщо бекенд чекає userId в параметрах запиту
         const response = await api.get('/collections/public', { params: { userId } }); 
         return response.data;
+    },
+
+    // Зберегти в закладки
+    saveCollection: async (id) => {
+        const response = await api.post(`/collections/${id}/save`);
+        return response.data;
+    },
+
+    // Видалити з закладок
+    unsaveCollection: async (id) => {
+        const response = await api.delete(`/collections/${id}/save`);
+        return response.data;
+    },
+
+    // Отримати список збережених (для профілю)
+    getSavedCollections: async () => {
+        const response = await api.get('/collections/saved');
+        return response.data;
     }
 };
 
