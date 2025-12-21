@@ -133,6 +133,16 @@ class UserDAO {
             });
         });
     }
+
+    searchUsers(query) {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT id, nickname, avatar_url FROM users WHERE nickname LIKE ? LIMIT 5`;
+            db.all(sql, [`%${query}%`], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    }
 }
 
 module.exports = new UserDAO();

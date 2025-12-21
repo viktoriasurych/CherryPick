@@ -321,6 +321,28 @@ class CollectionDAO {
         });
     }
 
+    searchCollections(query) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT 
+                    c.id, 
+                    c.title, 
+                    c.type, 
+                    u.nickname as author,
+                    (SELECT COUNT(*) FROM collection_items WHERE collection_id = c.id) as item_count
+                FROM collections c
+                JOIN users u ON c.user_id = u.id
+                WHERE c.is_public = 1              -- 👈 ОСЬ ТУТ: Тільки публічні!
+                  AND c.title LIKE ?               -- Пошук за назвою
+                LIMIT 5                            -- Обмеження, щоб не перевантажувати список
+            `;
+            db.all(sql, [`%${query}%`], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    }
+
     
 }
 

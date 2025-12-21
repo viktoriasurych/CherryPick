@@ -12,6 +12,8 @@ const dictionaryRoutes = require('./routes/dictionaryRoutes');
 const collectionRoutes = require('./routes/collectionRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const userRoutes = require('./routes/userRoutes'); // <--- НОВЕ: Імпорт роутів профілю
+const searchRoutes = require('./routes/searchRoutes');
+
 
 const app = express();
 const PORT = 3000;
@@ -30,6 +32,8 @@ app.use('/api/dict', dictionaryRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/users', userRoutes); // <--- НОВЕ: Підключили /api/users (для профілю)
+app.use('/api/search', searchRoutes);
+
 
 // Тестові маршрути
 app.get('/api', (req, res) => {
