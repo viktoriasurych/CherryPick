@@ -103,7 +103,6 @@ class CollectionDAO {
         });
     }
 
-    // Отримати всі мої колекції
     getAll(userId) {
         return new Promise((resolve, reject) => {
             const sql = `
@@ -122,7 +121,7 @@ class CollectionDAO {
                 LEFT JOIN collection_items ci ON c.id = ci.collection_id 
                 WHERE c.user_id = ? 
                 GROUP BY c.id 
-                ORDER BY c.created_at DESC
+                ORDER BY c.sort_order ASC, c.created_at DESC -- 👈 ОСЬ ТУТ КЛЮЧОВА ЗМІНА
             `;
             
             db.all(sql, [userId], (err, rows) => {
@@ -264,6 +263,65 @@ class CollectionDAO {
             });
         });
     }
+
+    getPublic(userId) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT 
+                    c.*, 
+                    COUNT(ci.id) as item_count,
+                    (
+                        SELECT a.image_path 
+                        FROM collection_items ci_sub
+                        JOIN artworks a ON ci_sub.artwork_id = a.id
+                        WHERE ci_sub.collection_id = c.id
+                        ORDER BY ci_sub.created_at DESC
+                        LIMIT 1
+                    ) as latest_image
+                FROM collections c 
+                LEFT JOIN collection_items ci ON c.id = ci.collection_id 
+                WHERE c.user_id = ? AND c.is_public = 1 
+                GROUP BY c.id 
+                ORDER BY c.sort_order ASC, c.created_at DESC -- 👈 І ТУТ ТЕЖ
+            `;
+            
+            db.all(sql, [userId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    }
+
+    // 👇 3. РЕАЛІЗУЄМО ЗБЕРЕЖЕННЯ ПОРЯДКУ
+    updateCollectionsOrder(items) {
+        return new Promise((resolve, reject) => {
+            db.serialize(() => {
+                db.run('BEGIN TRANSACTION');
+
+                const sql = 'UPDATE collections SET sort_order = ? WHERE id = ?';
+                const stmt = db.prepare(sql);
+
+                // items - це масив [{id: 1}, {id: 5}, ...], який приходить у новому порядку
+                items.forEach((item, index) => {
+                    // index стає новим sort_order (0, 1, 2...)
+                    stmt.run(index, item.id);
+                });
+
+                stmt.finalize();
+
+                db.run('COMMIT', (err) => {
+                    if (err) {
+                        console.error("Помилка збереження порядку:", err);
+                        reject(err);
+                    } else {
+                        resolve(true);
+                    }
+                });
+            });
+        });
+    }
+
+    
 }
 
 module.exports = new CollectionDAO();

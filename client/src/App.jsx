@@ -52,6 +52,17 @@ function App() {
         } 
       />
 
+<Route 
+        path="/user/:id"
+        element={
+            <ProtectedRoute>
+                <Layout>
+                    <ProfilePage />
+                </Layout>
+            </ProtectedRoute>
+        } 
+      />
+
       {/* 👇 НОВИЙ РОУТ: РЕДАГУВАННЯ */}
       <Route 
         path="/profile/edit"

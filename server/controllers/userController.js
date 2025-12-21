@@ -48,6 +48,17 @@ class UserController {
             res.status(500).json({ message: 'Помилка видалення фото' });
         }
     }
+
+    // 👇 ДОДАЙ ЦЕЙ МЕТОД, ЯКЩО ЙОГО НЕМАЄ
+    async getById(req, res) {
+        try {
+            const user = await userService.getProfile(req.params.id);
+            res.json(user);
+        } catch (e) {
+            // Якщо юзера немає, повертаємо 404
+            res.status(404).json({ message: 'Користувача не знайдено' });
+        }
+    }
 }
 
 module.exports = new UserController();

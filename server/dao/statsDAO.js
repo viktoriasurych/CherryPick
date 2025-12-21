@@ -1,6 +1,8 @@
 const db = require('../config/db');
 
 class StatsDAO {
+    
+    // Отримати рік початку першої роботи (або поточний рік)
     getStartYear(userId) {
         return new Promise((resolve, reject) => {
             const sql = `
@@ -14,9 +16,12 @@ class StatsDAO {
         });
     }
 
+    // Загальні показники (KPI)
     getTotals(userId, year = null) {
         return new Promise((resolve, reject) => {
+            // Нам потрібно передати userId тричі, бо в SQL запиті три знаки питання '?'
             const params = [userId, userId, userId];
+            
             const artYearFilter = year ? `AND started_year = ${Number(year)}` : "";
             const sessYearFilter = year ? `AND strftime('%Y', s.start_time) = '${year}'` : "";
             const colYearFilter = year ? `AND strftime('%Y', created_at) = '${year}'` : "";
@@ -24,7 +29,6 @@ class StatsDAO {
             const sql = `
                 SELECT 
                     (SELECT COUNT(*) FROM artworks WHERE user_id = ? ${artYearFilter}) as works_count,
-                    -- 👇 ТУТ ЗМІНИ: COALESCE(SUM(...), 0)
                     (SELECT COALESCE(SUM(duration_seconds), 0) FROM sessions s JOIN artworks a ON s.artwork_id = a.id WHERE a.user_id = ? ${sessYearFilter}) as total_seconds,
                     (SELECT COUNT(*) FROM collections WHERE user_id = ? ${colYearFilter}) as collections_count
             `;
@@ -36,6 +40,7 @@ class StatsDAO {
         });
     }
 
+    // Розподіл (Діаграми)
     getDistributions(userId, year = null) {
         return new Promise((resolve, reject) => {
             const params = [userId];
@@ -55,25 +60,30 @@ class StatsDAO {
             const result = {};
             const keys = Object.keys(queries);
             let completed = 0;
+            
             if (keys.length === 0) resolve({});
 
             keys.forEach(key => {
                 db.all(queries[key], params, (err, rows) => {
-                    if (err) { console.error(`SQL Error in ${key}:`, err); result[key] = []; } 
-                    else result[key] = rows;
+                    if (err) { 
+                        console.error(`SQL Error in ${key}:`, err); 
+                        result[key] = []; 
+                    } else {
+                        result[key] = rows;
+                    }
                     if (++completed === keys.length) resolve(result);
                 });
             });
         });
     }
 
+    // Часові патерни (Графіки)
     getTimePatterns(userId, year = null) {
         return new Promise((resolve, reject) => {
             const params = [userId];
             const yearFilter = year ? ` AND strftime('%Y', start_time) = '${year}'` : "";
 
             const queries = {
-                // 👇 ТУТ ЗМІНИ: Явно сумуємо числа
                 days: `
                     SELECT strftime('%w', start_time) as index_val, 
                     COALESCE(SUM(duration_seconds), 0) as total_seconds
@@ -108,6 +118,7 @@ class StatsDAO {
         });
     }
 
+    // Активність по днях (для Heatmap)
     getDailyActivity(userId, year) {
         return new Promise((resolve, reject) => {
             const sql = `
@@ -123,9 +134,15 @@ class StatsDAO {
         });
     }
 
+    // Отримати всі дати активності (для підрахунку стріка)
     getAllActivityDates(userId) {
         return new Promise((resolve, reject) => {
-            const sql = `SELECT DISTINCT date(start_time) as date FROM sessions s JOIN artworks a ON s.artwork_id = a.id WHERE a.user_id = ? ORDER BY date DESC`;
+            const sql = `
+                SELECT DISTINCT date(start_time) as date 
+                FROM sessions s JOIN artworks a ON s.artwork_id = a.id 
+                WHERE a.user_id = ? 
+                ORDER BY date DESC
+            `;
             db.all(sql, [userId], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows.map(r => r.date));

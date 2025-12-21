@@ -38,16 +38,19 @@ const CollectionDetailsPage = () => {
     if (loading) return <div className="text-center py-20 text-slate-500 animate-pulse">Завантаження...</div>;
     if (!collection) return null;
 
+    // Перевірка, чи це власник
+    // Приводимо до рядка, бо іноді ID приходить як число
     const isOwner = user && String(user.id) === String(collection.user_id);
+    
     const authorAvatarSrc = collection.author_avatar ? `http://localhost:3000${collection.author_avatar}` : defaultAvatar;
 
     // 👇 3. Функція-обгортка: Вирішує, що рендерити (Link чи Div)
     const ArtWrapper = ({ artwork, children, className }) => {
         if (isOwner) {
-            // Власник йде на сторінку редагування проекту
+            // Власник йде на сторінку редагування проекту (щоб міняти статус, час і т.д.)
             return <Link to={`/projects/${artwork.id}`} className={className}>{children}</Link>;
         } else {
-            // Гість відкриває модалку
+            // Гість відкриває модалку (просто подивитись)
             return (
                 <div 
                     onClick={() => setSelectedArtwork(artwork)} 
@@ -62,8 +65,10 @@ const CollectionDetailsPage = () => {
     return (
         <div className="min-h-screen pb-20 relative">
             
-            {/* ... HEADER залишається без змін ... */}
+            {/* ... HEADER ... */}
             <div className="mb-12 text-center border-b border-slate-900 pb-12 relative px-4 pt-8">
+                
+                {/* Кнопка НАЗАД */}
                 <div className="absolute top-8 left-4 md:left-8">
                     <Link to="/collections" className="text-slate-500 hover:text-cherry-500 text-sm inline-flex items-center gap-2 transition">
                         <ArrowLeftIcon className="w-4 h-4" />
@@ -71,6 +76,7 @@ const CollectionDetailsPage = () => {
                     </Link>
                 </div>
 
+                {/* Кнопка НАЛАШТУВАННЯ (Тільки для власника) */}
                 {isOwner && (
                     <div className="absolute top-8 right-4 md:right-8">
                         <Link to={`/collections/${id}/edit`} className="text-slate-500 hover:text-white text-sm inline-flex items-center gap-2 transition">
@@ -85,13 +91,19 @@ const CollectionDetailsPage = () => {
                         {collection.title}
                     </h1>
 
+                    {/* 👇 БЛОК АВТОРА */}
                     <div className="flex items-center justify-center gap-3 mb-6">
                         <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-700 shadow-sm">
                             <img src={authorAvatarSrc} alt="Author" className="w-full h-full object-cover" />
                         </div>
                         <div className="text-sm text-slate-400 flex items-center gap-2">
-                            <span>by</span>
-                            <Link to={isOwner ? "/profile" : "#"} className={`font-bold transition ${isOwner ? 'text-slate-200 hover:text-cherry-400 cursor-pointer' : 'text-slate-400 cursor-default'}`}>
+                            <span>автор:</span>
+                            {/* Посилання на профіль (або заглушка #, якщо це чужий, поки не зробимо публічні профілі) */}
+                            {/* Для власника веде на /profile */}
+                            <Link 
+                                to={isOwner ? "/profile" : `/user/${collection.user_id}`} 
+                                className="font-bold text-slate-200 hover:text-cherry-400 transition cursor-pointer"
+                            >
                                 {collection.author_name} {isOwner && "(Ви)"}
                             </Link>
                             <span className="text-slate-700">•</span>
@@ -100,22 +112,26 @@ const CollectionDetailsPage = () => {
                     </div>
 
                     {collection.description && (
-                        <p className="text-slate-400 text-lg italic font-serif break-words whitespace-pre-wrap max-w-2xl mx-auto">"{collection.description}"</p>
+                        <p className="text-slate-400 text-lg italic font-serif break-words whitespace-pre-wrap max-w-2xl mx-auto">
+                            "{collection.description}"
+                        </p>
                     )}
 
                     <div className="mt-6 flex justify-center gap-2">
-                        <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded text-xs text-slate-500 uppercase tracking-widest font-bold">{collection.type}</span>
+                        <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded text-xs text-slate-500 uppercase tracking-widest font-bold">
+                            {collection.type}
+                        </span>
                         <span className={`border px-3 py-1 rounded text-xs uppercase tracking-widest font-bold flex items-center gap-1 ${collection.is_public ? 'border-green-900 text-green-600 bg-green-900/10' : 'border-slate-800 text-slate-600 bg-slate-900'}`}>
                             {collection.is_public ? <GlobeAltIcon className="w-3 h-3"/> : <LockClosedIcon className="w-3 h-3"/>}
-                            {collection.is_public ? 'Public' : 'Private'}
+                            {collection.is_public ? 'Публічна' : 'Приватна'}
                         </span>
                     </div>
                 </div>
             </div>
 
-            {/* --- ВМІСТ --- */}
+            {/* --- ВМІСТ КОЛЕКЦІЇ --- */}
 
-            {/* 1. MOODBOARD */}
+            {/* 1. MOODBOARD (Пінтерест-стайл) */}
             {collection.type === 'MOODBOARD' && (
                 <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 px-4 max-w-[1600px] mx-auto">
                     {collection.items.map(art => (
@@ -136,7 +152,7 @@ const CollectionDetailsPage = () => {
                 </div>
             )}
 
-            {/* 2. SERIES */}
+            {/* 2. SERIES (Сетка з номерами) */}
             {collection.type === 'SERIES' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4 max-w-7xl mx-auto">
                     {collection.items.map((art, idx) => (
@@ -161,12 +177,14 @@ const CollectionDetailsPage = () => {
                 </div>
             )}
 
-            {/* 3. EXHIBITION */}
+            {/* 3. EXHIBITION (Виставка - Скролінг) */}
             {collection.type === 'EXHIBITION' && (
                 <div className="max-w-6xl mx-auto space-y-32 px-4 py-10">
                     {collection.items.map((art) => {
                         let layoutClasses = "flex flex-col items-center gap-8"; 
                         let textAlign = "text-center max-w-lg";
+                        
+                        // Логіка розташування тексту
                         if (art.layout_type === 'LEFT_TEXT') {
                             layoutClasses = "flex flex-col md:flex-row items-center gap-12 md:gap-20";
                             textAlign = "text-left max-w-md";
@@ -178,14 +196,15 @@ const CollectionDetailsPage = () => {
                         return (
                             <div key={art.link_id} className={layoutClasses}>
                                 <div className={`relative shadow-2xl ${art.layout_type === 'CENTER' ? 'w-full max-w-4xl aspect-video' : 'w-full md:w-1/2 aspect-[4/5]'}`}>
-                                    {/* 👇 Використовуємо обгортку */}
-                                    <ArtWrapper artwork={art} className="block w-full h-full">
-                                        <img 
+                                    {/* 👇 Тут завжди відкриваємо модалку для краси (навіть для власника можна, але залишимо логіку ArtWrapper) */}
+                                    {/* Або можна примусово відкривати модалку для виставки, бо це "презентація" */}
+                                    <div onClick={() => setSelectedArtwork(art)} className="cursor-zoom-in w-full h-full block">
+                                         <img 
                                             src={artworkService.getImageUrl(art.image_path)} 
                                             alt={art.title} 
                                             className="w-full h-full object-cover border-[10px] border-white shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                                         />
-                                    </ArtWrapper>
+                                    </div>
                                 </div>
 
                                 <div className={textAlign}>
@@ -196,7 +215,9 @@ const CollectionDetailsPage = () => {
                                     {art.context_description && (
                                         <div className="relative">
                                             <span className="text-cherry-900/50 text-6xl absolute -top-6 -left-4 font-serif">“</span>
-                                            <p className="text-bone-200 leading-8 font-serif text-xl italic relative z-10 break-words whitespace-pre-wrap">{art.context_description}</p>
+                                            <p className="text-bone-200 leading-8 font-serif text-xl italic relative z-10 break-words whitespace-pre-wrap">
+                                                {art.context_description}
+                                            </p>
                                         </div>
                                     )}
                                 </div>

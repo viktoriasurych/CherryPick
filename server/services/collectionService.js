@@ -97,6 +97,11 @@ class CollectionService {
     async getPublicCollections(userId) {
         return await collectionDAO.getPublic(userId);
     }
+
+    async reorderCollections(items) {
+        return await collectionDAO.updateCollectionsOrder(items);
+    }
+
 }
 
 module.exports = new CollectionService();

@@ -11,17 +11,17 @@ const db = new sqlite3.Database(dbPath, (err) => {
 db.serialize(() => {
     db.run("PRAGMA foreign_keys = ON");
 
-// 1. КОРИСТУВАЧІ (ОНОВЛЕНО: nickname UNIQUE)
+// 1. КОРИСТУВАЧІ
 db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nickname TEXT UNIQUE,       -- 👈 ТЕПЕР ВОНИ НЕ МОЖУТЬ ПОВТОРЮВАТИСЬ
+    nickname TEXT UNIQUE,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    
     avatar_url TEXT,
     bio TEXT,
     location TEXT,
     
+    -- Контакти
     contact_email TEXT,
     social_telegram TEXT,
     social_instagram TEXT,
@@ -29,6 +29,9 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
     social_artstation TEXT,
     social_behance TEXT,
     social_website TEXT,
+
+    -- 👇 НОВЕ: Налаштування приватності
+    show_stats_public BOOLEAN DEFAULT 1, 
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`);
@@ -99,17 +102,19 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
         FOREIGN KEY (material_id) REFERENCES art_materials(id) ON DELETE CASCADE
     )`);
 
-  // 4. КОЛЕКЦІЇ (ОНОВЛЕНО: Додано is_public)
-  db.run(`CREATE TABLE IF NOT EXISTS collections (
+ // 4. КОЛЕКЦІЇ
+ db.run(`CREATE TABLE IF NOT EXISTS collections (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
     type TEXT NOT NULL CHECK(type IN ('MOODBOARD', 'SERIES', 'EXHIBITION')) DEFAULT 'MOODBOARD',
-    
-    is_public BOOLEAN DEFAULT 0, -- 👈 НОВЕ ПОЛЕ (0 = Приватна, 1 = Публічна)
-    
+    is_public BOOLEAN DEFAULT 0,
     cover_image TEXT,
+    
+    -- 👇 НОВЕ: Порядок сортування на сторінці профілю
+    sort_order INTEGER DEFAULT 0, 
+
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 )`);

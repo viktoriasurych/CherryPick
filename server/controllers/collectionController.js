@@ -22,15 +22,13 @@ class CollectionController {
         }
     }
 
-    // 👇 НОВИЙ МЕТОД
     async getPublic(req, res) {
         try {
-            // Якщо ми хочемо подивитися публічні колекції конкретного юзера
-            // Ми маємо передати userId.
-            // Поки що, для твого профілю, візьмемо req.user.id
-            // Але в майбутньому це може бути req.params.userId
+            // 👇 ВИПРАВЛЕННЯ:
+            // Якщо прийшов параметр ?userId=5, беремо його.
+            // Якщо ні — беремо поточного юзера (req.user.id)
+            const userId = req.query.userId || req.user.id; 
             
-            const userId = req.user.id; 
             const collections = await collectionService.getPublicCollections(userId);
             res.json(collections);
         } catch (e) {
@@ -158,6 +156,14 @@ class CollectionController {
         try {
             await collectionService.removeCover(req.params.id, req.user.id);
             res.json({ message: "Обкладинку видалено" });
+        } catch(e) { res.status(500).json({message: e.message}); }
+    }
+
+    async reorder(req, res) {
+        try {
+            // req.body.items = [{id: 1}, {id: 5}, ...]
+            await collectionService.reorderCollections(req.body.items);
+            res.json({ message: "Порядок збережено" });
         } catch(e) { res.status(500).json({message: e.message}); }
     }
 }

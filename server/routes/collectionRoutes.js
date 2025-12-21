@@ -2,26 +2,29 @@ const express = require('express');
 const router = express.Router();
 const collectionController = require('../controllers/collectionController');
 const authMiddleware = require('../middleware/authMiddleware');
-const upload = require('../middleware/fileUpload'); // 👈 ДОДАЙ ЦЕЙ РЯДОК!
+const upload = require('../middleware/fileUpload');
 
-router.post('/', authMiddleware, collectionController.create);
-router.get('/', authMiddleware, collectionController.getAll);
-router.delete('/:id', authMiddleware, collectionController.delete);
+router.use(authMiddleware); // Захист для всіх роутів
 
-// 👇 НОВІ РОУТИ
-router.get('/:id', authMiddleware, collectionController.getOne);
-router.post('/:id/items', authMiddleware, collectionController.addItem); 
-router.delete('/:id/items/:artId', authMiddleware, collectionController.removeItem);
+// 1. Спочатку статичні/конкретні роути
+router.post('/', collectionController.create);
+router.get('/', collectionController.getAll); // Всі мої
+router.get('/public', collectionController.getPublic); // 👈 ПЕРЕМІСТИЛИ СЮДИ (перед /:id)
+router.put('/reorder', collectionController.reorder); // 👈 Це теж краще вище
 
-// Batch update & Cover
-router.put('/:id/batch', authMiddleware, collectionController.updateBatch);
-router.post('/:id/cover', authMiddleware, upload.single('image'), collectionController.uploadCover); // Тепер upload буде знайдено
-router.delete('/:id/cover', authMiddleware, collectionController.deleteCover);
+// 2. Роути для Artwork
+router.get('/artwork/:id', collectionController.getByArtwork);
 
-// Get collections by artwork
-router.get('/artwork/:id', authMiddleware, collectionController.getByArtwork);
+// 3. Потім динамічні роути (з параметрами :id)
+router.get('/:id', collectionController.getOne); // 👈 Цей "з'їдає" все, що схоже на ID
+router.delete('/:id', collectionController.delete);
+router.put('/:id', collectionController.update); // Просте оновлення
 
-router.get('/public', authMiddleware, collectionController.getPublic); // 👈 Тільки мої публічні (для профілю)
-// ...
+// 4. Вкладені роути
+router.post('/:id/items', collectionController.addItem);
+router.delete('/:id/items/:artId', collectionController.removeItem);
+router.put('/:id/batch', collectionController.updateBatch);
+router.post('/:id/cover', upload.single('image'), collectionController.uploadCover);
+router.delete('/:id/cover', collectionController.deleteCover);
 
 module.exports = router;

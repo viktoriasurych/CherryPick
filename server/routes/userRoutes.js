@@ -19,4 +19,6 @@ router.post('/me/avatar', upload.single('avatar'), userController.uploadAvatar);
 
 router.delete('/me/avatar', userController.deleteAvatar);
 
+router.get('/:id', userController.getById);
+
 module.exports = router;
