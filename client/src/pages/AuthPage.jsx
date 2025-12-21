@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google'; // 👈 Імпорт компонента Google
 import api from '../api/axios';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { useAuth } from '../hooks/useAuth'; // 👈 Імпорт хука авторизації
+import { useAuth } from '../hooks/useAuth';
 
 const AuthPage = () => {
     const navigate = useNavigate();
-    const { login } = useAuth(); // 👈 Дістаємо функцію входу з контексту
+    const { login } = useAuth();
     
     const [isLogin, setIsLogin] = useState(true); // true = Вхід, false = Реєстрація
     const [loading, setLoading] = useState(false);
@@ -19,11 +20,13 @@ const AuthPage = () => {
         password: ''
     });
 
+    // Оновлення полів форми
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setError(''); // Очищаємо помилку, коли юзер починає писати
+        setError('');
     };
 
+    // --- ЛОГІКА 1: Звичайний вхід через пошту ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -31,21 +34,35 @@ const AuthPage = () => {
 
         try {
             const endpoint = isLogin ? '/auth/login' : '/auth/register';
-            
-            // Відправляємо запит на сервер
             const response = await api.post(endpoint, formData);
-
-            console.log("Відповідь сервера:", response.data);
 
             if (response.data.token) {
                 login(response.data.token, response.data.user);
                 navigate('/projects');
             }
-
         } catch (err) {
             console.error("Помилка:", err);
-            // Виводимо повідомлення від бекенду або загальне
             setError(err.response?.data?.message || 'Щось пішло не так. Перевірте з’єднання.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- ЛОГІКА 2: Вхід через Google ---
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            setLoading(true);
+            // Відправляємо токен Google на наш сервер для перевірки
+            const res = await api.post('/auth/google', { 
+                token: credentialResponse.credential 
+            });
+            
+            // Якщо все ок - сервер поверне наш JWT токен і юзера
+            login(res.data.token, res.data.user);
+            navigate('/projects');
+        } catch (e) {
+            console.error("Google Auth Error:", e);
+            setError("Не вдалося увійти через Google. Спробуйте ще раз.");
         } finally {
             setLoading(false);
         }
@@ -53,21 +70,21 @@ const AuthPage = () => {
 
     return (
         <div className="min-h-screen bg-slate-950 font-sans flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-lg shadow-2xl overflow-hidden relative">
+            <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-lg shadow-2xl overflow-hidden relative animate-in fade-in zoom-in duration-300">
                 
-                {/* Декоративна смужка зверху */}
+                {/* Декоративна смужка */}
                 <div className="h-1 bg-gradient-to-r from-cherry-900 via-cherry-500 to-cherry-900"></div>
 
                 <div className="p-8">
-                    {/* Заголовок */}
+                    {/* Логотип */}
                     <h1 className="font-pixel text-3xl text-center text-cherry-500 mb-2 tracking-wide">
                         CherryPick 🍒
                     </h1>
-                    <p className="text-center text-slate-500 text-sm mb-8 uppercase tracking-widest font-medium">
+                    <p className="text-center text-slate-500 text-sm mb-6 uppercase tracking-widest font-medium">
                         {isLogin ? 'Вхід до архіву' : 'Новий художник'}
                     </p>
 
-                    {/* Форма */}
+                    {/* --- ФОРМА --- */}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         
                         {/* Поле Нікнейм (тільки для реєстрації) */}
@@ -90,18 +107,28 @@ const AuthPage = () => {
                             onChange={handleChange} 
                         />
 
-                        <Input 
-                            label="Пароль" 
-                            name="password" 
-                            type="password"
-                            placeholder="••••••••" 
-                            value={formData.password} 
-                            onChange={handleChange}
-                            error={error} // Показуємо помилку під полем пароля (або можна окремим блоком)
-                        />
+                        <div className="space-y-1">
+                            <Input 
+                                label="Пароль" 
+                                name="password" 
+                                type="password"
+                                placeholder="••••••••" 
+                                value={formData.password} 
+                                onChange={handleChange}
+                                error={error} 
+                            />
+                            {/* Посилання "Забули пароль?" */}
+                            {isLogin && (
+                                <div className="flex justify-end">
+                                    <Link to="/forgot-password" class="text-[10px] text-slate-500 hover:text-cherry-400 transition-colors uppercase font-bold tracking-wider">
+                                        Забули пароль?
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
 
-                        {/* Блок помилки, якщо вона не прив'язана до конкретного поля */}
-                        {error && !error.includes('Пароль') && (
+                        {/* Загальна помилка (якщо не прив'язана до поля) */}
+                        {error && !error.toLowerCase().includes('пароль') && (
                             <div className="text-red-500 text-xs text-center bg-red-500/10 p-2 rounded border border-red-500/20">
                                 {error}
                             </div>
@@ -116,7 +143,29 @@ const AuthPage = () => {
                         </div>
                     </form>
 
-                    {/* Перемикач Вхід / Реєстрація */}
+                    {/* --- РОЗДІЛЮВАЧ --- */}
+                    <div className="mt-6 mb-4">
+                        <div className="relative flex py-2 items-center">
+                            <div className="flex-grow border-t border-slate-800"></div>
+                            <span className="flex-shrink-0 mx-4 text-slate-600 text-[10px] uppercase font-bold tracking-widest">або</span>
+                            <div className="flex-grow border-t border-slate-800"></div>
+                        </div>
+                    </div>
+
+                    {/* --- КНОПКА GOOGLE --- */}
+                    <div className="flex justify-center w-full">
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => setError('Google Login Failed')}
+                            theme="filled_black"
+                            shape="pill"
+                            width="350px" // Можна поставити фіксовану ширину або 100% (але бібліотека має ліміти)
+                            locale="uk"
+                            text={isLogin ? "signin_with" : "signup_with"}
+                        />
+                    </div>
+
+                    {/* --- ПІДВАЛ (Перемикач) --- */}
                     <div className="mt-8 text-center text-sm border-t border-slate-800 pt-6">
                         <span className="text-slate-500 mr-2">
                             {isLogin ? 'Ще немає акаунту?' : 'Вже є акаунт?'}
@@ -125,13 +174,14 @@ const AuthPage = () => {
                             onClick={() => { 
                                 setIsLogin(!isLogin); 
                                 setError(''); 
-                                setFormData({ nickname: '', email: '', password: '' }); // Очистка форми при перемиканні
+                                setFormData({ nickname: '', email: '', password: '' });
                             }}
                             className="text-cherry-500 hover:text-cherry-400 font-bold hover:underline transition-colors"
                         >
                             {isLogin ? 'Реєстрація' : 'Увійти'}
                         </button>
                     </div>
+
                 </div>
             </div>
         </div>

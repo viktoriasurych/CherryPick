@@ -14,6 +14,9 @@ import CollectionDetailsPage from './pages/CollectionDetailsPage';
 import CollectionEditPage from './pages/CollectionEditPage';
 import SavedCollectionsPage from './pages/SavedCollectionsPage'; // 👈 1. НОВИЙ ІМПОРТ
 
+import ForgotPasswordPage from './pages/ForgotPasswordPage'; // 👈 Додали
+import ResetPasswordPage from './pages/ResetPasswordPage';   // 👈 Додали
+
 import ProtectedRoute from './components/ProtectedRoute'; 
 import SessionPage from './pages/SessionPage';
 import Layout from './components/Layout';
@@ -36,6 +39,15 @@ function App() {
       <Route 
         path="/auth" 
         element={user ? <Navigate to="/projects" replace /> : <AuthPage />} 
+      />
+
+<Route 
+        path="/forgot-password" 
+        element={user ? <Navigate to="/projects" replace /> : <ForgotPasswordPage />} 
+      />
+      <Route 
+        path="/reset-password" 
+        element={user ? <Navigate to="/projects" replace /> : <ResetPasswordPage />} 
       />
 
       {/* Публічний профіль */}

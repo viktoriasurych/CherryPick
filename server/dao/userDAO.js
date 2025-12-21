@@ -141,6 +141,83 @@ class UserDAO {
             });
         });
     }
+
+    // 👇 1. НОВІ МЕТОДИ ДЛЯ GOOGLE
+    // 👇 ТРЕБА (правильно):
+    createFromGoogle(nickname, email, passwordHash, googleId, avatarUrl) {
+        return new Promise((resolve, reject) => {
+            const sql = `INSERT INTO users (nickname, email, password_hash, google_id, avatar_url) VALUES (?, ?, ?, ?, ?)`;
+            
+            // ВАЖЛИВО: Тут має бути 'function(err)', а не '(err) =>'
+            db.run(sql, [nickname, email, passwordHash, googleId, avatarUrl], function(err) {
+                if (err) {
+                    // Якщо помилка (наприклад, такий нік вже є), повертаємо її
+                    return reject(err); 
+                }
+                // Тепер 'this' посилається на Statement об'єкт sqlite, де є lastID
+                resolve({ 
+                    id: this.lastID, 
+                    nickname, 
+                    email, 
+                    google_id: googleId, 
+                    avatar_url: avatarUrl 
+                });
+            });
+        });
+    }
+
+    linkGoogleId(userId, googleId) {
+        return new Promise((resolve, reject) => {
+            const sql = 'UPDATE users SET google_id = ? WHERE id = ?';
+            db.run(sql, [googleId, userId], (err) => {
+                if (err) reject(err);
+                resolve(true);
+            });
+        });
+    }
+
+    // 👇 2. НОВІ МЕТОДИ ДЛЯ PASSWORD RESET
+    saveResetToken(email, token, expiresAt) {
+        return new Promise((resolve, reject) => {
+            const sql = `INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)`;
+            db.run(sql, [email, token, expiresAt], (err) => {
+                if (err) reject(err);
+                resolve(true);
+            });
+        });
+    }
+
+    findResetToken(email, token) {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT * FROM password_resets WHERE email = ? AND token = ?`;
+            db.get(sql, [email, token], (err, row) => {
+                if (err) reject(err);
+                resolve(row);
+            });
+        });
+    }
+
+    deleteResetToken(email) {
+        return new Promise((resolve, reject) => {
+            const sql = `DELETE FROM password_resets WHERE email = ?`;
+            db.run(sql, [email], (err) => {
+                if (err) reject(err);
+                resolve(true);
+            });
+        });
+    }
+
+    updatePassword(email, newHash) {
+        return new Promise((resolve, reject) => {
+            const sql = `UPDATE users SET password_hash = ? WHERE email = ?`;
+            db.run(sql, [newHash, email], (err) => {
+                if (err) reject(err);
+                resolve(true);
+            });
+        });
+    }
+
+    
 }
 
 module.exports = new UserDAO();

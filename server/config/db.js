@@ -11,50 +11,57 @@ const db = new sqlite3.Database(dbPath, (err) => {
 db.serialize(() => {
     db.run("PRAGMA foreign_keys = ON");
 
-// 1. КОРИСТУВАЧІ
-db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nickname TEXT UNIQUE,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    avatar_url TEXT,
-    bio TEXT,
-    location TEXT,
-    
-    -- Контакти
-    contact_email TEXT,
-    social_telegram TEXT,
-    social_instagram TEXT,
-    social_twitter TEXT,
-    social_artstation TEXT,
-    social_behance TEXT,
-    social_website TEXT,
+    // 1. КОРИСТУВАЧІ
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nickname TEXT UNIQUE,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT, -- 👇 ПРИБРАЛИ 'NOT NULL', щоб дозволити Google-only вхід (якщо треба)
+        google_id TEXT UNIQUE, -- 👇 НОВЕ: ID від Google
+        
+        avatar_url TEXT,
+        bio TEXT,
+        location TEXT,
+        
+        -- Контакти
+        contact_email TEXT,
+        social_telegram TEXT,
+        social_instagram TEXT,
+        social_twitter TEXT,
+        social_artstation TEXT,
+        social_behance TEXT,
+        social_website TEXT,
 
-    -- 👇 НОВІ НАЛАШТУВАННЯ ПРИВАТНОСТІ (3 окремих прапорця)
-    show_global_stats BOOLEAN DEFAULT 1,  -- БЛОК 1: Глобальні (перегляди/збереження)
-    show_kpi_stats BOOLEAN DEFAULT 1,     -- БЛОК 2: Активність (4 квадратики)
-    show_heatmap_stats BOOLEAN DEFAULT 1, -- БЛОК 3: Heatmap (календар)
+        -- Налаштування приватності (статистика)
+        show_global_stats BOOLEAN DEFAULT 1, 
+        show_kpi_stats BOOLEAN DEFAULT 1,    
+        show_heatmap_stats BOOLEAN DEFAULT 1, 
 
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`);
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
 
-// ...
-    // 2. ДОВІДНИКИ (З підтримкою особистих записів)
-    // user_id NULL = Загальне для всіх
-    // user_id NOT NULL = Особисте
+    // 1.1. 👇 НОВЕ: ТАБЛИЦЯ ДЛЯ ВІДНОВЛЕННЯ ПАРОЛЮ
+    db.run(`CREATE TABLE IF NOT EXISTS password_resets (
+        email TEXT NOT NULL,
+        token TEXT NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // 2. ДОВІДНИКИ
     const createDictTable = (tableName) => {
         db.run(`CREATE TABLE IF NOT EXISTS ${tableName} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             user_id INTEGER, 
-            UNIQUE(name, user_id), -- Щоб не дублювали назви для одного юзера
+            UNIQUE(name, user_id),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
     };
 
     createDictTable('art_styles');
     createDictTable('art_materials');
-    createDictTable('art_genres'); // <--- НОВЕ: Жанри
+    createDictTable('art_genres');
     createDictTable('art_tags');
 
     // 3. КАРТИНИ
@@ -65,14 +72,12 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
         image_path TEXT,
         status TEXT DEFAULT 'PLANNED',
         
-        created_date DATETIME DEFAULT CURRENT_TIMESTAMP, -- Системна дата
+        created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
         
-        -- 👇 ГНУЧКІ ДАТИ (Початок)
         started_year INTEGER,
         started_month INTEGER,
         started_day INTEGER,
 
-        -- 👇 ГНУЧКІ ДАТИ (Кінець)
         finished_year INTEGER,
         finished_month INTEGER,
         finished_day INTEGER,
@@ -86,8 +91,7 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
         FOREIGN KEY (genre_id) REFERENCES art_genres(id) ON DELETE SET NULL
     )`);
 
-
-    // 3.1. ЗВ'ЯЗОК КАРТИНА <-> ТЕГИ (Багато до багатьох)
+    // 3.1. ЗВ'ЯЗКИ
     db.run(`CREATE TABLE IF NOT EXISTS artwork_tags_link (
         artwork_id INTEGER,
         tag_id INTEGER,
@@ -104,45 +108,33 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
         FOREIGN KEY (material_id) REFERENCES art_materials(id) ON DELETE CASCADE
     )`);
 
- // 4. КОЛЕКЦІЇ
- db.run(`CREATE TABLE IF NOT EXISTS collections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    type TEXT NOT NULL CHECK(type IN ('MOODBOARD', 'SERIES', 'EXHIBITION')) DEFAULT 'MOODBOARD',
-    is_public BOOLEAN DEFAULT 0,
-    cover_image TEXT,
-    
-    -- 👇 НОВЕ: Порядок сортування на сторінці профілю
-    sort_order INTEGER DEFAULT 0, 
+    // 4. КОЛЕКЦІЇ
+    db.run(`CREATE TABLE IF NOT EXISTS collections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        type TEXT NOT NULL CHECK(type IN ('MOODBOARD', 'SERIES', 'EXHIBITION')) DEFAULT 'MOODBOARD',
+        is_public BOOLEAN DEFAULT 0,
+        cover_image TEXT,
+        sort_order INTEGER DEFAULT 0, 
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
 
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-)`);
-
-db.run(`CREATE TABLE IF NOT EXISTS collection_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    collection_id INTEGER NOT NULL,
-    artwork_id INTEGER NOT NULL,
-    
-    -- 👇 Для порядку (Важливо для "Серії" та "Виставки")
-    sort_order INTEGER DEFAULT 0,
-    
-    -- 👇 Для "Виставки" (CENTER, LEFT_TEXT, RIGHT_TEXT)
-    layout_type TEXT DEFAULT 'CENTER',
-    
-    -- 👇 Унікальний опис картини саме для цієї збірки
-    context_description TEXT,
-    
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY(collection_id) REFERENCES collections(id) ON DELETE CASCADE,
-    FOREIGN KEY(artwork_id) REFERENCES artworks(id) ON DELETE CASCADE,
-    
-    -- Щоб одну картину не додали двічі в ту саму збірку
-    UNIQUE(collection_id, artwork_id)
-)`);
+    db.run(`CREATE TABLE IF NOT EXISTS collection_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        collection_id INTEGER NOT NULL,
+        artwork_id INTEGER NOT NULL,
+        sort_order INTEGER DEFAULT 0,
+        layout_type TEXT DEFAULT 'CENTER',
+        context_description TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        
+        FOREIGN KEY(collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+        FOREIGN KEY(artwork_id) REFERENCES artworks(id) ON DELETE CASCADE,
+        UNIQUE(collection_id, artwork_id)
+    )`);
 
     // 5. СЕСІЇ
     db.run(`CREATE TABLE IF NOT EXISTS sessions (
@@ -155,21 +147,19 @@ db.run(`CREATE TABLE IF NOT EXISTS collection_items (
         FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
     )`);
 
-    // 5.1. ЛІЧИЛЬНИК ПЕРЕГЛЯДІВ (SQLite версія)
-db.run(`CREATE TABLE IF NOT EXISTS collection_views (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    collection_id INTEGER NOT NULL,
-    user_id INTEGER,          -- NULL для гостей
-    ip_address TEXT NOT NULL, 
-    viewed_at TEXT DEFAULT CURRENT_DATE, -- SQLite зберігає дати як рядки YYYY-MM-DD
-    
-    FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-
-    -- Унікальні обмеження, щоб не накручували (1 перегляд в день)
-    UNIQUE(collection_id, user_id, viewed_at),
-    UNIQUE(collection_id, ip_address, viewed_at)
-)`);
+    // 5.1. ЛІЧИЛЬНИК ПЕРЕГЛЯДІВ
+    db.run(`CREATE TABLE IF NOT EXISTS collection_views (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        collection_id INTEGER NOT NULL,
+        user_id INTEGER,
+        ip_address TEXT NOT NULL, 
+        viewed_at TEXT DEFAULT CURRENT_DATE,
+        
+        FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE(collection_id, user_id, viewed_at),
+        UNIQUE(collection_id, ip_address, viewed_at)
+    )`);
 
     // 6. НОТАТКИ
     db.run(`CREATE TABLE IF NOT EXISTS notes (
@@ -181,6 +171,7 @@ db.run(`CREATE TABLE IF NOT EXISTS collection_views (
         FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
     )`);
 
+    // 7. ГАЛЕРЕЯ КАРТИНИ
     db.run(`CREATE TABLE IF NOT EXISTS artwork_gallery (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         artwork_id INTEGER NOT NULL,
@@ -190,22 +181,18 @@ db.run(`CREATE TABLE IF NOT EXISTS collection_views (
         FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
     )`);
 
-    // 8. ЗБЕРЕЖЕНІ КОЛЕКЦІЇ (Bookmarks)
+    // 8. ЗБЕРЕЖЕНІ КОЛЕКЦІЇ
     db.run(`CREATE TABLE IF NOT EXISTS saved_collections (
         user_id INTEGER NOT NULL,
         collection_id INTEGER NOT NULL,
         saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         
-        PRIMARY KEY (user_id, collection_id), -- Щоб не зберегти двічі
+        PRIMARY KEY (user_id, collection_id),
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        
-        -- 👇 ВАЖЛИВО: Якщо автор видаляє колекцію, вона зникне і зі збережених.
-        -- Це "чистий" підхід (Hard Delete). Якщо хочеш "Soft Delete" (повідомлення "видалено"),
-        -- треба міняти логіку видалення самих колекцій, але для MVP Cascade краще.
         FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE
     )`);
 
-    // 7. ПОЧАТКОВЕ ЗАПОВНЕННЯ (Global Data)
+    // 9. ПОЧАТКОВЕ ЗАПОВНЕННЯ (Global Data)
     const seedDict = (table, items) => {
         db.get(`SELECT count(*) as count FROM ${table}`, (err, row) => {
             if (row && row.count === 0) {
@@ -219,7 +206,7 @@ db.run(`CREATE TABLE IF NOT EXISTS collection_views (
 
     seedDict('art_styles', ['Realism', 'Anime', 'Pixel Art', 'Abstract', 'Gothic', 'Sketch']);
     seedDict('art_materials', ['Oil', 'Watercolor', 'Digital', 'Pencil', 'Acrylic', 'Ink']);
-    seedDict('art_genres', ['Portrait', 'Landscape', 'Still Life', 'Character Design', 'Concept Art']); // <--- Жанри
+    seedDict('art_genres', ['Portrait', 'Landscape', 'Still Life', 'Character Design', 'Concept Art']);
 });
 
 module.exports = db;
