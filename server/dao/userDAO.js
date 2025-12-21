@@ -32,20 +32,27 @@ class UserDAO {
                     id, nickname, email, 
                     avatar_url, bio, location,
                     
-                    -- Контакти
                     contact_email, social_telegram, 
                     social_instagram, social_twitter, 
                     social_artstation, social_behance, 
                     social_website,
                     
-                    -- Налаштування
-                    show_stats_public, 
+                    -- 👇 ТЕПЕР 3 ОКРЕМИХ НАЛАШТУВАННЯ
+                    show_global_stats,
+                    show_kpi_stats,
+                    show_heatmap_stats,
                     
                     created_at 
                 FROM users WHERE id = ?`;
             
             db.get(sql, [id], (err, row) => {
                 if (err) reject(err);
+                // Конвертуємо 1/0 в true/false для зручності фронту
+                if (row) {
+                    row.show_global_stats = !!row.show_global_stats;
+                    row.show_kpi_stats = !!row.show_kpi_stats;
+                    row.show_heatmap_stats = !!row.show_heatmap_stats;
+                }
                 resolve(row);
             });
         });
@@ -54,58 +61,49 @@ class UserDAO {
     // 4. Оновлення текстового профілю (Виправлено помилку showStats)
     updateProfile(id, data) {
         return new Promise((resolve, reject) => {
-            // 👇 1. ОГОЛОШУЄМО ЗМІННУ ТУТ
-            // Конвертуємо true/false/"true" в 1 або 0 для SQLite
-            const showStats = (data.show_stats_public === true || data.show_stats_public === 1 || data.show_stats_public === 'true') ? 1 : 0;
+            // Конвертуємо boolean в 1/0
+            const showGlobal = data.show_global_stats ? 1 : 0;
+            const showKpi = data.show_kpi_stats ? 1 : 0;
+            const showHeatmap = data.show_heatmap_stats ? 1 : 0;
 
             const sql = `
                 UPDATE users 
                 SET 
-                    nickname = ?, 
-                    bio = ?, 
-                    location = ?, 
-                    contact_email = ?,
-                    social_telegram = ?,
-                    social_instagram = ?, 
-                    social_twitter = ?,
-                    social_artstation = ?, 
-                    social_behance = ?,
+                    nickname = ?, bio = ?, location = ?, 
+                    contact_email = ?, social_telegram = ?,
+                    social_instagram = ?, social_twitter = ?,
+                    social_artstation = ?, social_behance = ?,
                     social_website = ?,
-                    show_stats_public = ?  -- Оновлюємо налаштування
+                    
+                    -- 👇 ОНОВЛЮЄМО 3 ПОЛЯ
+                    show_global_stats = ?,
+                    show_kpi_stats = ?,
+                    show_heatmap_stats = ?
                 WHERE id = ?
             `;
             
             const params = [
-                data.nickname, 
-                data.bio, 
-                data.location,
-                data.contact_email,
-                data.social_telegram,
-                data.social_instagram,
-                data.social_twitter,
-                data.social_artstation,
-                data.social_behance,
+                data.nickname, data.bio, data.location,
+                data.contact_email, data.social_telegram,
+                data.social_instagram, data.social_twitter,
+                data.social_artstation, data.social_behance,
                 data.social_website,
-                showStats, // 👇 ТЕПЕР ВОНА ІСНУЄ
+                showGlobal, showKpi, showHeatmap, // Нові параметри
                 id
             ];
 
             db.run(sql, params, function(err) {
                 if (err) return reject(err);
                 
-                // Після успішного оновлення повертаємо оновлений профіль
-                // Щоб фронтенд одразу оновив картинку і дані
-                const selectSql = `
-                    SELECT 
-                        id, nickname, email, avatar_url, bio, location,
-                        contact_email, social_telegram, social_instagram, social_twitter, 
-                        social_artstation, social_behance, social_website,
-                        show_stats_public
-                    FROM users WHERE id = ?
-                `;
-
+                // Повертаємо оновленого юзера
+                const selectSql = `SELECT * FROM users WHERE id = ?`;
                 db.get(selectSql, [id], (err, row) => {
                     if(err) reject(err);
+                    if (row) {
+                        row.show_global_stats = !!row.show_global_stats;
+                        row.show_kpi_stats = !!row.show_kpi_stats;
+                        row.show_heatmap_stats = !!row.show_heatmap_stats;
+                    }
                     resolve(row);
                 });
             });

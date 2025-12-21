@@ -28,7 +28,12 @@ const StatsPage = () => {
         const load = async () => {
             try {
                 setLoading(true);
+                
+                // 👇 ТУТ ВАЖЛИВИЙ МОМЕНТ:
+                // Ми викликаємо БЕЗ третього параметра (або передаємо false).
+                // Це каже бекенду: "Використовуй дату першої КАРТИНИ, а не реєстрації".
                 const stats = await statsService.getStats(selectedYear);
+                
                 setData(stats);
             } catch (error) {
                 console.error(error);
@@ -208,7 +213,6 @@ const StatsPage = () => {
 
 // --- КОМПОНЕНТИ ---
 
-// 👇 Новий компонент для заголовків блоків
 const SectionTitle = ({ children }) => (
     <h3 className="text-lg font-bold text-slate-400 uppercase tracking-widest border-l-4 border-cherry-600 pl-3">
         {children}

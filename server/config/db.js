@@ -30,8 +30,10 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
     social_behance TEXT,
     social_website TEXT,
 
-    -- 👇 НОВЕ: Налаштування приватності
-    show_stats_public BOOLEAN DEFAULT 1, 
+    -- 👇 НОВІ НАЛАШТУВАННЯ ПРИВАТНОСТІ (3 окремих прапорця)
+    show_global_stats BOOLEAN DEFAULT 1,  -- БЛОК 1: Глобальні (перегляди/збереження)
+    show_kpi_stats BOOLEAN DEFAULT 1,     -- БЛОК 2: Активність (4 квадратики)
+    show_heatmap_stats BOOLEAN DEFAULT 1, -- БЛОК 3: Heatmap (календар)
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`);

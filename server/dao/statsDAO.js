@@ -1,7 +1,53 @@
 const db = require('../config/db');
 
 class StatsDAO {
-    
+    // 👇 НОВИЙ МЕТОД (Додай його сюди, наприклад, на початку)
+    // Рахує загальні перегляди та збереження для БЛОКУ 1
+    getGlobalImpact(userId) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT 
+                    -- 1. Загальна кількість переглядів моїх колекцій
+                    (
+                        SELECT COUNT(*) 
+                        FROM collection_views cv 
+                        JOIN collections c ON cv.collection_id = c.id 
+                        WHERE c.user_id = ?
+                    ) as total_views,
+                    
+                    -- 2. Скільки разів інші люди зберегли мої колекції
+                    (
+                        SELECT COUNT(*) 
+                        FROM saved_collections sc
+                        JOIN collections c ON sc.collection_id = c.id
+                        WHERE c.user_id = ?
+                    ) as total_saves
+            `;
+            // Передаємо userId двічі (для двох підзапитів)
+            db.get(sql, [userId, userId], (err, row) => {
+                if (err) return reject(err);
+                resolve(row || { total_views: 0, total_saves: 0 });
+            });
+        });
+    }
+
+    // 👇 НОВИЙ МЕТОД: Тільки дата реєстрації (для Профілю)
+    getRegistrationYear(userId) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT CAST(strftime('%Y', created_at) AS INTEGER) as reg_year
+                FROM users
+                WHERE id = ?
+            `;
+            db.get(sql, [userId], (err, row) => {
+                if (err) return reject(err);
+                const currentYear = new Date().getFullYear();
+                // Якщо помилка або null — повертаємо поточний рік
+                resolve(row?.reg_year || currentYear);
+            });
+        });
+    }
+
     // Отримати рік початку першої роботи (або поточний рік)
     getStartYear(userId) {
         return new Promise((resolve, reject) => {
