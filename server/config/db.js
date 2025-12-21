@@ -153,6 +153,22 @@ db.run(`CREATE TABLE IF NOT EXISTS collection_items (
         FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
     )`);
 
+    // 5.1. ЛІЧИЛЬНИК ПЕРЕГЛЯДІВ (SQLite версія)
+db.run(`CREATE TABLE IF NOT EXISTS collection_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    collection_id INTEGER NOT NULL,
+    user_id INTEGER,          -- NULL для гостей
+    ip_address TEXT NOT NULL, 
+    viewed_at TEXT DEFAULT CURRENT_DATE, -- SQLite зберігає дати як рядки YYYY-MM-DD
+    
+    FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    -- Унікальні обмеження, щоб не накручували (1 перегляд в день)
+    UNIQUE(collection_id, user_id, viewed_at),
+    UNIQUE(collection_id, ip_address, viewed_at)
+)`);
+
     // 6. НОТАТКИ
     db.run(`CREATE TABLE IF NOT EXISTS notes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

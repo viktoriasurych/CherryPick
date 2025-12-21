@@ -1,5 +1,10 @@
+const jwt = require('jsonwebtoken');
 const collectionService = require('../services/collectionService');
+const viewStatsService = require('../services/viewStatsService');
 
+// 👇 ВАЖЛИВО: Цей ключ має бути ІДЕНТИЧНИМ тому, що в authMiddleware.js
+// Краще перевір, що написано у твоєму middleware і встав сюди те саме.
+const secret = process.env.JWT_SECRET || 'fallback_secret';
 class CollectionController {
     
     async create(req, res) {
@@ -99,22 +104,63 @@ class CollectionController {
 
     async getOne(req, res) {
         try {
-            // 👇 ВИПРАВЛЕННЯ:
-            // Якщо є req.user (авторизований), беремо ID. 
-            // Якщо ні (гість) — ставимо null.
-            const userId = req.user ? req.user.id : null; 
-
-            // Передаємо null у сервіс. Сервіс має зрозуміти:
-            // "Якщо ID юзера немає, показуй колекцію ТІЛЬКИ якщо вона is_public=true"
-            const collection = await collectionService.getCollectionDetails(req.params.id, userId);
+            const collectionId = req.params.id;
             
-            res.json(collection);
+            // --- ПОЧАТОК РОЗПІЗНАВАННЯ ---
+            let userId = null;
+            
+            // 1. Спробуємо взяти з req.user (якщо спрацював optionalAuthMiddleware)
+            if (req.user) {
+                userId = req.user.id;
+                console.log(`🔑 АВТОРИЗАЦІЯ (Middleware): Впізнав UserID=${userId}`);
+            } 
+            // 2. Якщо ні, пробуємо розшифрувати вручну (Запасний план)
+            else {
+                try {
+                    const authHeader = req.headers.authorization;
+                    if (authHeader) {
+                        const token = authHeader.split(' ')[1];
+                        const jwt = require('jsonwebtoken');
+                        // ⚠️ УВАГА: Тут має бути ТОЙ САМИЙ ключ, що в authMiddleware!
+                        // Якщо в тебе там 'fallback_secret', то і тут має бути він.
+                        const secret = process.env.JWT_SECRET || 'fallback_secret'; 
+                        
+                        const decoded = jwt.verify(token, secret);
+                        userId = decoded.id;
+                        console.log(`🔑 АВТОРИЗАЦІЯ (Manual): Впізнав UserID=${userId}`);
+                    } else {
+                        console.log(`👤 АВТОРИЗАЦІЯ: Токена немає, це Гість.`);
+                    }
+                } catch (e) {
+                    console.log(`❌ АВТОРИЗАЦІЯ ПОМИЛКА: ${e.message}`);
+                }
+            }
+            // --- КІНЕЦЬ РОЗПІЗНАВАННЯ ---
+
+            // Шукаємо колекцію
+            const collection = await collectionService.getCollectionDetails(collectionId, userId);
+            
+            if (!collection) {
+                console.log(`🚫 БАЗА ДАНИХ: Колекцію ID=${collectionId} не знайдено для UserID=${userId}`);
+                return res.status(404).json({ message: "Колекцію не знайдено (або вона приватна)" });
+            }
+
+            // Статистика (пропускаємо помилки, щоб не крашило)
+            try {
+                const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+                viewStatsService.recordView(collectionId, userId, ip).catch(() => {});
+                const views = await viewStatsService.getViewsCount(collectionId);
+                res.json({ ...collection, views });
+            } catch (statErr) {
+                // Якщо статистика впала - віддаємо хоча б колекцію
+                res.json({ ...collection, views: 0 });
+            }
+
         } catch (e) {
-            // Якщо сервіс викинув помилку (наприклад "Доступ заборонено"), повертаємо 403 або 404
-            res.status(404).json({ message: e.message });
+            console.error("CRITICAL ERROR:", e);
+            res.status(500).json({ message: e.message });
         }
     }
-
     // 👇 ОСЬ ТУТ БУЛА ПОМИЛКА:
     // Ми змінили collectionDAO.update -> collectionService.updateCollection
     async update(req, res) {

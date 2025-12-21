@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const statsController = require('../controllers/statsController');
-// const authMiddleware = require('../middleware/authMiddleware'); // 👈 Тут він не потрібен для публічного доступу
+const authMiddleware = require('../middleware/authMiddleware'); // 👈 1. Переконайся, що це імпортовано
 
-// GET /api/stats?userId=5&year=2025
-// Ми прибрали authMiddleware, щоб гості не отримували помилку 401
-router.get('/', statsController.getStats);
+// 🔐 Отримати статистику (Тільки для авторизованих!)
+// 👇 2. Додай authMiddleware другим аргументом
+router.get('/', authMiddleware, statsController.getStats); 
 
 module.exports = router;
