@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const RULES = require('./validationRules.json');// Import validation rules
 
 const dbPath = path.resolve(__dirname, '../cherrypitch.sqlite');
 
@@ -11,28 +12,32 @@ const db = new sqlite3.Database(dbPath, (err) => {
 db.serialize(() => {
     db.run("PRAGMA foreign_keys = ON");
 
-    // 1. КОРИСТУВАЧІ
+    // 1. USERS
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nickname TEXT UNIQUE,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT, -- 👇 ПРИБРАЛИ 'NOT NULL', щоб дозволити Google-only вхід (якщо треба)
-        google_id TEXT UNIQUE, -- 👇 НОВЕ: ID від Google
+        -- 👇 ТЕХНІЧНИЙ НІКНЕЙМ (для URL)
+        nickname TEXT UNIQUE CHECK(length(nickname) <= ${RULES.USER.NICKNAME.MAX}),
+        
+        -- 👇 КРАСИВЕ ІМ'Я (для відображення)
+        display_name TEXT CHECK(length(display_name) <= ${RULES.USER.DISPLAY_NAME.MAX}),
+        email TEXT UNIQUE NOT NULL CHECK(length(email) <= ${RULES.USER.EMAIL.MAX}),
+        password_hash TEXT, 
+        google_id TEXT UNIQUE, 
         
         avatar_url TEXT,
-        bio TEXT,
-        location TEXT,
+        bio TEXT CHECK(length(bio) <= ${RULES.USER.BIO.MAX}),
+        location TEXT CHECK(length(location) <= ${RULES.USER.LOCATION.MAX}),
         
-        -- Контакти
-        contact_email TEXT,
-        social_telegram TEXT,
-        social_instagram TEXT,
-        social_twitter TEXT,
-        social_artstation TEXT,
-        social_behance TEXT,
-        social_website TEXT,
+        -- Contacts
+        contact_email TEXT CHECK(length(contact_email) <= ${RULES.USER.EMAIL.MAX}),
+        social_telegram TEXT CHECK(length(social_telegram) <= ${RULES.USER.SOCIAL.MAX}),
+        social_instagram TEXT CHECK(length(social_instagram) <= ${RULES.USER.SOCIAL.MAX}),
+        social_twitter TEXT CHECK(length(social_twitter) <= ${RULES.USER.SOCIAL.MAX}),
+        social_artstation TEXT CHECK(length(social_artstation) <= ${RULES.USER.SOCIAL.MAX}),
+        social_behance TEXT CHECK(length(social_behance) <= ${RULES.USER.SOCIAL.MAX}),
+        social_website TEXT CHECK(length(social_website) <= ${RULES.USER.SOCIAL.MAX}),
 
-        -- Налаштування приватності (статистика)
+        -- Privacy settings (stats)
         show_global_stats BOOLEAN DEFAULT 1, 
         show_kpi_stats BOOLEAN DEFAULT 1,    
         show_heatmap_stats BOOLEAN DEFAULT 1, 
@@ -40,7 +45,7 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    // 1.1. 👇 НОВЕ: ТАБЛИЦЯ ДЛЯ ВІДНОВЛЕННЯ ПАРОЛЮ
+    // 1.1. PASSWORD RESETS
     db.run(`CREATE TABLE IF NOT EXISTS password_resets (
         email TEXT NOT NULL,
         token TEXT NOT NULL,
@@ -48,11 +53,11 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    // 2. ДОВІДНИКИ
+    // 2. DICTIONARIES
     const createDictTable = (tableName) => {
         db.run(`CREATE TABLE IF NOT EXISTS ${tableName} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
+            name TEXT NOT NULL CHECK(length(name) <= ${RULES.DICT.NAME.MAX}),
             user_id INTEGER, 
             UNIQUE(name, user_id),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -64,11 +69,11 @@ db.serialize(() => {
     createDictTable('art_genres');
     createDictTable('art_tags');
 
-    // 3. КАРТИНИ
+    // 3. ARTWORKS
     db.run(`CREATE TABLE IF NOT EXISTS artworks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        description TEXT,
+        title TEXT NOT NULL CHECK(length(title) <= ${RULES.ARTWORK.TITLE.MAX}),
+        description TEXT CHECK(length(description) <= ${RULES.ARTWORK.DESCRIPTION.MAX}),
         image_path TEXT,
         status TEXT DEFAULT 'PLANNED',
         
@@ -91,7 +96,7 @@ db.serialize(() => {
         FOREIGN KEY (genre_id) REFERENCES art_genres(id) ON DELETE SET NULL
     )`);
 
-    // 3.1. ЗВ'ЯЗКИ
+    // 3.1. LINKS (Constraints not needed on IDs)
     db.run(`CREATE TABLE IF NOT EXISTS artwork_tags_link (
         artwork_id INTEGER,
         tag_id INTEGER,
@@ -108,12 +113,12 @@ db.serialize(() => {
         FOREIGN KEY (material_id) REFERENCES art_materials(id) ON DELETE CASCADE
     )`);
 
-    // 4. КОЛЕКЦІЇ
+    // 4. COLLECTIONS
     db.run(`CREATE TABLE IF NOT EXISTS collections (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        description TEXT,
+        title TEXT NOT NULL CHECK(length(title) <= ${RULES.COLLECTION.TITLE.MAX}),
+        description TEXT CHECK(length(description) <= ${RULES.COLLECTION.DESCRIPTION.MAX}),
         type TEXT NOT NULL CHECK(type IN ('MOODBOARD', 'SERIES', 'EXHIBITION')) DEFAULT 'MOODBOARD',
         is_public BOOLEAN DEFAULT 0,
         cover_image TEXT,
@@ -128,7 +133,7 @@ db.serialize(() => {
         artwork_id INTEGER NOT NULL,
         sort_order INTEGER DEFAULT 0,
         layout_type TEXT DEFAULT 'CENTER',
-        context_description TEXT,
+        context_description TEXT CHECK(length(context_description) <= ${RULES.COLLECTION.CONTEXT_DESC.MAX}),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         
         FOREIGN KEY(collection_id) REFERENCES collections(id) ON DELETE CASCADE,
@@ -136,7 +141,7 @@ db.serialize(() => {
         UNIQUE(collection_id, artwork_id)
     )`);
 
-    // 5. СЕСІЇ
+    // 5. SESSIONS
     db.run(`CREATE TABLE IF NOT EXISTS sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         start_time DATETIME,
@@ -147,7 +152,7 @@ db.serialize(() => {
         FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
     )`);
 
-    // 5.1. ЛІЧИЛЬНИК ПЕРЕГЛЯДІВ
+    // 5.1. VIEW COUNTER
     db.run(`CREATE TABLE IF NOT EXISTS collection_views (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         collection_id INTEGER NOT NULL,
@@ -161,27 +166,27 @@ db.serialize(() => {
         UNIQUE(collection_id, ip_address, viewed_at)
     )`);
 
-    // 6. НОТАТКИ
+    // 6. NOTES (Session Notes)
     db.run(`CREATE TABLE IF NOT EXISTS notes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        content TEXT,
+        content TEXT CHECK(length(content) <= ${RULES.NOTE.CONTENT.MAX}),
         photo_url TEXT,
         added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         session_id INTEGER NOT NULL,
         FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
     )`);
 
-    // 7. ГАЛЕРЕЯ КАРТИНИ
+    // 7. ARTWORK GALLERY
     db.run(`CREATE TABLE IF NOT EXISTS artwork_gallery (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         artwork_id INTEGER NOT NULL,
         image_path TEXT NOT NULL,
-        description TEXT,
+        description TEXT CHECK(length(description) <= ${RULES.ARTWORK.DESCRIPTION.MAX}),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
     )`);
 
-    // 8. ЗБЕРЕЖЕНІ КОЛЕКЦІЇ
+    // 8. SAVED COLLECTIONS
     db.run(`CREATE TABLE IF NOT EXISTS saved_collections (
         user_id INTEGER NOT NULL,
         collection_id INTEGER NOT NULL,
@@ -192,18 +197,19 @@ db.serialize(() => {
         FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE
     )`);
 
-  // 10. ГЛОБАЛЬНІ НОТАТКИ (Sticky Notes)
-db.run(`CREATE TABLE IF NOT EXISTS sticky_notes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    title TEXT,
-    content TEXT,
-    color TEXT DEFAULT 'yellow', -- yellow, pink, blue, green, purple
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)`);
-    // 9. ПОЧАТКОВЕ ЗАПОВНЕННЯ (Global Data)
+    // 10. STICKY NOTES
+    db.run(`CREATE TABLE IF NOT EXISTS sticky_notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT CHECK(length(title) <= ${RULES.STICKY_NOTE.TITLE.MAX}),
+        content TEXT CHECK(length(content) <= ${RULES.STICKY_NOTE.CONTENT.MAX}),
+        color TEXT DEFAULT 'yellow', 
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
+
+    // 9. INITIAL SEEDING (Global Data)
     const seedDict = (table, items) => {
         db.get(`SELECT count(*) as count FROM ${table}`, (err, row) => {
             if (row && row.count === 0) {

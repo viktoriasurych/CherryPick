@@ -6,18 +6,21 @@ import EditorLayout from '../components/EditorLayout';
 import Input from '../components/ui/Input';
 import { PhotoIcon, CloudArrowUpIcon, TrashIcon } from '@heroicons/react/24/outline';
 import defaultAvatar from '../assets/default-avatar.png';
+// 👇 1. Імпортуємо правила (щоб знати ліміти)
+import RULES from '../config/validationRules.json'; 
 
 const ProfileEditPage = () => {
-    const { user, login } = useAuth(); // user беремо тільки для ID та токена
+    const { user, login } = useAuth(); 
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
     // --- STATE ---
     const [formData, setFormData] = useState({
-        nickname: '', bio: '', location: '', contact_email: '',
+        nickname: '', 
+        display_name: '', // 👈 2. Додали нове поле
+        bio: '', location: '', contact_email: '',
         social_telegram: '', social_instagram: '', social_artstation: '',
         social_behance: '', social_twitter: '', social_website: '',
-        // Дефолтні значення (поки не завантажиться з сервера)
         show_global_stats: 1,
         show_kpi_stats: 1,
         show_heatmap_stats: 1
@@ -27,20 +30,18 @@ const ProfileEditPage = () => {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [isAvatarDeleted, setIsAvatarDeleted] = useState(false);
     
-    // Початково true, бо ми вантажимо дані
     const [isLoading, setIsLoading] = useState(true); 
     const [hasChanges, setHasChanges] = useState(false);
 
-    // 👇 ГОЛОВНА ЗМІНА: Вантажимо СВІЖІ дані з сервера
     useEffect(() => {
         const loadFreshData = async () => {
             try {
-                // 1. Робимо запит до бази за актуальним профілем
                 const freshUser = await userService.getProfile();
                 
-                // 2. Заповнюємо форму свіжими даними
                 setFormData({
                     nickname: freshUser.nickname || '',
+                    // 👇 3. Завантажуємо ім'я (якщо його немає, беремо нік як дефолт)
+                    display_name: freshUser.display_name || freshUser.nickname || '',
                     bio: freshUser.bio || '',
                     location: freshUser.location || '',
                     contact_email: freshUser.contact_email || '',
@@ -51,14 +52,12 @@ const ProfileEditPage = () => {
                     social_twitter: freshUser.social_twitter || '',
                     social_website: freshUser.social_website || '',
                     
-                    // Тепер тут будуть АКТУАЛЬНІ налаштування з бази
                     show_global_stats: freshUser.show_global_stats,
                     show_kpi_stats: freshUser.show_kpi_stats,
                     show_heatmap_stats: freshUser.show_heatmap_stats
                 });
             } catch (error) {
                 console.error("Не вдалося завантажити профіль:", error);
-                // Якщо помилка, пробуємо взяти хоча б з кешу (fallback)
                 if (user) {
                     setFormData(prev => ({...prev, nickname: user.nickname})); 
                 }
@@ -68,7 +67,7 @@ const ProfileEditPage = () => {
         };
 
         loadFreshData();
-    }, []); // Пустий масив = викликати один раз при відкритті сторінки
+    }, []); 
 
     useEffect(() => {
         return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
@@ -77,6 +76,10 @@ const ProfileEditPage = () => {
     // --- HANDLERS ---
 
     const handleChange = (field, value) => {
+        // Якщо це нікнейм - видаляємо пробіли відразу
+        if (field === 'nickname') {
+            value = value.replace(/\s/g, '');
+        }
         setFormData(prev => ({ ...prev, [field]: value }));
         setHasChanges(true);
     };
@@ -100,12 +103,17 @@ const ProfileEditPage = () => {
 
     const handleSave = async () => {
         try {
-            setIsLoading(true); // Вмикаємо спінер
+            setIsLoading(true);
 
-            // 1. Оновлюємо дані
+            // Валідація нікнейму на клієнті
+            if (formData.nickname.length < RULES.USER.NICKNAME.MIN) {
+                alert(`Нікнейм має бути мінімум ${RULES.USER.NICKNAME.MIN} символи`);
+                setIsLoading(false);
+                return;
+            }
+
             let finalUser = await userService.updateProfile(formData);
 
-            // 2. Логіка фото
             if (pendingAvatar) {
                 const avatarResponse = await userService.uploadAvatar(pendingAvatar);
                 finalUser = { ...finalUser, avatar_url: avatarResponse.avatar_url };
@@ -114,7 +122,6 @@ const ProfileEditPage = () => {
                 finalUser = { ...finalUser, avatar_url: null };
             }
 
-            // 3. Оновлюємо глобальний стейт
             login(localStorage.getItem('token'), finalUser);
             navigate('/profile'); 
             
@@ -126,10 +133,8 @@ const ProfileEditPage = () => {
         }
     };
 
-    // ВІЗУАЛІЗАЦІЯ
     const displayAvatar = previewUrl || (user?.avatar_url && !isAvatarDeleted ? `http://localhost:3000${user.avatar_url}` : defaultAvatar);
 
-    // Якщо дані ще вантажаться, показуємо заглушку (щоб не блимали пусті поля)
     if (isLoading && !formData.nickname) {
         return <div className="text-center py-20 text-slate-500 animate-pulse">Завантаження даних...</div>;
     }
@@ -143,6 +148,7 @@ const ProfileEditPage = () => {
             onSave={handleSave}
         >
             <div className="lg:col-span-1 space-y-6">
+                 {/* ... Блок аватара без змін ... */}
                 <div className="bg-slate-950 border border-slate-800 p-6 rounded-xl flex flex-col items-center text-center">
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-6 w-full text-left">Аватар</h3>
                     
@@ -165,24 +171,53 @@ const ProfileEditPage = () => {
                             </button>
                         )}
                     </div>
-                    {previewUrl && <span className="text-yellow-500 text-[10px] mt-4 animate-pulse">● Нове фото буде збережено</span>}
-                    {isAvatarDeleted && !previewUrl && <span className="text-red-500 text-[10px] mt-4 animate-pulse">● Фото буде видалено після збереження</span>}
                 </div>
             </div>
 
             <div className="lg:col-span-2 space-y-6">
                 <div className="bg-slate-950 border border-slate-800 p-6 rounded-xl space-y-4">
                     <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-2">Основне</h3>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input label="Нікнейм" value={formData.nickname} onChange={e => handleChange('nickname', e.target.value)} />
-                        <Input label="Локація" value={formData.location} onChange={e => handleChange('location', e.target.value)} />
+                        {/* 👇 4. ПОЛЕ ДЛЯ ІМЕНІ */}
+                        <Input 
+                            label="Ім'я (відображається)" 
+                            value={formData.display_name} 
+                            onChange={e => handleChange('display_name', e.target.value)} 
+                            maxLength={RULES.USER.DISPLAY_NAME?.MAX || 50}
+                            placeholder="Наприклад: Вікторія Арт 🎨"
+                        />
+                        
+                        {/* 👇 5. ПОЛЕ ДЛЯ НІКНЕЙМУ */}
+                        <Input 
+                            label="Нікнейм (унікальний ID)" 
+                            value={formData.nickname} 
+                            onChange={e => handleChange('nickname', e.target.value)} 
+                            maxLength={RULES.USER.NICKNAME.MAX}
+                            placeholder="viky_sia"
+                            hint="Тільки латиниця, цифри та '_'"
+                        />
                     </div>
+
                     <div>
-                        <label className="block text-[10px] text-slate-500 uppercase mb-1 ml-1">Про себе</label>
-                        <textarea className="w-full bg-black border border-slate-800 rounded p-3 text-slate-300 text-sm focus:border-cherry-500 outline-none transition h-32 resize-none" value={formData.bio} onChange={e => handleChange('bio', e.target.value)} />
+                        <Input label="Локація" value={formData.location} onChange={e => handleChange('location', e.target.value)} maxLength={RULES.USER.LOCATION.MAX} />
+                    </div>
+
+                    <div>
+                        <div className="flex justify-between">
+                            <label className="block text-[10px] text-slate-500 uppercase mb-1 ml-1">Про себе</label>
+                            <span className="text-[10px] text-slate-600">{formData.bio.length} / {RULES.USER.BIO.MAX}</span>
+                        </div>
+                        <textarea 
+                            className="w-full bg-black border border-slate-800 rounded p-3 text-slate-300 text-sm focus:border-cherry-500 outline-none transition h-32 resize-none" 
+                            value={formData.bio} 
+                            onChange={e => handleChange('bio', e.target.value)} 
+                            maxLength={RULES.USER.BIO.MAX}
+                        />
                     </div>
                 </div>
 
+                {/* ... Контакти та соцмережі без змін ... */}
                 <div className="bg-slate-950 border border-slate-800 p-6 rounded-xl space-y-6">
                     <div>
                         <h3 className="text-sm font-bold text-cherry-500 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Контакти</h3>

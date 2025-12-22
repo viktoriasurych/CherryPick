@@ -13,13 +13,17 @@ class UserDAO {
         });
     }
 
-    // 2. Створити нового (Реєстрація)
-    create(nickname, email, passwordHash) {
+    // 2. Створити нового (Реєстрація) - Додали displayName
+    create(nickname, email, passwordHash, displayName) { // 👈 Додай displayName в аргументи
         return new Promise((resolve, reject) => {
-            const sql = 'INSERT INTO users (nickname, email, password_hash) VALUES (?, ?, ?)';
-            db.run(sql, [nickname, email, passwordHash], function(err) {
+            // Додали поле display_name в SQL
+            const sql = 'INSERT INTO users (nickname, email, password_hash, display_name) VALUES (?, ?, ?, ?)';
+            // Якщо displayName не передали, використовуємо nickname як дефолт
+            const nameToSave = displayName || nickname; 
+            
+            db.run(sql, [nickname, email, passwordHash, nameToSave], function(err) {
                 if (err) reject(err);
-                resolve({ id: this.lastID, nickname, email });
+                else resolve({ id: this.lastID, nickname, email, display_name: nameToSave });
             });
         });
     }
@@ -30,24 +34,21 @@ class UserDAO {
             const sql = `
                 SELECT 
                     id, nickname, email, 
+                    display_name, -- 👈 ДОДАЛИ ТУТ
                     avatar_url, bio, location,
-                    
                     contact_email, social_telegram, 
                     social_instagram, social_twitter, 
                     social_artstation, social_behance, 
                     social_website,
-                    
-                    -- 👇 ТЕПЕР 3 ОКРЕМИХ НАЛАШТУВАННЯ
                     show_global_stats,
                     show_kpi_stats,
                     show_heatmap_stats,
-                    
                     created_at 
                 FROM users WHERE id = ?`;
             
             db.get(sql, [id], (err, row) => {
                 if (err) reject(err);
-                // Конвертуємо 1/0 в true/false для зручності фронту
+                // Конвертація булевих значень...
                 if (row) {
                     row.show_global_stats = !!row.show_global_stats;
                     row.show_kpi_stats = !!row.show_kpi_stats;
@@ -61,7 +62,6 @@ class UserDAO {
     // 4. Оновлення текстового профілю (Виправлено помилку showStats)
     updateProfile(id, data) {
         return new Promise((resolve, reject) => {
-            // Конвертуємо boolean в 1/0
             const showGlobal = data.show_global_stats ? 1 : 0;
             const showKpi = data.show_kpi_stats ? 1 : 0;
             const showHeatmap = data.show_heatmap_stats ? 1 : 0;
@@ -69,13 +69,13 @@ class UserDAO {
             const sql = `
                 UPDATE users 
                 SET 
-                    nickname = ?, bio = ?, location = ?, 
+                    nickname = ?, 
+                    display_name = ?, -- 👈 ДОДАЛИ ТУТ
+                    bio = ?, location = ?, 
                     contact_email = ?, social_telegram = ?,
                     social_instagram = ?, social_twitter = ?,
                     social_artstation = ?, social_behance = ?,
                     social_website = ?,
-                    
-                    -- 👇 ОНОВЛЮЄМО 3 ПОЛЯ
                     show_global_stats = ?,
                     show_kpi_stats = ?,
                     show_heatmap_stats = ?
@@ -83,19 +83,21 @@ class UserDAO {
             `;
             
             const params = [
-                data.nickname, data.bio, data.location,
+                data.nickname, 
+                data.display_name, // 👈 ДОДАЛИ ТУТ
+                data.bio, data.location,
                 data.contact_email, data.social_telegram,
                 data.social_instagram, data.social_twitter,
                 data.social_artstation, data.social_behance,
                 data.social_website,
-                showGlobal, showKpi, showHeatmap, // Нові параметри
+                showGlobal, showKpi, showHeatmap,
                 id
             ];
 
             db.run(sql, params, function(err) {
                 if (err) return reject(err);
                 
-                // Повертаємо оновленого юзера
+                // Повертаємо оновленого (тут можна просто викликати findById, щоб не дублювати код)
                 const selectSql = `SELECT * FROM users WHERE id = ?`;
                 db.get(selectSql, [id], (err, row) => {
                     if(err) reject(err);
@@ -106,6 +108,15 @@ class UserDAO {
                     }
                     resolve(row);
                 });
+            });
+        });
+    }
+
+    findByNickname(nickname) {
+        return new Promise((resolve, reject) => {
+            db.get(`SELECT * FROM users WHERE nickname = ?`, [nickname], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
             });
         });
     }
@@ -143,24 +154,32 @@ class UserDAO {
     }
 
     // 👇 1. НОВІ МЕТОДИ ДЛЯ GOOGLE
-    // 👇 ТРЕБА (правильно):
-    createFromGoogle(nickname, email, passwordHash, googleId, avatarUrl) {
+
+    findByGoogleId(googleId) {
         return new Promise((resolve, reject) => {
-            const sql = `INSERT INTO users (nickname, email, password_hash, google_id, avatar_url) VALUES (?, ?, ?, ?, ?)`;
+            const sql = 'SELECT * FROM users WHERE google_id = ?';
+            db.get(sql, [googleId], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+    }
+    // 👇 ТРЕБА (правильно):
+    createFromGoogle(nickname, email, passwordHash, googleId, avatarUrl, displayName) {
+        return new Promise((resolve, reject) => {
+            // Додали display_name в SQL
+            const sql = `INSERT INTO users (nickname, email, password_hash, google_id, avatar_url, display_name) VALUES (?, ?, ?, ?, ?, ?)`;
             
-            // ВАЖЛИВО: Тут має бути 'function(err)', а не '(err) =>'
-            db.run(sql, [nickname, email, passwordHash, googleId, avatarUrl], function(err) {
-                if (err) {
-                    // Якщо помилка (наприклад, такий нік вже є), повертаємо її
-                    return reject(err); 
-                }
-                // Тепер 'this' посилається на Statement об'єкт sqlite, де є lastID
+            db.run(sql, [nickname, email, passwordHash, googleId, avatarUrl, displayName], function(err) {
+                if (err) return reject(err);
+                
                 resolve({ 
                     id: this.lastID, 
                     nickname, 
                     email, 
                     google_id: googleId, 
-                    avatar_url: avatarUrl 
+                    avatar_url: avatarUrl,
+                    display_name: displayName
                 });
             });
         });

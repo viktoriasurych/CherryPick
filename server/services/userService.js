@@ -63,6 +63,14 @@ class UserService {
             console.error("Помилка видалення файлу:", e);
         }
     }
+
+    async getByNickname(nickname) {
+        // Треба додати findByNickname в DAO, якщо його ще немає
+        const user = await userDAO.findByNickname(nickname);
+        if (!user) return null;
+        const { password_hash, ...safeUser } = user;
+        return safeUser;
+    }
 }
 
 module.exports = new UserService();

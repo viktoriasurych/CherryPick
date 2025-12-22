@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const collectionService = require('../services/collectionService');
 const viewStatsService = require('../services/viewStatsService');
+const { validate } = require('../utils/validation'); // 👇 Імпорт
 
 // 👇 ВАЖЛИВО: Цей ключ має бути ІДЕНТИЧНИМ тому, що в authMiddleware.js
 // Краще перевір, що написано у твоєму middleware і встав сюди те саме.
@@ -9,6 +10,10 @@ class CollectionController {
     
     async create(req, res) {
         try {
+            // 👇 Перевірка
+            const errors = validate.collection(req.body);
+            if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
+
             const userId = req.user.id;
             // Додали is_public
             const { title, description, type, is_public } = req.body; 
@@ -165,6 +170,10 @@ class CollectionController {
     // Ми змінили collectionDAO.update -> collectionService.updateCollection
     async update(req, res) {
         try {
+            // 👇 Перевірка
+            const errors = validate.collection(req.body);
+            if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
+
             await collectionService.updateCollection(req.params.id, req.user.id, req.body);
             res.json({ message: "Оновлено" });
         } catch(e) { 

@@ -1,0 +1,29 @@
+{
+    "USER": {
+    "NICKNAME": { "MIN": 3, "MAX": 30 },
+    "DISPLAY_NAME": { "MIN": 2, "MAX": 50 }, 
+    "BIO": { "MAX": 500 },
+    "LOCATION": { "MAX": 60 },
+    "SOCIAL": { "MAX": 200 },
+    "EMAIL": { "MAX": 100 }
+    },
+    "ARTWORK": {
+      "TITLE": { "MIN": 1, "MAX": 100 },
+      "DESCRIPTION": { "MAX": 2000 }
+    },
+    "COLLECTION": {
+      "TITLE": { "MIN": 1, "MAX": 60 },
+      "DESCRIPTION": { "MAX": 1000 },
+      "CONTEXT_DESC": { "MAX": 500 }
+    },
+    "STICKY_NOTE": {
+      "TITLE": { "MAX": 100 },
+      "CONTENT": { "MAX": 1000 }
+    },
+    "DICT": {
+      "NAME": { "MAX": 50 }
+    },
+    "NOTE": {
+      "CONTENT": { "MAX": 10000 }
+    }
+  }

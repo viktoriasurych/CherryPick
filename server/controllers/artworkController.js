@@ -1,10 +1,15 @@
 const artworkService = require('../services/artworkService');
+const { validate } = require('../utils/validation'); // 👇 Імпорт
 
 class ArtworkController {
 
     // POST /api/artworks
     async create(req, res) {
         try {
+            // 👇 Перевірка
+            const errors = validate.artwork(req.body);
+            if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
+
             const userId = req.user.id;
             const image_path = req.file ? 'uploads/' + req.file.filename : null;
 
@@ -42,6 +47,10 @@ class ArtworkController {
    // PUT /api/artworks/:id
    async update(req, res) {
     try {
+        // 👇 Перевірка
+        const errors = validate.artwork(req.body);
+        if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
+
         const userId = req.user.id;
         const artworkId = req.params.id;
         

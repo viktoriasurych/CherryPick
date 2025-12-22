@@ -1,4 +1,5 @@
 const sessionService = require('../services/sessionService');
+const { validate } = require('../utils/validation'); // 👇 1. Імпорт
 
 class SessionController {
 
@@ -17,13 +18,15 @@ class SessionController {
     // Сюди прийде: duration (секунди), content (текст), image (файл)
     async finish(req, res) {
         try {
+            // 👇 2. ВАЛІДАЦІЯ НОТАТКИ
+            // Ми перевіряємо поле 'content', яке прийшло з форми
+            const errors = validate.note({ content: req.body.content });
+            if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
+
             const sessionId = req.params.id;
-            const userId = req.user.id; // <--- Беремо ID юзера з токена
+            const userId = req.user.id;
             
-            // Читаємо дані з форми
-            // updateCover приходить як рядок "true"/"false", треба конвертувати
             const { duration, content, artworkId, updateCover } = req.body; 
-            
             const photo_path = req.file ? 'uploads/' + req.file.filename : null;
 
             const noteData = {
@@ -31,7 +34,6 @@ class SessionController {
                 photo_path: photo_path
             };
 
-            // Перетворюємо рядок "true" в булеве значення
             const isUpdateCover = updateCover === 'true';
 
             const result = await sessionService.finishSession(
