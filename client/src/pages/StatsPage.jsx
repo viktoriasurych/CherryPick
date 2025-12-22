@@ -28,12 +28,9 @@ const StatsPage = () => {
         const load = async () => {
             try {
                 setLoading(true);
-                
-                // 👇 ТУТ ВАЖЛИВИЙ МОМЕНТ:
-                // Ми викликаємо БЕЗ третього параметра (або передаємо false).
-                // Це каже бекенду: "Використовуй дату першої КАРТИНИ, а не реєстрації".
+                // Третій параметр (useRegistrationDate) тут false або undefined, 
+                // щоб рахувати від першої картини
                 const stats = await statsService.getStats(selectedYear);
-                
                 setData(stats);
             } catch (error) {
                 console.error(error);
@@ -50,6 +47,8 @@ const StatsPage = () => {
     const { availableYears, global, yearly } = data;
     const yearOptions = availableYears?.map(y => ({ value: y, label: y.toString() })) || [];
 
+    // Фільтруємо нульові значення тільки для кругових діаграм (жанри, стилі), 
+    // щоб не було порожніх секторів.
     const cleanData = (chartData) => {
         if (!chartData) return [];
         return chartData.filter(item => item.name !== 'Не вказано' && item.count > 0);
@@ -67,7 +66,7 @@ const StatsPage = () => {
             </div>
 
             {/* ====================================================================================
-                                              GLOBAL TAB
+                                                GLOBAL TAB
                ==================================================================================== */}
             {activeTab === 'GLOBAL' && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -76,7 +75,7 @@ const StatsPage = () => {
                     <section className="space-y-4">
                         <SectionTitle>Загальні показники</SectionTitle>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <KpiCard icon={ClockIcon} label="Загальний час малювання" value={global.kpi.total_time} color="text-blue-400" />
+                            <KpiCard icon={ClockIcon} label="Загальний час малювання" value={`${global.kpi.total_time} год`} color="text-blue-400" />
                             <KpiCard icon={Square3Stack3DIcon} label="Загальна к-сть робіт" value={global.kpi.total_works} color="text-purple-400" />
                             <KpiCard icon={Squares2X2Icon} label="Загальна к-сть колекцій" value={global.kpi.total_collections} color="text-pink-400" />
                         </div>
@@ -118,12 +117,12 @@ const StatsPage = () => {
             )}
 
             {/* ====================================================================================
-                                              YEARLY TAB
+                                                YEARLY TAB
                ==================================================================================== */}
             {activeTab === 'YEARLY' && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     
-                    {/* ВИБІР РОКУ (Без заголовка, це навігація) */}
+                    {/* ВИБІР РОКУ */}
                     <div className="flex justify-between items-center bg-slate-900/40 p-4 rounded-xl border border-slate-800 backdrop-blur-sm">
                         <h2 className="text-xl font-bold text-slate-200">Огляд року</h2>
                         <div className="w-40">
@@ -135,7 +134,7 @@ const StatsPage = () => {
                     <section className="space-y-4">
                         <SectionTitle>Підсумки року {selectedYear}</SectionTitle>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <KpiCard icon={ClockIcon} label={`Час малювання у ${selectedYear}`} value={yearly.kpi.total_time} color="text-blue-400" />
+                            <KpiCard icon={ClockIcon} label={`Час малювання у ${selectedYear}`} value={`${yearly.kpi.total_time} год`} color="text-blue-400" />
                             <KpiCard icon={Square3Stack3DIcon} label={`Робіт за ${selectedYear}`} value={yearly.kpi.works_count} color="text-purple-400" />
                             <KpiCard icon={Squares2X2Icon} label={`Колекцій за ${selectedYear}`} value={yearly.kpi.collections_count} color="text-pink-400" />
                         </div>
@@ -267,8 +266,9 @@ const MyPieChart = ({ data, nameKey = "name" }) => {
 };
 
 const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20, type = "time", unit = "" }) => {
-    // Ховаємо тільки якщо ВСІ значення <= 0 (але нуль дозволяємо, якщо це просто "пусто")
-    if (!data || data.length === 0 || data.every(i => i[yKey] <= 0)) 
+    // Ховаємо тільки якщо взагалі порожньо, або немає ключів.
+    // Але якщо прийшли нулі з бекенду ({name: "Січ", value: 0}), ми це МАЄМО відобразити.
+    if (!data || data.length === 0) 
         return <div className="text-slate-600 italic text-xs font-pixel opacity-50">Немає даних</div>;
     
     return (
@@ -280,7 +280,11 @@ const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20, type =
                     tick={{fill: '#64748b', fontSize: 10}} 
                     axisLine={false} 
                     tickLine={false} 
-                    tickFormatter={(val) => val >= 1 ? Math.round(val) : (val === 0 ? 0 : '')} 
+                    // Форматування осі Y (щоб не показувати 0.5 години як 1)
+                    tickFormatter={(val) => {
+                        if (type === 'time') return (val / 3600).toFixed(0); // В годинах
+                        return val;
+                    }}
                 />
                 
                 <RechartsTooltip 
@@ -288,11 +292,16 @@ const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20, type =
                     contentStyle={{backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px'}} 
                     itemStyle={{color: '#fff'}} 
                     formatter={(value, name) => {
+                        // Якщо тип "число" (кількість сесій)
                         if (type === "number") return [`${value} ${unit}`, 'Кількість'];
-                        const seconds = value * 3600;
+                        
+                        // 👇 ВИПРАВЛЕНО: value вже в секундах, не множимо!
+                        const seconds = value; 
+                        
+                        if (seconds === 0) return ['0 хв', 'Час'];
                         if (seconds < 60) return [`${Math.round(seconds)} с`, 'Час'];
                         else if (seconds < 3600) return [`${Math.round(seconds / 60)} хв`, 'Час'];
-                        else return [`${value.toFixed(1)} год`, 'Час'];
+                        else return [`${(seconds / 3600).toFixed(1)} год`, 'Час'];
                     }}
                 />
                 <Bar dataKey={yKey} fill={color} radius={[4, 4, 0, 0]} barSize={barSize} />
