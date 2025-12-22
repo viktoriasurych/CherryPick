@@ -13,6 +13,7 @@ const collectionRoutes = require('./routes/collectionRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const userRoutes = require('./routes/userRoutes'); // <--- НОВЕ: Імпорт роутів профілю
 const searchRoutes = require('./routes/searchRoutes');
+const stickyNoteRoutes = require('./routes/stickyNoteRoutes')
 
 
 const app = express();
@@ -33,6 +34,7 @@ app.use('/api/collections', collectionRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/users', userRoutes); // <--- НОВЕ: Підключили /api/users (для профілю)
 app.use('/api/search', searchRoutes);
+app.use('/api/sticky-notes', stickyNoteRoutes);
 
 
 // Тестові маршрути

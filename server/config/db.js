@@ -192,6 +192,17 @@ db.serialize(() => {
         FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE
     )`);
 
+  // 10. ГЛОБАЛЬНІ НОТАТКИ (Sticky Notes)
+db.run(`CREATE TABLE IF NOT EXISTS sticky_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT,
+    content TEXT,
+    color TEXT DEFAULT 'yellow', -- yellow, pink, blue, green, purple
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)`);
     // 9. ПОЧАТКОВЕ ЗАПОВНЕННЯ (Global Data)
     const seedDict = (table, items) => {
         db.get(`SELECT count(*) as count FROM ${table}`, (err, row) => {

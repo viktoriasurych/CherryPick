@@ -3,11 +3,11 @@ import artworkService from '../services/artworkService';
 import { 
     HomeIcon, 
     RectangleStackIcon, 
-    // PhotoIcon, 
     ChartBarIcon, 
     Squares2X2Icon,
     PlusIcon,
-    BookmarkIcon 
+    BookmarkIcon,
+    DocumentTextIcon // <--- 1. ДОДАЙ НОВУ ІКОНКУ
 } from '@heroicons/react/24/outline';
 
 const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
@@ -17,6 +17,7 @@ const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
         { name: 'Головна', path: '/', icon: HomeIcon },
         { name: 'Архів проєктів', path: '/projects', icon: RectangleStackIcon },
         { name: 'Колекції', path: '/collections', icon: Squares2X2Icon },
+        { name: 'Наліпки', path: '/notes', icon: DocumentTextIcon },
         { name: 'Збережене', path: '/saved', icon: BookmarkIcon },
         { name: 'Статистика', path: '/stats', icon: ChartBarIcon },
     ];

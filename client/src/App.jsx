@@ -23,6 +23,8 @@ import Layout from './components/Layout';
 import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
 
+import StickyNotesPage from './pages/StickyNotesPage';
+
 function App() {
   const { user } = useAuth();
 
@@ -73,6 +75,17 @@ function App() {
 
       {/* --- ПРИВАТНІ РОУТИ (Тільки для своїх) --- */}
 
+      <Route 
+        path="/notes"
+        element={
+            <ProtectedRoute>
+                <Layout>
+                    <StickyNotesPage />
+                </Layout>
+            </ProtectedRoute>
+        } 
+      />
+      
       <Route 
         path="/profile"
         element={
