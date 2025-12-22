@@ -1,5 +1,9 @@
 import api from '../api/axios';
 
+// 👇 1. ІМПОРТУЄМО ЗАГЛУШКУ
+// (Шлях відносно папки services: виходимо в src (..), заходимо в assets)
+import defaultImage from '../assets/default-art.png'; 
+
 const artworkService = {
     getAll: async (filters = {}, sort = { by: 'updated', dir: 'DESC' }) => {
         const params = new URLSearchParams();
@@ -44,7 +48,6 @@ const artworkService = {
         return response.data;
     },
 
-    // 👇 ГОЛОВНЕ ВИПРАВЛЕННЯ ТУТ
     _sendData: async (url, method, data) => {
         const formData = new FormData();
         
@@ -76,23 +79,17 @@ const artworkService = {
         }
 
         // --- ЛОГІКА КАРТИНКИ ---
-        
-        // 1. Якщо це НОВИЙ файл (об'єкт File)
         if (data.image && data.image instanceof File) {
             formData.append('image', data.image); 
         } 
-        // 2. Якщо це шлях (рядок) - наприклад, обрали з галереї
         else if (data.image_path && typeof data.image_path === 'string') {
             formData.append('image_path', data.image_path);
         }
 
-        // --- ВІДПРАВКА ---
-        // Важливо явно вказати Content-Type, інакше при PUT запиті файл може не дійти
         const config = {
             headers: { 'Content-Type': 'multipart/form-data' }
         };
 
-        // Axios синтаксис: axios.post(url, data, config) або axios.put(url, data, config)
         const response = await api[method](url, formData, config);
         return response.data;
     },
@@ -118,9 +115,15 @@ const artworkService = {
         return response.data;
     },
 
+    // 👇 2. ОНОВЛЕНА ФУНКЦІЯ ОТРИМАННЯ URL
     getImageUrl: (path) => {
-        if (!path) return null;
+        // Якщо шляху немає (null, undefined, або пустий рядок) -> повертаємо імпортовану заглушку
+        if (!path) return defaultImage; 
+        
+        // Якщо це вже повне посилання (наприклад, гугл аватарка)
         if (path.startsWith('http')) return path;
+        
+        // Якщо це локальний файл на сервері
         const baseUrl = 'http://localhost:3000'; 
         return `${baseUrl}/${path.replace(/\\/g, '/')}`;
     }

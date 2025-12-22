@@ -7,7 +7,8 @@ import {
     Squares2X2Icon,
     PlusIcon,
     BookmarkIcon,
-    DocumentTextIcon // <--- 1. ДОДАЙ НОВУ ІКОНКУ
+    DocumentTextIcon,
+    ClockIcon // 👈 1. ДОДАЙ ЦЮ ІКОНКУ (Годинник) // <--- 1. ДОДАЙ НОВУ ІКОНКУ
 } from '@heroicons/react/24/outline';
 
 const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
@@ -15,6 +16,7 @@ const Sidebar = ({ recentProjects = [], isOpen, onClose }) => {
 
     const menuItems = [
         { name: 'Головна', path: '/', icon: HomeIcon },
+        { name: 'Сеанс', path: '/session', icon: ClockIcon },
         { name: 'Архів проєктів', path: '/projects', icon: RectangleStackIcon },
         { name: 'Колекції', path: '/collections', icon: Squares2X2Icon },
         { name: 'Наліпки', path: '/notes', icon: DocumentTextIcon },

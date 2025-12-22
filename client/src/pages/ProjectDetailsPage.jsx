@@ -168,11 +168,12 @@ const ProjectDetailsPage = () => {
                 {/* === ЛІВА КОЛОНКА (7/12): ВІЗУАЛ === */}
                 <div className="lg:col-span-7 space-y-4">
                     <div className="bg-black rounded-xl border border-slate-800 overflow-hidden shadow-2xl relative group h-[500px] md:h-[600px] flex items-center justify-center">
-                        {currentSrc ? (
-                            <img src={artworkService.getImageUrl(currentSrc)} alt="Selected" className="w-full h-full object-contain" />
-                        ) : (
-                            <div className="text-slate-600">Немає зображень</div>
-                        )}
+                       {/* 👇 СТАЛО: Просто рендеримо картинку, сервіс сам підставить заглушку */}
+    <img 
+        src={artworkService.getImageUrl(currentSrc)} 
+        alt="Selected" 
+        className="w-full h-full object-contain" 
+    />
                         
                         <div className="absolute top-4 right-4">
                             <select 
@@ -306,7 +307,7 @@ const ProjectDetailsPage = () => {
                                             <div className="text-cherry-400 font-bold font-mono text-lg">{formatDuration(session.duration_seconds)}</div>
                                         </div>
                                         <div className="border-l border-slate-800 pl-4 grow">
-                                            <div className="text-slate-500 text-xs mb-1">{formatDate(session.start_time)}</div>
+                                            <div className="text-slate-500 text-xs mb-1">{formatDate(session.end_time)}</div>
                                             <p className="text-sm text-slate-300 whitespace-pre-wrap">{session.note_content || <span className="italic opacity-50">Без нотаток</span>}</p>
                                         </div>
                                         {session.note_photo && (

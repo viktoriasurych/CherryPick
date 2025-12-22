@@ -1,29 +1,14 @@
 const db = require('../config/db');
 
 class StatsDAO {
-    // 👇 НОВИЙ МЕТОД (Додай його сюди, наприклад, на початку)
-    // Рахує загальні перегляди та збереження для БЛОКУ 1
+    // 1. Глобальні перегляди (без змін)
     getGlobalImpact(userId) {
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT 
-                    -- 1. Загальна кількість переглядів моїх колекцій
-                    (
-                        SELECT COUNT(*) 
-                        FROM collection_views cv 
-                        JOIN collections c ON cv.collection_id = c.id 
-                        WHERE c.user_id = ?
-                    ) as total_views,
-                    
-                    -- 2. Скільки разів інші люди зберегли мої колекції
-                    (
-                        SELECT COUNT(*) 
-                        FROM saved_collections sc
-                        JOIN collections c ON sc.collection_id = c.id
-                        WHERE c.user_id = ?
-                    ) as total_saves
+                    (SELECT COUNT(*) FROM collection_views cv JOIN collections c ON cv.collection_id = c.id WHERE c.user_id = ?) as total_views,
+                    (SELECT COUNT(*) FROM saved_collections sc JOIN collections c ON sc.collection_id = c.id WHERE c.user_id = ?) as total_saves
             `;
-            // Передаємо userId двічі (для двох підзапитів)
             db.get(sql, [userId, userId], (err, row) => {
                 if (err) return reject(err);
                 resolve(row || { total_views: 0, total_saves: 0 });
@@ -31,30 +16,21 @@ class StatsDAO {
         });
     }
 
-    // 👇 НОВИЙ МЕТОД: Тільки дата реєстрації (для Профілю)
+    // 2. Рік реєстрації (без змін)
     getRegistrationYear(userId) {
         return new Promise((resolve, reject) => {
-            const sql = `
-                SELECT CAST(strftime('%Y', created_at) AS INTEGER) as reg_year
-                FROM users
-                WHERE id = ?
-            `;
+            const sql = `SELECT CAST(strftime('%Y', created_at) AS INTEGER) as reg_year FROM users WHERE id = ?`;
             db.get(sql, [userId], (err, row) => {
                 if (err) return reject(err);
-                const currentYear = new Date().getFullYear();
-                // Якщо помилка або null — повертаємо поточний рік
-                resolve(row?.reg_year || currentYear);
+                resolve(row?.reg_year || new Date().getFullYear());
             });
         });
     }
 
-    // Отримати рік початку першої роботи (або поточний рік)
+    // 3. Рік початку (без змін)
     getStartYear(userId) {
         return new Promise((resolve, reject) => {
-            const sql = `
-                SELECT MIN(COALESCE(started_year, CAST(strftime('%Y', created_date) AS INTEGER))) as min_year
-                FROM artworks WHERE user_id = ?
-            `;
+            const sql = `SELECT MIN(COALESCE(started_year, CAST(strftime('%Y', created_date) AS INTEGER))) as min_year FROM artworks WHERE user_id = ?`;
             db.get(sql, [userId], (err, row) => {
                 if (err) return reject(err);
                 resolve(row?.min_year || new Date().getFullYear());
@@ -62,14 +38,15 @@ class StatsDAO {
         });
     }
 
-    // Загальні показники (KPI)
+    // 4. Загальні показники (ВИПРАВЛЕНО: s.created_at замість s.start_time)
     getTotals(userId, year = null) {
         return new Promise((resolve, reject) => {
-            // Нам потрібно передати userId тричі, бо в SQL запиті три знаки питання '?'
             const params = [userId, userId, userId];
-            
             const artYearFilter = year ? `AND started_year = ${Number(year)}` : "";
-            const sessYearFilter = year ? `AND strftime('%Y', s.start_time) = '${year}'` : "";
+            
+            // 👇 ТУТ ЗМІНИЛИ: s.created_at
+            const sessYearFilter = year ? `AND strftime('%Y', s.created_at) = '${year}'` : "";
+            
             const colYearFilter = year ? `AND strftime('%Y', created_at) = '${year}'` : "";
 
             const sql = `
@@ -86,7 +63,7 @@ class StatsDAO {
         });
     }
 
-    // Розподіл (Діаграми)
+    // 5. Розподіл (Діаграми) (без змін, тут все ок)
     getDistributions(userId, year = null) {
         return new Promise((resolve, reject) => {
             const params = [userId];
@@ -106,46 +83,45 @@ class StatsDAO {
             const result = {};
             const keys = Object.keys(queries);
             let completed = 0;
-            
             if (keys.length === 0) resolve({});
 
             keys.forEach(key => {
                 db.all(queries[key], params, (err, rows) => {
-                    if (err) { 
-                        console.error(`SQL Error in ${key}:`, err); 
-                        result[key] = []; 
-                    } else {
-                        result[key] = rows;
-                    }
+                    if (err) { console.error(`SQL Error in ${key}:`, err); result[key] = []; } else { result[key] = rows; }
                     if (++completed === keys.length) resolve(result);
                 });
             });
         });
     }
 
-    // Часові патерни (Графіки)
+    // 6. Часові патерни (ВИПРАВЛЕНО: s.created_at замість s.start_time)
     getTimePatterns(userId, year = null) {
         return new Promise((resolve, reject) => {
             const params = [userId];
-            const yearFilter = year ? ` AND strftime('%Y', start_time) = '${year}'` : "";
+            // 👇 ТУТ ЗМІНИЛИ: s.created_at
+            const yearFilter = year ? ` AND strftime('%Y', s.created_at) = '${year}'` : "";
+
+            // Увага: s.created_at показує, коли ти *почала* малювати цю сесію.
+            // s.end_time показує, коли *закінчила*.
+            // Зазвичай для графіків "Коли я малюю?" краще брати created_at (початок).
 
             const queries = {
                 days: `
-                    SELECT strftime('%w', start_time) as index_val, 
+                    SELECT strftime('%w', s.created_at) as index_val, 
                     COALESCE(SUM(duration_seconds), 0) as total_seconds
                     FROM sessions s JOIN artworks a ON s.artwork_id = a.id
                     WHERE a.user_id = ? ${yearFilter} GROUP BY index_val`,
                 hours: `
-                    SELECT strftime('%H', start_time) as index_val, COUNT(*) as count
+                    SELECT strftime('%H', s.created_at) as index_val, COUNT(*) as count
                     FROM sessions s JOIN artworks a ON s.artwork_id = a.id
                     WHERE a.user_id = ? ${yearFilter} GROUP BY index_val`,
                 months: `
-                    SELECT strftime('%m', start_time) as index_val, 
+                    SELECT strftime('%m', s.created_at) as index_val, 
                     COALESCE(SUM(duration_seconds), 0) as total_seconds
                     FROM sessions s JOIN artworks a ON s.artwork_id = a.id
                     WHERE a.user_id = ? ${yearFilter} GROUP BY index_val`,
                 years: `
-                    SELECT strftime('%Y', start_time) as index_val, 
+                    SELECT strftime('%Y', s.created_at) as index_val, 
                     COALESCE(SUM(duration_seconds), 0) as total_seconds
                     FROM sessions s JOIN artworks a ON s.artwork_id = a.id
                     WHERE a.user_id = ? GROUP BY index_val`
@@ -164,14 +140,14 @@ class StatsDAO {
         });
     }
 
-    // Активність по днях (для Heatmap)
+    // 7. Heatmap (ВИПРАВЛЕНО: s.created_at)
     getDailyActivity(userId, year) {
         return new Promise((resolve, reject) => {
             const sql = `
-                SELECT date(start_time) as date, COALESCE(SUM(duration_seconds), 0) as seconds
+                SELECT date(s.created_at) as date, COALESCE(SUM(duration_seconds), 0) as seconds
                 FROM sessions s JOIN artworks a ON s.artwork_id = a.id
-                WHERE a.user_id = ? AND strftime('%Y', s.start_time) = ?
-                GROUP BY date(start_time)
+                WHERE a.user_id = ? AND strftime('%Y', s.created_at) = ?
+                GROUP BY date(s.created_at)
             `;
             db.all(sql, [userId, String(year)], (err, rows) => {
                 if (err) return reject(err);
@@ -180,11 +156,11 @@ class StatsDAO {
         });
     }
 
-    // Отримати всі дати активності (для підрахунку стріка)
+    // 8. Стрік (ВИПРАВЛЕНО: s.created_at)
     getAllActivityDates(userId) {
         return new Promise((resolve, reject) => {
             const sql = `
-                SELECT DISTINCT date(start_time) as date 
+                SELECT DISTINCT date(s.created_at) as date 
                 FROM sessions s JOIN artworks a ON s.artwork_id = a.id 
                 WHERE a.user_id = ? 
                 ORDER BY date DESC

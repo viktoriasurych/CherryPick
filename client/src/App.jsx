@@ -3,6 +3,9 @@ import { useAuth } from './hooks/useAuth';
 
 import HomePage from './pages/HomePage'; 
 import AuthPage from './pages/AuthPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
 import ProjectCreatePage from './pages/ProjectCreatePage'; 
@@ -12,18 +15,17 @@ import StatsPage from './pages/StatsPage';
 import CollectionsPage from './pages/CollectionsPage';
 import CollectionDetailsPage from './pages/CollectionDetailsPage';
 import CollectionEditPage from './pages/CollectionEditPage';
-import SavedCollectionsPage from './pages/SavedCollectionsPage'; // 👈 1. НОВИЙ ІМПОРТ
+import SavedCollectionsPage from './pages/SavedCollectionsPage';
 
-import ForgotPasswordPage from './pages/ForgotPasswordPage'; // 👈 Додали
-import ResetPasswordPage from './pages/ResetPasswordPage';   // 👈 Додали
-
-import ProtectedRoute from './components/ProtectedRoute'; 
-import SessionPage from './pages/SessionPage';
-import Layout from './components/Layout';
 import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
-
 import StickyNotesPage from './pages/StickyNotesPage';
+
+// 👇 Твоя єдина сторінка для таймера
+import SessionPage from './pages/SessionPage'; 
+
+import ProtectedRoute from './components/ProtectedRoute'; 
+import Layout from './components/Layout';
 
 function App() {
   const { user } = useAuth();
@@ -31,7 +33,7 @@ function App() {
   return (
     <Routes>
 
-      {/* --- ПУБЛІЧНІ РОУТИ (Доступні всім) --- */}
+      {/* --- ПУБЛІЧНІ РОУТИ --- */}
 
       <Route 
         path="/" 
@@ -43,16 +45,17 @@ function App() {
         element={user ? <Navigate to="/projects" replace /> : <AuthPage />} 
       />
 
-<Route 
+      <Route 
         path="/forgot-password" 
         element={user ? <Navigate to="/projects" replace /> : <ForgotPasswordPage />} 
       />
+      
       <Route 
         path="/reset-password" 
         element={user ? <Navigate to="/projects" replace /> : <ResetPasswordPage />} 
       />
 
-      {/* Публічний профіль */}
+      {/* Публічний профіль (доступний без входу, але в Layout) */}
       <Route 
         path="/user/:id"
         element={
@@ -73,7 +76,32 @@ function App() {
       />
 
 
-      {/* --- ПРИВАТНІ РОУТИ (Тільки для своїх) --- */}
+      {/* --- ПРИВАТНІ РОУТИ --- */}
+
+      {/* 👇 1. ГЛОБАЛЬНИЙ СЕАНС (З меню зліва) */}
+      {/* Без <Layout>, бо там свій повноекранний дизайн */}
+      <Route 
+        path="/session"
+        element={
+            <ProtectedRoute>
+              <Layout><SessionPage /></Layout>
+                
+            </ProtectedRoute>
+        } 
+      />
+
+      {/* 👇 2. СЕАНС КОНКРЕТНОЇ КАРТИНИ (Старт з проєкту) */}
+      {/* Теж веде на SessionPage, але передає ID в URL */}
+      <Route 
+        path="/projects/:id/session" 
+        element={
+            <ProtectedRoute>
+                 <Layout><SessionPage /></Layout>
+            </ProtectedRoute>
+        } 
+      />
+
+      {/* --- Інші сторінки в Layout --- */}
 
       <Route 
         path="/notes"
@@ -153,9 +181,7 @@ function App() {
         } 
       />
 
-      {/* --- КОЛЕКЦІЇ --- */}
-
-      {/* 2. НОВИЙ РОУТ: ЗБЕРЕЖЕНІ КОЛЕКЦІЇ */}
+      {/* Колекції */}
       <Route 
         path="/saved"
         element={
@@ -167,7 +193,6 @@ function App() {
         } 
       />
 
-      {/* Список МОЇХ колекцій */}
       <Route 
         path="/collections"
         element={
@@ -190,8 +215,6 @@ function App() {
         } 
       />
 
-      {/* --- ІНШЕ --- */}
-
       <Route 
         path="/stats"
         element={
@@ -199,15 +222,6 @@ function App() {
                 <Layout>
                     <StatsPage />
                 </Layout>
-            </ProtectedRoute>
-        } 
-      />
-
-      <Route 
-        path="/projects/:id/session" 
-        element={
-            <ProtectedRoute>
-                 <SessionPage />
             </ProtectedRoute>
         } 
       />

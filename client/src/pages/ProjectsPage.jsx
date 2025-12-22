@@ -167,15 +167,11 @@ const ProjectsPage = () => {
                                                 className="group block bg-slate-900 rounded-xl overflow-hidden border border-slate-800 hover:border-cherry-500/50 transition duration-300 shadow-lg hover:shadow-cherry-900/20 flex flex-col h-full"
                                             >
                                                 <div className="h-52 bg-black relative overflow-hidden">
-                                                    {art.image_path ? (
-                                                        <img 
-                                                            src={artworkService.getImageUrl(art.image_path)} 
-                                                            alt={art.title} 
-                                                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition duration-500" 
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-slate-700 bg-slate-950 font-pixel text-xs">NO SIGNAL</div>
-                                                    )}
+                                                <img 
+        src={artworkService.getImageUrl(art.image_path)} 
+        alt={art.title} 
+        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition duration-500" 
+    />
                                                     
                                                     <div className={`absolute top-2 right-2 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold border shadow-lg uppercase tracking-wider
                                                         ${art.status === 'FINISHED' ? 'bg-green-900/80 border-green-500 text-green-100' : 
