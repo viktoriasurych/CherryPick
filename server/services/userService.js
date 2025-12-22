@@ -1,5 +1,6 @@
 const userDAO = require('../dao/userDAO');
-// const fs = require('fs'); // Можна додати пізніше для видалення файлів з диска
+const fs = require('fs');     // ✅ Для роботи з файлами (видалення)
+const path = require('path'); // ✅ Для правильних шляхів (Windows/Linux/Mac)
 
 class UserService {
     
@@ -48,10 +49,12 @@ class UserService {
     _deleteFile(avatarUrl) {
         try {
             // avatarUrl приходить як "/uploads/file.jpg"
-            // Нам треба повний шлях на диску: "D:\...\server\uploads\file.jpg"
             const fileName = avatarUrl.split('/').pop(); // беремо "file.jpg"
+            
+            // Тепер 'path' буде працювати, бо ми його підключили зверху
             const filePath = path.join(__dirname, '../uploads', fileName);
             
+            // І 'fs' теж буде працювати
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
                 console.log(`🗑️ Файл видалено: ${filePath}`);

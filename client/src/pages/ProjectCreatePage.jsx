@@ -10,23 +10,27 @@ const ProjectCreatePage = () => {
     const handleCreate = async (formData) => {
         try {
             setLoading(true);
-            await artworkService.create(formData);
-            navigate('/projects'); // Після успіху йдемо назад до списку
+            
+            // Створюємо проект і отримуємо відповідь
+            const response = await artworkService.create(formData);
+            
+            // Витягуємо ID нового проекту з відповіді (response.artwork.id)
+            const newId = response.artwork.id;
+            
+            // Переходимо на сторінку перегляду
+            navigate(`/projects/${newId}`);
         } catch (error) {
             alert('Помилка: ' + error.message);
-        } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="p-4 md:p-8 min-h-screen">
-            <ProjectForm 
-                title="Новий шедевр ✨" 
-                onSubmit={handleCreate} 
-                isLoading={loading} 
-            />
-        </div>
+        <ProjectForm 
+            title="Новий шедевр ✨" 
+            onSubmit={handleCreate} 
+            isLoading={loading} 
+        />
     );
 };
 

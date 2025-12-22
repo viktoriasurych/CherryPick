@@ -1,10 +1,9 @@
 import api from '../api/axios';
 
 const artworkService = {
-    getAll: async (filters = {}, sort = { by: 'updated', dir: 'DESC' }) => { // Додали sort
+    getAll: async (filters = {}, sort = { by: 'updated', dir: 'DESC' }) => {
         const params = new URLSearchParams();
         
-        // ... (код обробки фільтрів) ...
         Object.keys(filters).forEach(key => {
             const value = filters[key];
             if (Array.isArray(value) && value.length > 0) {
@@ -14,7 +13,6 @@ const artworkService = {
             }
         });
 
-        // 👇 ДОДАЄМО СОРТУВАННЯ В ЗАПИТ
         params.append('sortBy', sort.by);
         params.append('sortDir', sort.dir);
 
@@ -46,32 +44,18 @@ const artworkService = {
         return response.data;
     },
 
+    // 👇 ГОЛОВНЕ ВИПРАВЛЕННЯ ТУТ
     _sendData: async (url, method, data) => {
         const formData = new FormData();
         
+        // --- ЗВИЧАЙНІ ПОЛЯ ---
         formData.append('title', data.title);
         formData.append('description', data.description || '');
         if (data.status) formData.append('status', data.status);
         if (data.style_id) formData.append('style_id', data.style_id);
         if (data.genre_id) formData.append('genre_id', data.genre_id);
 
-        if (data.material_ids && data.material_ids.length > 0) {
-            formData.append('material_ids', data.material_ids.join(','));
-        }
-        if (data.tag_ids && data.tag_ids.length > 0) {
-            formData.append('tag_ids', data.tag_ids.join(','));
-        }
-
-        // 👇 ВИПРАВЛЕНО: Тільки один блок обробки фото
-        if (data.image instanceof File) {
-            // Це новий файл (об'єкт File)
-            formData.append('image', data.image); 
-        } else if (typeof data.image === 'string' && data.image.startsWith('uploads/')) {
-            // Це старий шлях (string), передаємо як текст, щоб сервер знав
-            formData.append('image_path', data.image);
-        }
-
-        // Дати
+        // --- ДАТИ ---
         if (data.started) {
             formData.append('started_year', data.started.year || '');
             formData.append('started_month', data.started.month || '');
@@ -83,9 +67,33 @@ const artworkService = {
             formData.append('finished_day', data.finished.day || '');
         }
 
-        const response = await api[method](url, formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-        });
+        // --- МАСИВИ ---
+        if (data.material_ids && Array.isArray(data.material_ids) && data.material_ids.length > 0) {
+            formData.append('material_ids', data.material_ids.join(','));
+        }
+        if (data.tag_ids && Array.isArray(data.tag_ids) && data.tag_ids.length > 0) {
+            formData.append('tag_ids', data.tag_ids.join(','));
+        }
+
+        // --- ЛОГІКА КАРТИНКИ ---
+        
+        // 1. Якщо це НОВИЙ файл (об'єкт File)
+        if (data.image && data.image instanceof File) {
+            formData.append('image', data.image); 
+        } 
+        // 2. Якщо це шлях (рядок) - наприклад, обрали з галереї
+        else if (data.image_path && typeof data.image_path === 'string') {
+            formData.append('image_path', data.image_path);
+        }
+
+        // --- ВІДПРАВКА ---
+        // Важливо явно вказати Content-Type, інакше при PUT запиті файл може не дійти
+        const config = {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        };
+
+        // Axios синтаксис: axios.post(url, data, config) або axios.put(url, data, config)
+        const response = await api[method](url, formData, config);
         return response.data;
     },
 
