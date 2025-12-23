@@ -68,35 +68,50 @@ class UserController {
     }
 
     // Отримати публічний профіль (по ID або по Nickname)
-    async getPublicProfile(req, res) {
-        try {
-            const identifier = req.params.id; // Це може бути "5" або "alex_art"
-            let user;
-            
-            // Якщо це число — шукаємо по ID
-            if (/^\d+$/.test(identifier)) {
-                user = await userService.getProfile(identifier);
-            } else {
-                // Якщо букви — шукаємо по нікнейму
-                user = await userService.getByNickname(identifier);
-            }
-
-            if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
-
-            // Повертаємо безпечні дані
-            const publicData = {
-                id: user.id,
-                nickname: user.nickname,
-                display_name: user.display_name || user.nickname,
-                avatar_url: user.avatar_url,
-                bio: user.bio,
-                // ...інші поля (статистика, соцмережі)
-            };
-            res.json(publicData);
-        } catch (e) {
-            res.status(500).json({ message: e.message });
+ // Отримати публічний профіль (по ID або по Nickname)
+ async getPublicProfile(req, res) {
+    try {
+        const identifier = req.params.id; 
+        let user;
+        
+        if (/^\d+$/.test(identifier)) {
+            user = await userService.getProfile(identifier);
+        } else {
+            user = await userService.getByNickname(identifier);
         }
+
+        if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
+
+        // Повертаємо безпечні дані
+        const publicData = {
+            id: user.id,
+            nickname: user.nickname,
+            display_name: user.display_name || user.nickname,
+            avatar_url: user.avatar_url,
+            bio: user.bio,
+            location: user.location, // Можна додати і локацію, якщо треба
+            
+            // Соцмережі (теж варто додати, якщо вони публічні)
+            social_telegram: user.social_telegram,
+            social_instagram: user.social_instagram,
+            social_twitter: user.social_twitter,
+            social_artstation: user.social_artstation,
+            social_behance: user.social_behance,
+            social_website: user.social_website,
+            contact_email: user.contact_email,
+
+            // 👇 ВАЖЛИВО: Додаємо налаштування приватності
+            show_global_stats: user.show_global_stats,
+            show_kpi_stats: user.show_kpi_stats,
+            show_heatmap_stats: user.show_heatmap_stats,
+            
+            created_at: user.created_at
+        };
+        res.json(publicData);
+    } catch (e) {
+        res.status(500).json({ message: e.message });
     }
+}
 }
 
 module.exports = new UserController();

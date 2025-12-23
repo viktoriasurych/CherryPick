@@ -1,15 +1,17 @@
 import { Link } from 'react-router-dom';
 import { 
     Squares2X2Icon, QueueListIcon, SparklesIcon,
-    GlobeAltIcon, LockClosedIcon, BookmarkIcon
+    GlobeAltIcon, LockClosedIcon
 } from '@heroicons/react/24/outline';
-import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid'; // Для "Збережено"
 import artworkService from '../services/artworkService';
+
+// 👇 Імпортуємо ОБИДВІ заглушки
 import defaultCollectionImg from '../assets/default-collection.png';
+import defaultAvatar from '../assets/default-avatar.png'; 
 
 const CollectionCard = ({ collection }) => {
     
-    // Визначаємо обкладинку
+    // 1. Логіка для ОБКЛАДИНКИ колекції
     let coverSrc = defaultCollectionImg;
     if (collection.cover_image) {
         coverSrc = artworkService.getImageUrl(collection.cover_image);
@@ -17,7 +19,13 @@ const CollectionCard = ({ collection }) => {
         coverSrc = artworkService.getImageUrl(collection.latest_image);
     }
 
-    // Хелпери для іконок
+    // 2. Логіка для АВАТАРКИ автора (якщо є)
+    let authorAvatarSrc = defaultAvatar; // За замовчуванням - сірий чоловічок
+    if (collection.author_avatar) {
+        // Тут краще використати повний шлях, якщо він приходить відносним
+        authorAvatarSrc = `http://localhost:3000${collection.author_avatar}`;
+    }
+
     const getTypeIcon = (type) => {
         switch(type) {
             case 'MOODBOARD': return <Squares2X2Icon className="w-4 h-4" />;
@@ -49,11 +57,7 @@ const CollectionCard = ({ collection }) => {
                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition duration-700 ease-in-out" 
                 />
                 
-                {/* Бейдж: Публічна/Приватна (тільки якщо це МОЯ колекція) */}
-                {/* Якщо це "Збережена", то показуємо автора */}
-                
                 <div className="absolute top-2 left-2 flex gap-1 z-10">
-                     {/* Статус (Публічність) */}
                      {collection.is_public !== undefined && (
                         <div className="bg-black/70 backdrop-blur p-1.5 rounded-full border border-white/10 text-white">
                             {collection.is_public ? (
@@ -63,9 +67,6 @@ const CollectionCard = ({ collection }) => {
                             )}
                         </div>
                     )}
-                    
-                    {/* Бейдж "Збережено" (якщо ми на сторінці збережених) */}
-                    {/* Можна перевіряти по якомусь прапорцю або просто виводити завжди якщо є */}
                 </div>
 
                 <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-[10px] text-white border border-white/10 font-mono z-10">
@@ -84,11 +85,15 @@ const CollectionCard = ({ collection }) => {
                     </div>
                 </div>
                 
-                {/* Автор (якщо є) */}
+                {/* 👇 АВТОР: Використовуємо правильну змінну authorAvatarSrc */}
                 {collection.author_name && (
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="w-4 h-4 rounded-full overflow-hidden bg-slate-800">
-                             <img src={collection.author_avatar ? `http://localhost:3000${collection.author_avatar}` : defaultCollectionImg} className="w-full h-full object-cover"/>
+                        <div className="w-4 h-4 rounded-full overflow-hidden bg-slate-800 border border-slate-700">
+                             <img 
+                                src={authorAvatarSrc} 
+                                alt={collection.author_name} 
+                                className="w-full h-full object-cover"
+                             />
                         </div>
                         <span className="text-xs text-slate-400 font-bold hover:text-white transition">
                             {collection.author_name}

@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { 
-    PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, 
-    BarChart, Bar, XAxis, YAxis, CartesianGrid 
-} from 'recharts';
-import { FireIcon, ClockIcon, PaintBrushIcon, Square3Stack3DIcon, Squares2X2Icon } from '@heroicons/react/24/solid';
+    FireIcon, ClockIcon, Square3Stack3DIcon, Squares2X2Icon,
+    EyeIcon, EyeSlashIcon, GlobeAltIcon, BookmarkIcon
+} from '@heroicons/react/24/solid';
 import statsService from '../services/statsService';
-import Tabs from '../components/ui/Tabs'; 
-import SearchableSelect from '../components/ui/SearchableSelect';
+import userService from '../services/userService'; 
 
-const COLORS = ['#e11d48', '#db2777', '#c026d3', '#9333ea', '#7c3aed', '#4f46e5'];
-
-// 👇 Хелпер для форматування часу (Години, Хвилини, Секунди)
+// Функція форматування для Heatmap
 const formatHeatmapTooltip = (value) => {
     if (!value || !value.count) return 'Немає даних';
     
@@ -29,282 +26,198 @@ const formatHeatmapTooltip = (value) => {
     return `${value.date}: ${parts.join(' ')}`;
 };
 
-const StatsPage = () => {
+const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const currentYear = new Date().getFullYear();
-    const [selectedYear, setSelectedYear] = useState(currentYear);
-    const [activeTab, setActiveTab] = useState('GLOBAL'); 
-
-    const STATS_TABS = [
-        { id: 'GLOBAL', label: '🌍 За весь час' },
-        { id: 'YEARLY', label: '📅 Хронологія' }
-    ];
+    const [year, setYear] = useState(new Date().getFullYear());
 
     useEffect(() => {
-        const load = async () => {
+        const loadStats = async () => {
             try {
                 setLoading(true);
-                const stats = await statsService.getStats(selectedYear);
+                // Якщо це чужий профіль, бекенд може повернути помилку або пусті дані, 
+                // якщо статистика повністю закрита. Треба це врахувати.
+                const stats = await statsService.getStats(year, userId, true); 
                 setData(stats);
             } catch (error) {
-                console.error(error);
+                console.error("Stats load error:", error);
             } finally {
                 setLoading(false);
             }
         };
-        load();
-    }, [selectedYear]);
+        loadStats();
+    }, [year, userId]);
 
-    if (loading) return <div className="text-center py-20 text-slate-500 animate-pulse font-pixel">Завантаження статистики...</div>;
-    if (!data) return <div className="text-center py-20 text-red-500">Помилка завантаження</div>;
+    const toggleBlock = async (blockKey) => {
+        if (!isOwner) return;
+        
+        const newValue = !privacySettings[blockKey];
+        // Локальне оновлення
+        onPrivacyChange(blockKey, newValue);
 
-    const { availableYears, global, yearly } = data;
-    const yearOptions = availableYears?.map(y => ({ value: y, label: y.toString() })) || [];
+        // Оновлення на сервері
+        const settingsForServer = { 
+            ...privacySettings, 
+            [blockKey]: newValue 
+        };
 
-    const cleanData = (chartData) => {
-        if (!chartData) return [];
-        return chartData.filter(item => item.name !== 'Не вказано' && item.count > 0);
+        try {
+            await userService.updateProfile(settingsForServer);
+        } catch (e) {
+            console.error("Помилка збереження налаштувань:", e);
+            onPrivacyChange(blockKey, !newValue); // Відкат
+        }
     };
 
-    return (
-        <div className="min-h-screen pb-20 p-4 md:p-8 max-w-[1600px] mx-auto space-y-10">
-            
-            {/* HEADER */}
-            <div className="flex flex-col md:flex-row justify-between items-end md:items-center border-b border-slate-800 pb-0 gap-6">
-                <div>
-                    <h1 className="text-3xl font-bold text-cherry-500 font-pixel tracking-wide mb-1 text-shadow-sm">Статистика</h1>
-                </div>
-                <Tabs items={STATS_TABS} activeId={activeTab} onChange={setActiveTab} />
+    if (loading) return <div className="p-10 text-center text-slate-500 animate-pulse text-xs font-pixel">Завантаження статистики...</div>;
+    if (!data) return null;
+
+    const { impact, overview, heatmap, availableYears } = data;
+
+    // Компонент заглушки (показуємо тільки власнику, щоб він бачив, що блок є, але прихований)
+    // Для чужого профілю, якщо блок прихований - ми його ВЗАГАЛІ не показуємо (return null)
+    const HiddenBlock = ({ label }) => {
+        if (!isOwner) return null; //  - для чужого просто пусто
+        
+        return (
+            <div className="bg-slate-900/20 border border-dashed border-slate-800 p-6 rounded-xl text-center text-slate-600 flex flex-col items-center justify-center h-full min-h-[100px]">
+                <EyeSlashIcon className="w-6 h-6 mb-2 opacity-50"/>
+                <p className="text-xs">Статистика "{label}" прихована (бачите тільки ви)</p>
             </div>
+        );
+    };
 
-            {/* GLOBAL TAB */}
-            {activeTab === 'GLOBAL' && (
-                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <section className="space-y-4">
-                        <SectionTitle>Загальні показники</SectionTitle>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <KpiCard icon={ClockIcon} label="Загальний час малювання" value={`${global.kpi.total_time} год`} color="text-blue-400" />
-                            <KpiCard icon={Square3Stack3DIcon} label="Загальна к-сть робіт" value={global.kpi.total_works} color="text-purple-400" />
-                            <KpiCard icon={Squares2X2Icon} label="Загальна к-сть колекцій" value={global.kpi.total_collections} color="text-pink-400" />
-                        </div>
-                    </section>
+    const VisibilityToggle = ({ blockKey }) => {
+        if (!isOwner) return null;
+        const isVisible = privacySettings[blockKey];
+        return (
+            <button 
+                onClick={() => toggleBlock(blockKey)}
+                className={`p-1.5 rounded-md transition ml-2 ${isVisible ? 'text-slate-600 hover:text-white' : 'text-red-500 bg-red-900/10'}`}
+                title={isVisible ? "Приховати від інших" : "Показати іншим"}
+            >
+                {isVisible ? <EyeIcon className="w-4 h-4"/> : <EyeSlashIcon className="w-4 h-4"/>}
+            </button>
+        );
+    };
 
-                    <section className="space-y-4">
-                        <SectionTitle>Структура портфоліо</SectionTitle>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <ChartContainer title="Статус робіт"><MyPieChart data={cleanData(global.charts.status)} nameKey="status" /></ChartContainer>
-                            <ChartContainer title="Види збірок"><MyPieChart data={cleanData(global.charts.collTypes)} /></ChartContainer>
-                        </div>
-                    </section>
+    // Перевірка видимості блоків
+    const showGlobal = isOwner || privacySettings.show_global_stats;
+    const showKpi = isOwner || privacySettings.show_kpi_stats;
+    const showHeatmap = isOwner || privacySettings.show_heatmap_stats;
 
-                    <section className="space-y-4">
-                        <SectionTitle>Творчий профіль</SectionTitle>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <ChartContainer title="Жанри"><MyPieChart data={cleanData(global.charts.genres)} /></ChartContainer>
-                            <ChartContainer title="Стилі"><MyPieChart data={cleanData(global.charts.styles)} /></ChartContainer>
-                            <ChartContainer title="Матеріали"><MyPieChart data={cleanData(global.charts.materials)} /></ChartContainer>
-                            <ChartContainer title="Теги"><MyPieChart data={cleanData(global.charts.tags)} /></ChartContainer>
-                        </div>
-                    </section>
+    // Якщо все приховано і це не власник - не рендеримо нічого, щоб не було пустих відступів
+    if (!isOwner && !showGlobal && !showKpi && !showHeatmap) return null;
 
-                    <section className="space-y-4">
-                        <SectionTitle>Динаміка продуктивності</SectionTitle>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <ChartContainer title="Активність по роках">
-                                <MyBarChart data={global.charts.years} color="#c026d3" type="time" unit="год" />
-                            </ChartContainer>
-                            <ChartContainer title="Активність по місяцях">
-                                <MyBarChart data={global.charts.months} color="#db2777" type="time" unit="год" />
-                            </ChartContainer>
-                        </div>
-                    </section>
-                </div>
-            )}
-
-            {/* YEARLY TAB */}
-            {activeTab === 'YEARLY' && (
-                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    
-                    <div className="flex justify-between items-center bg-slate-900/40 p-4 rounded-xl border border-slate-800 backdrop-blur-sm">
-                        <h2 className="text-xl font-bold text-slate-200">Огляд року</h2>
-                        <div className="w-40">
-                            <SearchableSelect options={yearOptions} value={selectedYear} onChange={setSelectedYear} placeholder="Рік..." />
-                        </div>
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            
+            {/* === БЛОК 1: ВПЛИВ === */}
+            {(showGlobal || isOwner) && (
+                <div className="relative group">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        {/* Заголовок показуємо тільки якщо блок видимий */}
+                        {showGlobal && <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Вплив</h3>}
+                        <VisibilityToggle blockKey="show_global_stats" />
                     </div>
-
-                    <section className="space-y-4">
-                        <SectionTitle>Підсумки року {selectedYear}</SectionTitle>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <KpiCard icon={ClockIcon} label={`Час малювання у ${selectedYear}`} value={`${yearly.kpi.total_time} год`} color="text-blue-400" />
-                            <KpiCard icon={Square3Stack3DIcon} label={`Робіт за ${selectedYear}`} value={yearly.kpi.works_count} color="text-purple-400" />
-                            <KpiCard icon={Squares2X2Icon} label={`Колекцій за ${selectedYear}`} value={yearly.kpi.collections_count} color="text-pink-400" />
-                        </div>
-                    </section>
-
-                    <section className="space-y-4">
-                        <SectionTitle>Ритм активності</SectionTitle>
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <KpiCard icon={FireIcon} label="Поточна серія (днів підряд)" value={`${yearly.kpi.current_streak} дн.`} color="text-orange-500" />
-                                <KpiCard icon={PaintBrushIcon} label="Найдовша серія (рекорд)" value={`${yearly.kpi.longest_streak} дн.`} color="text-green-400" />
+                    
+                    {showGlobal ? (
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex items-center gap-4">
+                                <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400"><GlobeAltIcon className="w-6 h-6" /></div>
+                                <div>
+                                    <div className="text-2xl font-bold text-white font-mono">{impact.views}</div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-bold">Переглядів колекцій</div>
+                                </div>
                             </div>
-                            
-                            <div className="bg-slate-950 border border-slate-800 p-6 rounded-xl relative group">
-                                <div className="overflow-x-auto no-scrollbar">
-                                    <div className="min-w-[800px]">
-                                        <CalendarHeatmap
-                                            startDate={new Date(`${selectedYear}-01-01`)}
-                                            endDate={selectedYear === currentYear ? new Date() : new Date(`${selectedYear}-12-31`)}
-                                            values={yearly.heatmap}
-                                            classForValue={(value) => {
-                                                if (!value) return 'color-empty';
-                                                // Пороги в секундах: 30 хв, 1 год, 2 год
-                                                if (value.count < 1800) return 'color-scale-1'; 
-                                                if (value.count < 3600) return 'color-scale-2';
-                                                if (value.count < 7200) return 'color-scale-3'; 
-                                                return 'color-scale-4'; 
-                                            }}
-                                            // 👇 Форматуємо підказку
-                                            titleForValue={formatHeatmapTooltip}
-                                            showWeekdayLabels gutterSize={3}
-                                        />
-                                    </div>
+                            <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex items-center gap-4">
+                                <div className="p-3 bg-pink-500/10 rounded-lg text-pink-400"><BookmarkIcon className="w-6 h-6" /></div>
+                                <div>
+                                    <div className="text-2xl font-bold text-white font-mono">{impact.saves}</div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-bold">Збережено іншими</div>
                                 </div>
                             </div>
                         </div>
-                    </section>
-
-                    <section className="space-y-4">
-                        <SectionTitle>Прогрес та Організація</SectionTitle>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <ChartContainer title={`Статус робіт (${selectedYear})`}><MyPieChart data={cleanData(yearly.charts.status)} nameKey="status" /></ChartContainer>
-                            <ChartContainer title={`Типи колекцій (${selectedYear})`}><MyPieChart data={cleanData(yearly.charts.collTypes)} /></ChartContainer>
-                        </div>
-                    </section>
-
-                    <section className="space-y-4">
-                        <SectionTitle>Вподобання року</SectionTitle>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <ChartContainer title={`Жанри (${selectedYear})`}><MyPieChart data={cleanData(yearly.charts.genres)} /></ChartContainer>
-                            <ChartContainer title={`Стилі (${selectedYear})`}><MyPieChart data={cleanData(yearly.charts.styles)} /></ChartContainer>
-                            <ChartContainer title={`Матеріали (${selectedYear})`}><MyPieChart data={cleanData(yearly.charts.materials)} /></ChartContainer>
-                            <ChartContainer title={`Теги (${selectedYear})`}><MyPieChart data={cleanData(yearly.charts.tags)} /></ChartContainer>
-                        </div>
-                    </section>
-
-                    <section className="space-y-4">
-                        <SectionTitle>Графік роботи</SectionTitle>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <ChartContainer title={`Тривалість по днях тижня (${selectedYear})`}>
-                                <MyBarChart data={yearly.charts.days} color="#f43f5e" type="time" unit="год" />
-                            </ChartContainer>
-                            <ChartContainer title={`Частота сеансів по годинах (${selectedYear})`}>
-                                <MyBarChart data={yearly.charts.hours} xKey="name" yKey="value" color="#8b5cf6" type="number" unit="сесій" />
-                            </ChartContainer>
-                        </div>
-                    </section>
+                    ) : <HiddenBlock label="Вплив" />}
                 </div>
             )}
-        </div>
-    );
-};
 
-// --- КОМПОНЕНТИ ---
-
-const SectionTitle = ({ children }) => (
-    <h3 className="text-lg font-bold text-slate-400 uppercase tracking-widest border-l-4 border-cherry-600 pl-3">
-        {children}
-    </h3>
-);
-
-const KpiCard = ({ icon: Icon, label, value, color }) => (
-    <div className="bg-slate-950 border border-slate-800 p-5 rounded-xl flex flex-col justify-between hover:border-slate-700 transition shadow-sm h-full">
-        <div className="flex justify-between items-start mb-3">
-            <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wider">{label}</span>
-            {Icon && <div className={`p-1.5 rounded-lg bg-slate-900 ${color} bg-opacity-10 shrink-0 border border-slate-800`}><Icon className="w-5 h-5" /></div>}
-        </div>
-        <div className="text-xl md:text-2xl font-bold text-slate-200 font-mono tracking-tight break-all leading-tight">
-            {value}
-        </div>
-    </div>
-);
-
-const ChartContainer = ({ title, children }) => (
-    <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex flex-col h-[320px] shadow-sm hover:shadow-md transition-shadow">
-        <h4 className="text-[10px] font-bold text-slate-500 mb-4 uppercase tracking-widest text-center border-b border-slate-900 pb-2 truncate" title={title}>
-            {title}
-        </h4>
-        <div className="flex-grow flex items-center justify-center w-full overflow-hidden">
-            {children}
-        </div>
-    </div>
-);
-
-const MyPieChart = ({ data, nameKey = "name" }) => {
-    if (!data || data.length === 0) return <div className="text-slate-600 italic text-xs">Немає даних</div>;
-    return (
-        <div className="w-full h-full flex flex-col">
-            <ResponsiveContainer width="100%" height="80%">
-                <PieChart>
-                    <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={5} dataKey="count" nameKey={nameKey}>
-                        {data.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} stroke="none" />)}
-                    </Pie>
-                    <RechartsTooltip contentStyle={{backgroundColor: '#020617', border: '1px solid #1e293b', fontSize: '12px'}} itemStyle={{color: '#fff'}} />
-                </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-wrap justify-center gap-2 mt-2 overflow-y-auto max-h-[50px] no-scrollbar px-2">
-                {data.map((entry, index) => (
-                    <div key={index} className="flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: COLORS[index % COLORS.length]}}></span>
-                        <span className="truncate max-w-[80px]">{entry[nameKey]}</span> ({entry.count})
+            {/* === БЛОК 2: АКТИВНІСТЬ === */}
+            {(showKpi || isOwner) && (
+                <div className="relative group">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        {showKpi && <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Активність (За весь час)</h3>}
+                        <VisibilityToggle blockKey="show_kpi_stats" />
                     </div>
-                ))}
-            </div>
+
+                    {showKpi ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <MiniKpi icon={Square3Stack3DIcon} label="Всього робіт" value={overview.total_works} color="text-purple-400" />
+                            <MiniKpi icon={Squares2X2Icon} label="Всього колекцій" value={overview.total_collections} color="text-indigo-400" />
+                            <MiniKpi icon={ClockIcon} label="Годин творчості" value={overview.total_time} color="text-cyan-400" />
+                            <MiniKpi icon={FireIcon} label="Макс. стрік" value={overview.longest_streak} color="text-orange-500" />
+                        </div>
+                    ) : <HiddenBlock label="Активність" />}
+                </div>
+            )}
+
+            {/* === БЛОК 3: HEATMAP === */}
+            {(showHeatmap || isOwner) && (
+                <div className="relative group">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        {showHeatmap && (
+                            <div className="flex items-center gap-4">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Графік {year}</h3>
+                                <select 
+                                    value={year} 
+                                    onChange={(e) => setYear(Number(e.target.value))}
+                                    className="bg-slate-950 border border-slate-800 text-slate-300 text-[10px] rounded px-2 py-0.5 outline-none focus:border-cherry-500 cursor-pointer"
+                                >
+                                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                            </div>
+                        )}
+                        <VisibilityToggle blockKey="show_heatmap_stats" />
+                    </div>
+
+                    {showHeatmap ? (
+                        <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl overflow-x-auto custom-scrollbar">
+                            <div className="min-w-[600px]">
+                                <CalendarHeatmap
+                                    startDate={new Date(`${year}-01-01`)}
+                                    endDate={new Date(`${year}-12-31`)}
+                                    values={heatmap}
+                                    classForValue={(value) => {
+                                        if (!value) return 'color-empty';
+                                        if (value.count < 1800) return 'color-scale-1'; 
+                                        if (value.count < 3600) return 'color-scale-2'; 
+                                        if (value.count < 7200) return 'color-scale-3'; 
+                                        return 'color-scale-4';
+                                    }}
+                                    tooltipDataAttrs={value => ({
+                                        'data-tooltip-content': formatHeatmapTooltip(value),
+                                        'data-tooltip-id': 'stats-tooltip'
+                                    })}
+                                    showWeekdayLabels
+                                    gutterSize={2}
+                                />
+                                <ReactTooltip id="stats-tooltip" style={{ backgroundColor: "#0f172a", color: "#fff", borderRadius: "4px", fontSize: "10px", padding: "4px 8px" }} />
+                            </div>
+                        </div>
+                    ) : <HiddenBlock label="Календар" />}
+                </div>
+            )}
+
         </div>
     );
 };
 
-// 👇 ОНОВЛЕНИЙ ГРАФІК З ДЕСЯТКОВИМИ ЧИСЛАМИ
-const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20, type = "time", unit = "" }) => {
-    if (!data || data.length === 0) 
-        return <div className="text-slate-600 italic text-xs font-pixel opacity-50">Немає даних</div>;
-    
-    return (
-        <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                <XAxis dataKey={xKey} tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} dy={5} />
-                <YAxis 
-                    tick={{fill: '#64748b', fontSize: 10}} 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tickFormatter={(val) => {
-                        if (type === 'time') {
-                            const hours = val / 3600;
-                            return hours === 0 ? "0" : hours.toFixed(1); // Наприклад, 1.5
-                        }
-                        return val;
-                    }}
-                />
-                
-                <RechartsTooltip 
-                    cursor={{fill: '#1e293b', opacity: 0.4}} 
-                    contentStyle={{backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px'}} 
-                    itemStyle={{color: '#fff'}} 
-                    formatter={(value, name) => {
-                        if (type === "number") return [`${value} ${unit}`, 'Кількість'];
-                        const seconds = value; 
-                        if (seconds === 0) return ['0 хв', 'Час'];
-                        if (seconds < 60) return [`${Math.round(seconds)} с`, 'Час'];
-                        else if (seconds < 3600) return [`${Math.round(seconds / 60)} хв`, 'Час'];
-                        else return [`${(seconds / 3600).toFixed(1)} год`, 'Час'];
-                    }}
-                />
-                <Bar dataKey={yKey} fill={color} radius={[4, 4, 0, 0]} barSize={barSize} />
-            </BarChart>
-        </ResponsiveContainer>
-    );
-};
+const MiniKpi = ({ icon: Icon, label, value, color }) => (
+    <div className="flex flex-col items-center justify-center bg-slate-900/40 p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition h-full">
+        <Icon className={`w-6 h-6 ${color} mb-2`} />
+        <div className="text-2xl font-bold text-white font-mono leading-none mb-1">{value}</div>
+        <div className="text-[10px] text-slate-500 uppercase font-bold text-center">{label}</div>
+    </div>
+);
 
-export default StatsPage;
+export default StatsSection;

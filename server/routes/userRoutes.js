@@ -13,6 +13,6 @@ router.delete('/me/avatar', authMiddleware, userController.deleteAvatar);
 
 // 2. ПОТІМ ДИНАМІЧНІ (Wildcards)
 // 🔓 Отримати дані будь-якого художника за ID (Це має бути останнім get)
-router.get('/:id', userController.getById);
-
+//router.get('/:id', userController.getById);
+router.get('/:id', userController.getPublicProfile);
 module.exports = router;

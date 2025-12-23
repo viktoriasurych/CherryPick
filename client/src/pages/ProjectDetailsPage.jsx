@@ -5,40 +5,43 @@ import {
     ClockIcon, 
     InformationCircleIcon, 
     Squares2X2Icon,
-    ArrowLeftIcon,
-    TagIcon // Додав іконку для тегів
+    ArrowLeftIcon
 } from '@heroicons/react/24/outline';
+
+// Сервіси
 import artworkService from '../services/artworkService';
 import sessionService from '../services/sessionService';
 import collectionService from '../services/collectionService';
+
+// Компоненти
 import AddToCollectionModal from '../components/AddToCollectionModal';
 import Tabs from '../components/ui/Tabs';
+import AtmosphereImage from '../components/ui/AtmosphereImage'; // 👈 Красиве фото
+import ArtworkInfoPanel from '../components/ArtworkInfoPanel';   // 👈 Вся інфа про картину (DRY)
+import BackButton from '../components/ui/BackButton';
 
 const ProjectDetailsPage = () => {
     const { id } = useParams();
     
-    // Стан даних
+    // --- STATE ---
     const [artwork, setArtwork] = useState(null);
     const [history, setHistory] = useState([]);
     const [inCollections, setInCollections] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // Стан інтерфейсу
     const [selectedImage, setSelectedImage] = useState(null);
     const [isCollectionModalOpen, setCollectionModalOpen] = useState(false);
-    
-    // Стан для табів
     const [activeTab, setActiveTab] = useState('INFO');
 
     const fileInputRef = useRef(null);
 
-    // Конфігурація табів
     const PROJECT_TABS = [
         { id: 'INFO', label: 'Про роботу' },
         { id: 'HISTORY', label: 'Історія сесій' },
         { id: 'COLLECTIONS', label: 'У колекціях' }
     ];
 
+    // --- DATA LOADING ---
     const fetchAllData = async (isSilent = false) => {
         try {
             if (!isSilent) setLoading(true);
@@ -72,6 +75,7 @@ const ProjectDetailsPage = () => {
 
     useEffect(() => { fetchAllData(); }, [id]);
 
+    // --- HANDLERS ---
     const handleQuickStatusChange = async (newStatus) => {
         try {
             setArtwork(prev => ({ ...prev, status: newStatus }));
@@ -87,7 +91,6 @@ const ProjectDetailsPage = () => {
             await artworkService.updateStatus(id, newStatus, finishedData);
             fetchAllData(true); 
         } catch (error) {
-            console.error(error);
             alert("Помилка оновлення статусу");
         }
     };
@@ -95,7 +98,6 @@ const ProjectDetailsPage = () => {
     const handleGalleryUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         try {
             await artworkService.addGalleryImage(id, file, 'Деталь');
             fetchAllData(true);
@@ -115,15 +117,6 @@ const ProjectDetailsPage = () => {
     const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { 
         day: 'numeric', month: 'long', hour: '2-digit', minute:'2-digit' 
     });
-    
-    const renderFuzzyDate = (y, m, d) => {
-        if (!y) return '—';
-        const months = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
-        let str = `${y}`;
-        if (m) str = `${months[m-1]} ${str}`;
-        if (d) str = `${d}, ${str}`;
-        return str;
-    };
 
     const STATUSES = { 
         'PLANNED': '📅 Заплановано', 
@@ -137,18 +130,19 @@ const ProjectDetailsPage = () => {
     if (loading) return <div className="text-center text-bone-200 mt-20">Завантаження...</div>;
     if (!artwork) return null;
 
+    // --- ЗБИРАЄМО ФОТО ---
     const allImages = [];
     const addedPaths = new Set();
 
     if (artwork.image_path) {
-        allImages.push({ id: 'cover_main', src: artwork.image_path, type: 'ОБКЛАДИНКА', isCover: true });
+        allImages.push({ id: 'cover_main', src: artwork.image_path, type: 'Обкладинка', isCover: true });
         addedPaths.add(artwork.image_path);
     }
 
     if (artwork.gallery) {
         artwork.gallery.forEach(img => {
             if (!addedPaths.has(img.image_path)) {
-                allImages.push({ id: `gal_${img.id}`, src: img.image_path, type: 'ДЕТАЛЬ' });
+                allImages.push({ id: `gal_${img.id}`, src: img.image_path, type: img.description || 'Деталь' });
                 addedPaths.add(img.image_path);
             }
         });
@@ -159,23 +153,27 @@ const ProjectDetailsPage = () => {
     return (
         <div className="p-4 md:p-8 relative min-h-screen max-w-7xl mx-auto">
             
-            <Link to="/projects" className="text-slate-500 hover:text-cherry-500 mb-6 inline-flex items-center gap-2 transition">
+            {/* <Link to="/projects" className="text-slate-500 hover:text-cherry-500 mb-6 inline-flex items-center gap-2 transition">
                 <ArrowLeftIcon className="w-4 h-4" /> Назад до архіву
-            </Link>
+            </Link> */}
+            <div className="mb-6">
+            <BackButton label="Назад" fallbackPath="/projects" />
+        </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
                 {/* === ЛІВА КОЛОНКА (7/12): ВІЗУАЛ === */}
                 <div className="lg:col-span-7 space-y-4">
-                    <div className="bg-black rounded-xl border border-slate-800 overflow-hidden shadow-2xl relative group h-[500px] md:h-[600px] flex items-center justify-center">
-                       {/* 👇 СТАЛО: Просто рендеримо картинку, сервіс сам підставить заглушку */}
-    <img 
-        src={artworkService.getImageUrl(currentSrc)} 
-        alt="Selected" 
-        className="w-full h-full object-contain" 
-    />
+                    
+                    {/* ГОЛОВНЕ ФОТО (Atmosphere) */}
+                    <div className="relative h-[500px] md:h-[600px] rounded-xl overflow-hidden shadow-2xl border border-slate-800 group bg-black">
+                        <AtmosphereImage 
+                            src={artworkService.getImageUrl(currentSrc)} 
+                            alt="Selected Artwork" 
+                            className="w-full h-full"
+                        />
                         
-                        <div className="absolute top-4 right-4">
+                        <div className="absolute top-4 right-4 z-20">
                             <select 
                                 value={artwork.status}
                                 onChange={(e) => handleQuickStatusChange(e.target.value)}
@@ -188,39 +186,47 @@ const ProjectDetailsPage = () => {
                         </div>
                     </div>
 
+                    {/* СТРІЧКА МІНІАТЮР */}
                     <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-800 p-1">
                         <div 
                             onClick={() => fileInputRef.current.click()}
-                            className="min-w-[70px] h-[70px] bg-slate-900 border border-dashed border-slate-600 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:text-cherry-500 hover:border-cherry-500 transition shrink-0 cursor-pointer group"
+                            className="min-w-[80px] h-[100px] bg-slate-900 border border-dashed border-slate-600 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:text-cherry-500 hover:border-cherry-500 transition shrink-0 cursor-pointer group"
                         >
                             <span className="text-2xl group-hover:scale-110 transition">+</span>
+                            <span className="text-[10px] mt-1">Додати</span>
                             <input type="file" ref={fileInputRef} onChange={handleGalleryUpload} className="hidden" />
                         </div>
 
-                        {allImages.map((img) => (
-                            <div 
-                                key={img.id} 
-                                onClick={() => setSelectedImage(img.src)} 
-                                className={`
-                                    min-w-[70px] h-[70px] rounded-lg overflow-hidden cursor-pointer border-2 transition relative shrink-0 
-                                    ${currentSrc === img.src ? 'border-cherry-500 scale-105 z-10 shadow-lg shadow-cherry-900/50' : 'border-transparent opacity-60 hover:opacity-100'}
-                                `}
-                            >
-                                <img src={artworkService.getImageUrl(img.src)} alt={img.type} className="w-full h-full object-cover" />
-                            </div>
-                        ))}
+                        {allImages.map((img) => {
+                            const isSelected = currentSrc === img.src;
+                            return (
+                                <div 
+                                    key={img.id} 
+                                    onClick={() => setSelectedImage(img.src)} 
+                                    className="min-w-[80px] w-[80px] flex flex-col gap-1 cursor-pointer group shrink-0"
+                                >
+                                    <div className={`
+                                        h-[80px] w-full rounded-lg overflow-hidden border-2 transition relative
+                                        ${isSelected ? 'border-cherry-500 shadow-lg shadow-cherry-900/50' : 'border-transparent opacity-70 hover:opacity-100'}
+                                    `}>
+                                        <img src={artworkService.getImageUrl(img.src)} alt={img.type} className="w-full h-full object-cover" />
+                                    </div>
+                                    <span className={`text-[9px] text-center uppercase tracking-wider truncate px-1 ${isSelected ? 'text-cherry-400 font-bold' : 'text-slate-600'}`}>
+                                        {img.type}
+                                    </span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
                 {/* === ПРАВА КОЛОНКА (5/12): ІНФОРМАЦІЯ === */}
                 <div className="lg:col-span-5 flex flex-col h-full">
                     
-                    {/* 3. FIX: break-words для перенесення довгого тексту */}
                     <h1 className="text-3xl md:text-4xl font-bold text-cherry-500 mb-2 font-pixel tracking-wide break-words">
                         {artwork.title}
                     </h1>
                     
-                    {/* 2. FIX: Приховування скролу на табах за допомогою [&::-webkit-scrollbar]:hidden */}
                     <div className="mb-6 mt-4">
                         <Tabs 
                             items={PROJECT_TABS} 
@@ -234,61 +240,13 @@ const ProjectDetailsPage = () => {
                         
                         {/* --- TAB 1: INFO --- */}
                         {activeTab === 'INFO' && (
-                            <div className="space-y-6">
-                                <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 shadow-inner">
-                                    <p className="text-bone-100 whitespace-pre-wrap leading-relaxed text-sm md:text-base break-words">
-                                        {artwork.description || <span className="italic text-slate-500">Опис відсутній...</span>}
-                                    </p>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
-                                        <span className="text-[10px] text-slate-500 uppercase block mb-1">Жанр</span>
-                                        <span className="text-cherry-300 font-bold text-sm">{artwork.genre_name || '—'}</span>
-                                    </div>
-                                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
-                                        <span className="text-[10px] text-slate-500 uppercase block mb-1">Стиль</span>
-                                        <span className="text-bone-200 text-sm">{artwork.style_name || '—'}</span>
-                                    </div>
-                                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
-                                        <span className="text-[10px] text-slate-500 uppercase block mb-1">Початок</span>
-                                        <span className="text-bone-200 text-sm">{renderFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day)}</span>
-                                    </div>
-                                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
-                                        <span className="text-[10px] text-slate-500 uppercase block mb-1">Кінець</span>
-                                        <span className="text-green-400 font-bold text-sm">{renderFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day)}</span>
-                                    </div>
-                                    
-                                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 col-span-2">
-                                        <span className="text-[10px] text-slate-500 uppercase block mb-2">Матеріали</span>
-                                        <div className="flex flex-wrap gap-1">
-                                            {artwork.material_names ? artwork.material_names.split(',').map((m, i) => (
-                                                <span key={i} className="inline-block bg-slate-800 px-2 py-1 rounded text-xs text-slate-300 border border-slate-700">{m.trim()}</span>
-                                            )) : <span className="text-sm text-slate-500">—</span>}
-                                        </div>
-                                    </div>
+                            <div className="space-y-6 h-full flex flex-col">
+                                {/* 👇 ВИКОРИСТОВУЄМО СПІЛЬНИЙ КОМПОНЕНТ */}
+                                <ArtworkInfoPanel artwork={artwork} showEditButton={true} />
 
-                                    {/* 1. FIX: Додано блок ТЕГІВ */}
-                                    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 col-span-2">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <TagIcon className="w-3 h-3 text-slate-500" />
-                                            <span className="text-[10px] text-slate-500 uppercase block">Теги</span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1">
-                                            {artwork.tag_names ? artwork.tag_names.split(',').map((t, i) => (
-                                                <span key={i} className="inline-block bg-cherry-900/20 px-2 py-1 rounded text-xs text-cherry-200 border border-cherry-900/30">
-                                                    #{t.trim()}
-                                                </span>
-                                            )) : <span className="text-sm text-slate-500 italic">Теги відсутні</span>}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 flex gap-3">
-                                    <Link to={`/projects/${id}/edit`} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-lg border border-slate-700 hover:border-cherry-500 transition text-center text-sm">
-                                        ✎ Редагувати
-                                    </Link>
-                                    <Link to={`/projects/${id}/session`} className="flex-1 bg-green-700 hover:bg-green-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-green-900/20 text-center transition flex items-center justify-center gap-2 text-sm">
+                                {/* Додаткова кнопка "Малювати", яка потрібна тільки тут */}
+                                <div className="mt-4">
+                                    <Link to={`/projects/${id}/session`} className="block w-full bg-green-700 hover:bg-green-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-green-900/20 text-center transition flex items-center justify-center gap-2 text-sm">
                                         <ClockIcon className="w-5 h-5" /> Малювати
                                     </Link>
                                 </div>

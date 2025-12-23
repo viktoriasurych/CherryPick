@@ -151,9 +151,10 @@ const ProfilePage = () => {
                         userId={profileUser.id} 
                         isOwner={isOwner}
                         privacySettings={{
-                            show_global_stats: profileUser.show_global_stats ?? true,
-                            show_kpi_stats: profileUser.show_kpi_stats ?? true,
-                            show_heatmap_stats: profileUser.show_heatmap_stats ?? true
+                            // Використовуйте Boolean(), щоб коректно обробити 0/1 з бази
+                            show_global_stats: Boolean(profileUser.show_global_stats),
+                            show_kpi_stats: Boolean(profileUser.show_kpi_stats),
+                            show_heatmap_stats: Boolean(profileUser.show_heatmap_stats)
                         }}
                         onPrivacyChange={handlePrivacyChange} // 👇 Передаємо виправлену функцію
                     />
