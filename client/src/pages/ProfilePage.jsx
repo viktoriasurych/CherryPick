@@ -20,15 +20,12 @@ import { SortableItem } from '../components/SortableItem';
 import defaultAvatar from '../assets/default-avatar.png'; 
 
 const ProfilePage = () => {
-    // id може бути undefined (якщо /profile) або рядок (якщо /user/viky_sia)
     const { id } = useParams(); 
     const { user: currentUser } = useAuth();
     
     const [profileUser, setProfileUser] = useState(null);
     const [collections, setCollections] = useState([]);
     const [loading, setLoading] = useState(true);
-    
-    // 👇 ЗМІНА 1: Робимо isOwner стейтом, бо ми дізнаємося правду тільки після завантаження даних
     const [isOwner, setIsOwner] = useState(false);
     
     const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
@@ -40,26 +37,18 @@ const ProfilePage = () => {
                 let userData;
                 let userCollections;
 
-                // 1. Завантажуємо ДАНІ ПРОФІЛЮ
                 if (!id) {
-                    // Якщо ми на /profile
                     userData = await userService.getProfile();
                 } else {
-                    // Якщо ми на /user/..., робимо запит (сервер знайде по ID або Ніку)
                     const res = await api.get(`/users/${id}`); 
                     userData = res.data;
                 }
 
-                // 2. Встановлюємо дані користувача
                 setProfileUser(userData);
 
-                // 👇 ЗМІНА 2: Визначаємо власника ТУТ, коли маємо userData
-                // Це працюватиме і для ID, і для Нікнейму
                 const ownerCheck = !id || (currentUser && String(currentUser.id) === String(userData.id));
                 setIsOwner(ownerCheck);
 
-                // 3. Завантажуємо колекції цього користувача
-                // Якщо це власник, можна було б вантажити і приватні, але для профілю беремо публічні
                 userCollections = await collectionService.getPublicCollections(userData.id);
                 setCollections(userCollections);
 
@@ -70,10 +59,22 @@ const ProfilePage = () => {
             }
         };
         loadProfile();
-    }, [id, currentUser?.id]); // Залежність від зміни ID в URL
+    }, [id, currentUser?.id]);
 
-    const handlePrivacyChange = (newSettings) => {
-        setProfileUser(prev => ({ ...prev, ...newSettings }));
+    // 🔥🔥🔥 ОСЬ ТУТ БУЛА ПОМИЛКА 🔥🔥🔥
+    // Ця функція має приймати (key, value) і ОБОВ'ЯЗКОВО використовувати ...prev
+    const handlePrivacyChange = (key, value) => {
+        console.log("Оновлюємо налаштування:", key, value); // Для перевірки в консолі
+        
+        setProfileUser(prev => {
+            // Якщо prev немає (рідкісний випадок), повертаємо що є
+            if (!prev) return prev;
+
+            return {
+                ...prev,        // 1. Беремо всі старі дані (ім'я, аватар, біо...)
+                [key]: value    // 2. І перезаписуємо ТІЛЬКИ одне налаштування
+            };
+        });
     };
 
     const handleDragEnd = async (event) => {
@@ -100,22 +101,19 @@ const ProfilePage = () => {
         <div className="max-w-[1600px] mx-auto pb-20 px-4 md:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 
-                {/* === ЛІВА КОЛОНКА === */}
+                {/* ЛІВА КОЛОНКА */}
                 <div className="lg:col-span-3 lg:sticky lg:top-24 h-fit space-y-6">
                     <div className="flex flex-col gap-4 text-center lg:text-left">
                         
-                        {/* Аватар */}
                         <div className="w-48 h-48 md:w-64 md:h-64 rounded-full border-4 border-slate-800 overflow-hidden shadow-2xl mx-auto lg:mx-0 bg-slate-900 shrink-0">
                             <img src={avatarSrc} alt="Profile" className="w-full h-full object-cover" />
                         </div>
                         
                         <div className="space-y-1">
-                            {/* ІМ'Я (Display Name) */}
                             <h1 className="text-3xl font-bold text-white font-pixel tracking-wide break-words">
                                 {profileUser.display_name || profileUser.nickname}
                             </h1>
                             
-                            {/* НІКНЕЙМ (Handle) */}
                             <p className="text-cherry-500 font-mono text-sm break-all">
                                 @{profileUser.nickname}
                             </p>
@@ -147,7 +145,7 @@ const ProfilePage = () => {
                     </div>
                 </div>
 
-                {/* === ПРАВА КОЛОНКА === */}
+                {/* ПРАВА КОЛОНКА */}
                 <div className="lg:col-span-9 space-y-12">
                     <StatsSection 
                         userId={profileUser.id} 
@@ -157,7 +155,7 @@ const ProfilePage = () => {
                             show_kpi_stats: profileUser.show_kpi_stats ?? true,
                             show_heatmap_stats: profileUser.show_heatmap_stats ?? true
                         }}
-                        onPrivacyChange={handlePrivacyChange}
+                        onPrivacyChange={handlePrivacyChange} // 👇 Передаємо виправлену функцію
                     />
 
                     <div>

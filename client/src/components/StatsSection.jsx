@@ -10,6 +10,23 @@ import statsService from '../services/statsService';
 import userService from '../services/userService'; 
 import { useAuth } from '../hooks/useAuth';
 
+// Функція форматування для Heatmap
+const formatHeatmapTooltip = (value) => {
+    if (!value || !value.count) return 'Немає даних';
+    
+    const totalSeconds = Number(value.count);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = Math.floor(totalSeconds % 60);
+
+    const parts = [];
+    if (h > 0) parts.push(`${h} год`);
+    if (m > 0) parts.push(`${m} хв`);
+    if (s > 0 || parts.length === 0) parts.push(`${s} с`);
+
+    return `${value.date}: ${parts.join(' ')}`;
+};
+
 const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -19,11 +36,7 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
         const loadStats = async () => {
             try {
                 setLoading(true);
-                
-                // 👇 ВАЖЛИВО: Передаємо 'true' третім параметром.
-                // Це каже бекенду: "Я на сторінці профілю, дай мені роки від дати РЕЄСТРАЦІЇ".
                 const stats = await statsService.getStats(year, userId, true); 
-                
                 setData(stats);
             } catch (error) {
                 console.error("Stats load error:", error);
@@ -34,19 +47,28 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
         loadStats();
     }, [year, userId]);
 
-    // Логіка перемикання видимості блоку
+    // 👇 ВИПРАВЛЕНО: Безпечне оновлення
     const toggleBlock = async (blockKey) => {
         if (!isOwner) return;
         
-        // 1. Оновлюємо локально через батьківську функцію (для миттєвої зміни UI)
-        const newSettings = { ...privacySettings, [blockKey]: !privacySettings[blockKey] };
-        onPrivacyChange(newSettings);
+        // 1. Обчислюємо нове значення (true/false)
+        const newValue = !privacySettings[blockKey];
 
-        // 2. Відправляємо на сервер
+        // 2. Оновлюємо локально (передаємо ключ і значення окремо!)
+        onPrivacyChange(blockKey, newValue);
+
+        // 3. Формуємо повний об'єкт для сервера (якщо API це вимагає)
+        const settingsForServer = { 
+            ...privacySettings, 
+            [blockKey]: newValue 
+        };
+
         try {
-            await userService.updateProfile(newSettings);
+            await userService.updateProfile(settingsForServer);
         } catch (e) {
             console.error("Помилка збереження налаштувань:", e);
+            // Можна відкотити назад у разі помилки
+            onPrivacyChange(blockKey, !newValue); 
         }
     };
 
@@ -55,7 +77,6 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
 
     const { impact, overview, heatmap, availableYears } = data;
 
-    // Компонент-заглушка для прихованого блоку
     const HiddenBlock = ({ label }) => (
         <div className="bg-slate-900/20 border border-dashed border-slate-800 p-6 rounded-xl text-center text-slate-600 flex flex-col items-center justify-center h-full min-h-[100px]">
             <EyeSlashIcon className="w-6 h-6 mb-2 opacity-50"/>
@@ -63,7 +84,6 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
         </div>
     );
 
-    // Кнопка перемикання (Око)
     const VisibilityToggle = ({ blockKey }) => {
         if (!isOwner) return null;
         const isVisible = privacySettings[blockKey];
@@ -81,7 +101,7 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             
-            {/* === БЛОК 1: ВПЛИВ (GLOBAL IMPACT) === */}
+            {/* === БЛОК 1: ВПЛИВ === */}
             <div className="relative group">
                 <div className="flex items-center justify-between mb-3 px-1">
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Вплив</h3>
@@ -90,21 +110,15 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
                 
                 {(isOwner || privacySettings.show_global_stats) ? (
                     <div className="grid grid-cols-2 gap-4">
-                        {/* Перегляди */}
                         <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex items-center gap-4">
-                            <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
-                                <GlobeAltIcon className="w-6 h-6" />
-                            </div>
+                            <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400"><GlobeAltIcon className="w-6 h-6" /></div>
                             <div>
                                 <div className="text-2xl font-bold text-white font-mono">{impact.views}</div>
                                 <div className="text-[10px] text-slate-500 uppercase font-bold">Переглядів колекцій</div>
                             </div>
                         </div>
-                        {/* Збереження */}
                         <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex items-center gap-4">
-                            <div className="p-3 bg-pink-500/10 rounded-lg text-pink-400">
-                                <BookmarkIcon className="w-6 h-6" />
-                            </div>
+                            <div className="p-3 bg-pink-500/10 rounded-lg text-pink-400"><BookmarkIcon className="w-6 h-6" /></div>
                             <div>
                                 <div className="text-2xl font-bold text-white font-mono">{impact.saves}</div>
                                 <div className="text-[10px] text-slate-500 uppercase font-bold">Збережено іншими</div>
@@ -114,7 +128,7 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
                 ) : <HiddenBlock label="Вплив" />}
             </div>
 
-            {/* === БЛОК 2: АКТИВНІСТЬ (ЗА ВЕСЬ ЧАС) === */}
+            {/* === БЛОК 2: АКТИВНІСТЬ === */}
             <div className="relative group">
                 <div className="flex items-center justify-between mb-3 px-1">
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Активність (За весь час)</h3>
@@ -131,13 +145,11 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
                 ) : <HiddenBlock label="Активність" />}
             </div>
 
-            {/* === БЛОК 3: HEATMAP (КАЛЕНДАР) === */}
+            {/* === БЛОК 3: HEATMAP === */}
             <div className="relative group">
                 <div className="flex items-center justify-between mb-3 px-1">
                     <div className="flex items-center gap-4">
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Графік {year}</h3>
-                        
-                        {/* Дропдаун років (Тут тепер будуть 2023, 2024, 2025) */}
                         <select 
                             value={year} 
                             onChange={(e) => setYear(Number(e.target.value))}
@@ -158,13 +170,13 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
                                 values={heatmap}
                                 classForValue={(value) => {
                                     if (!value) return 'color-empty';
-                                    if (value.count < 30) return 'color-scale-1';
-                                    if (value.count < 60) return 'color-scale-2';
-                                    if (value.count < 120) return 'color-scale-3';
+                                    if (value.count < 1800) return 'color-scale-1'; // 30 хв
+                                    if (value.count < 3600) return 'color-scale-2'; // 1 год
+                                    if (value.count < 7200) return 'color-scale-3'; // 2 год
                                     return 'color-scale-4';
                                 }}
                                 tooltipDataAttrs={value => ({
-                                    'data-tooltip-content': value.date ? `${value.date}: ${Math.round(value.count)} хв` : '',
+                                    'data-tooltip-content': formatHeatmapTooltip(value),
                                     'data-tooltip-id': 'stats-tooltip'
                                 })}
                                 showWeekdayLabels

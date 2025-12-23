@@ -111,6 +111,15 @@ class SessionService {
     async getHistory(artworkId) {
         return await sessionDAO.getByArtworkId(artworkId); 
     }
+
+    // 👇 НОВИЙ МЕТОД
+    async discardSession(userId) {
+        const session = await sessionDAO.findActive(userId);
+        if (session) {
+            await sessionDAO.delete(session.id);
+        }
+        return { message: "Сесію скасовано" };
+    }
 }
 
 module.exports = new SessionService();

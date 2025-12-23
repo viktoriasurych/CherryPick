@@ -12,6 +12,23 @@ import SearchableSelect from '../components/ui/SearchableSelect';
 
 const COLORS = ['#e11d48', '#db2777', '#c026d3', '#9333ea', '#7c3aed', '#4f46e5'];
 
+// 👇 Хелпер для форматування часу (Години, Хвилини, Секунди)
+const formatHeatmapTooltip = (value) => {
+    if (!value || !value.count) return 'Немає даних';
+    
+    const totalSeconds = Number(value.count);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = Math.floor(totalSeconds % 60);
+
+    const parts = [];
+    if (h > 0) parts.push(`${h} год`);
+    if (m > 0) parts.push(`${m} хв`);
+    if (s > 0 || parts.length === 0) parts.push(`${s} с`);
+
+    return `${value.date}: ${parts.join(' ')}`;
+};
+
 const StatsPage = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -28,8 +45,6 @@ const StatsPage = () => {
         const load = async () => {
             try {
                 setLoading(true);
-                // Третій параметр (useRegistrationDate) тут false або undefined, 
-                // щоб рахувати від першої картини
                 const stats = await statsService.getStats(selectedYear);
                 setData(stats);
             } catch (error) {
@@ -47,8 +62,6 @@ const StatsPage = () => {
     const { availableYears, global, yearly } = data;
     const yearOptions = availableYears?.map(y => ({ value: y, label: y.toString() })) || [];
 
-    // Фільтруємо нульові значення тільки для кругових діаграм (жанри, стилі), 
-    // щоб не було порожніх секторів.
     const cleanData = (chartData) => {
         if (!chartData) return [];
         return chartData.filter(item => item.name !== 'Не вказано' && item.count > 0);
@@ -65,13 +78,9 @@ const StatsPage = () => {
                 <Tabs items={STATS_TABS} activeId={activeTab} onChange={setActiveTab} />
             </div>
 
-            {/* ====================================================================================
-                                                GLOBAL TAB
-               ==================================================================================== */}
+            {/* GLOBAL TAB */}
             {activeTab === 'GLOBAL' && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    
-                    {/* БЛОК 1: ЗАГАЛЬНІ ПОКАЗНИКИ */}
                     <section className="space-y-4">
                         <SectionTitle>Загальні показники</SectionTitle>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -81,7 +90,6 @@ const StatsPage = () => {
                         </div>
                     </section>
 
-                    {/* БЛОК 2: СТРУКТУРА ПОРТФОЛІО */}
                     <section className="space-y-4">
                         <SectionTitle>Структура портфоліо</SectionTitle>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -90,7 +98,6 @@ const StatsPage = () => {
                         </div>
                     </section>
 
-                    {/* БЛОК 3: ТВОРЧИЙ ПРОФІЛЬ */}
                     <section className="space-y-4">
                         <SectionTitle>Творчий профіль</SectionTitle>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -101,7 +108,6 @@ const StatsPage = () => {
                         </div>
                     </section>
 
-                    {/* БЛОК 4: ДИНАМІКА */}
                     <section className="space-y-4">
                         <SectionTitle>Динаміка продуктивності</SectionTitle>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -116,13 +122,10 @@ const StatsPage = () => {
                 </div>
             )}
 
-            {/* ====================================================================================
-                                                YEARLY TAB
-               ==================================================================================== */}
+            {/* YEARLY TAB */}
             {activeTab === 'YEARLY' && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     
-                    {/* ВИБІР РОКУ */}
                     <div className="flex justify-between items-center bg-slate-900/40 p-4 rounded-xl border border-slate-800 backdrop-blur-sm">
                         <h2 className="text-xl font-bold text-slate-200">Огляд року</h2>
                         <div className="w-40">
@@ -130,7 +133,6 @@ const StatsPage = () => {
                         </div>
                     </div>
 
-                    {/* БЛОК 1: ПІДСУМКИ РОКУ */}
                     <section className="space-y-4">
                         <SectionTitle>Підсумки року {selectedYear}</SectionTitle>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -140,16 +142,14 @@ const StatsPage = () => {
                         </div>
                     </section>
 
-                    {/* БЛОК 2: РИТМ АКТИВНОСТІ */}
                     <section className="space-y-4">
                         <SectionTitle>Ритм активності</SectionTitle>
                         <div className="space-y-6">
-                            {/* Серії */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <KpiCard icon={FireIcon} label="Поточна серія (днів підряд)" value={`${yearly.kpi.current_streak} дн.`} color="text-orange-500" />
                                 <KpiCard icon={PaintBrushIcon} label="Найдовша серія (рекорд)" value={`${yearly.kpi.longest_streak} дн.`} color="text-green-400" />
                             </div>
-                            {/* Календар */}
+                            
                             <div className="bg-slate-950 border border-slate-800 p-6 rounded-xl relative group">
                                 <div className="overflow-x-auto no-scrollbar">
                                     <div className="min-w-[800px]">
@@ -159,11 +159,14 @@ const StatsPage = () => {
                                             values={yearly.heatmap}
                                             classForValue={(value) => {
                                                 if (!value) return 'color-empty';
-                                                if (value.count < 30) return 'color-scale-1';
-                                                if (value.count < 120) return 'color-scale-3';
-                                                return 'color-scale-4';
+                                                // Пороги в секундах: 30 хв, 1 год, 2 год
+                                                if (value.count < 1800) return 'color-scale-1'; 
+                                                if (value.count < 3600) return 'color-scale-2';
+                                                if (value.count < 7200) return 'color-scale-3'; 
+                                                return 'color-scale-4'; 
                                             }}
-                                            titleForValue={(value) => value ? `${value.date}: ~${Math.floor(value.count)} хв` : 'Немає даних'}
+                                            // 👇 Форматуємо підказку
+                                            titleForValue={formatHeatmapTooltip}
                                             showWeekdayLabels gutterSize={3}
                                         />
                                     </div>
@@ -172,7 +175,6 @@ const StatsPage = () => {
                         </div>
                     </section>
 
-                    {/* БЛОК 3: СТАТУСИ ТА ЗБІРКИ */}
                     <section className="space-y-4">
                         <SectionTitle>Прогрес та Організація</SectionTitle>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -181,7 +183,6 @@ const StatsPage = () => {
                         </div>
                     </section>
 
-                    {/* БЛОК 4: ВПОДОБАННЯ РОКУ */}
                     <section className="space-y-4">
                         <SectionTitle>Вподобання року</SectionTitle>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -192,7 +193,6 @@ const StatsPage = () => {
                         </div>
                     </section>
 
-                    {/* БЛОК 5: ГРАФІК РОБОТИ */}
                     <section className="space-y-4">
                         <SectionTitle>Графік роботи</SectionTitle>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -265,9 +265,8 @@ const MyPieChart = ({ data, nameKey = "name" }) => {
     );
 };
 
+// 👇 ОНОВЛЕНИЙ ГРАФІК З ДЕСЯТКОВИМИ ЧИСЛАМИ
 const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20, type = "time", unit = "" }) => {
-    // Ховаємо тільки якщо взагалі порожньо, або немає ключів.
-    // Але якщо прийшли нулі з бекенду ({name: "Січ", value: 0}), ми це МАЄМО відобразити.
     if (!data || data.length === 0) 
         return <div className="text-slate-600 italic text-xs font-pixel opacity-50">Немає даних</div>;
     
@@ -280,9 +279,11 @@ const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20, type =
                     tick={{fill: '#64748b', fontSize: 10}} 
                     axisLine={false} 
                     tickLine={false} 
-                    // Форматування осі Y (щоб не показувати 0.5 години як 1)
                     tickFormatter={(val) => {
-                        if (type === 'time') return (val / 3600).toFixed(0); // В годинах
+                        if (type === 'time') {
+                            const hours = val / 3600;
+                            return hours === 0 ? "0" : hours.toFixed(1); // Наприклад, 1.5
+                        }
                         return val;
                     }}
                 />
@@ -292,12 +293,8 @@ const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20, type =
                     contentStyle={{backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '8px'}} 
                     itemStyle={{color: '#fff'}} 
                     formatter={(value, name) => {
-                        // Якщо тип "число" (кількість сесій)
                         if (type === "number") return [`${value} ${unit}`, 'Кількість'];
-                        
-                        // 👇 ВИПРАВЛЕНО: value вже в секундах, не множимо!
                         const seconds = value; 
-                        
                         if (seconds === 0) return ['0 хв', 'Час'];
                         if (seconds < 60) return [`${Math.round(seconds)} с`, 'Час'];
                         else if (seconds < 3600) return [`${Math.round(seconds / 60)} хв`, 'Час'];

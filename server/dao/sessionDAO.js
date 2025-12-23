@@ -97,7 +97,19 @@ class SessionDAO {
                 resolve(rows);
             });
         });
+
     }
+    // 👇 НОВИЙ МЕТОД: Видалити сесію (для кнопки "Скинути")
+    delete(sessionId) {
+        return new Promise((resolve, reject) => {
+            const sql = `DELETE FROM sessions WHERE id = ?`;
+            db.run(sql, [sessionId], function(err) {
+                if (err) reject(err);
+                resolve(this.changes);
+            });
+        });
+    }
+    
 }
 
 module.exports = new SessionDAO();

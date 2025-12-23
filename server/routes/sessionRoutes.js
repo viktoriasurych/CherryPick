@@ -19,5 +19,7 @@ router.post('/stop', authMiddleware, upload.single('image'), sessionController.s
 
 // 👇 5. ІСТОРІЯ (Тут без змін)
 router.get('/history/:artworkId', authMiddleware, sessionController.getHistory);
+// 👇 СКИДАННЯ (Видалення поточної сесії)
+router.post('/discard', authMiddleware, sessionController.discard);
 
 module.exports = router;

@@ -75,6 +75,16 @@ class SessionController {
             res.status(500).json({ message: e.message });
         }
     }
+
+    // 👇 НОВИЙ МЕТОД
+    async discard(req, res) {
+        try {
+            await sessionService.discardSession(req.user.id);
+            res.json({ success: true });
+        } catch (e) {
+            res.status(500).json({ message: e.message });
+        }
+    }
 }
 
 module.exports = new SessionController();

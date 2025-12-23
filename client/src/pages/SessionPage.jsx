@@ -1,134 +1,156 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ClockIcon, PaintBrushIcon } from '@heroicons/react/24/outline'; // Додали іконки
+import { ArrowLeftIcon } from '@heroicons/react/24/outline'; 
 import artworkService from '../services/artworkService';
 import sessionService from '../services/sessionService';
 import SessionTimer from '../components/SessionTimer';
 
 const SessionPage = () => {
-    const { id } = useParams(); // ID з URL (якщо зайшли з конкретної картини)
+    const { id } = useParams();
     const navigate = useNavigate();
     
     const [loading, setLoading] = useState(true);
-    const [activeSession, setActiveSession] = useState(null); // Якщо вже щось тікає
-    const [targetArtwork, setTargetArtwork] = useState(null); // Картина, яку хочемо почати
+    const [activeSession, setActiveSession] = useState(null);
+    const [targetArtwork, setTargetArtwork] = useState(null);
+    const [history, setHistory] = useState([]);
 
     useEffect(() => {
         const init = async () => {
             try {
-                // 1. Спочатку питаємо: "Чи щось вже запущено?"
                 const current = await sessionService.getCurrent();
                 
                 if (current) {
-                    // ТАК: Показуємо активну сесію (ігноруємо URL id)
                     setActiveSession(current);
+                    const hist = await sessionService.getHistory(current.artwork_id);
+                    setHistory(hist);
                 } else if (id) {
-                    // НІ, але є ID в URL: Вантажимо інфу про картину для старту
                     const artworkData = await artworkService.getById(id);
                     setTargetArtwork(artworkData);
+                    const hist = await sessionService.getHistory(id);
+                    setHistory(hist);
                 } 
-                // 👇 ЯКЩО НІЧОГО НЕМАЄ — ПРОСТО НІЧОГО НЕ РОБИМО.
-                // Loading стане false, і ми покажемо блок "Немає сеансу".
-                
             } catch (error) {
                 console.error(error);
-                // Тут можна залишити редирект тільки якщо сталася реальна помилка сервера
             } finally {
                 setLoading(false);
             }
         };
         init();
-    }, [id]); // Прибрали navigate із залежностей
+    }, [id]);
 
-    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-slate-500 animate-pulse">Синхронізація часу...</div>;
+    const handleSessionSaved = async () => {
+        const artworkId = activeSession?.artwork_id || targetArtwork?.id;
+        if (artworkId) {
+            const hist = await sessionService.getHistory(artworkId);
+            setHistory(hist);
+        }
+    };
 
-    // 👇 ВАРІАНТ 1: НЕМАЄ АКТИВНОГО СЕАНСУ І НЕ ОБРАНО КАРТИНУ
+    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-slate-500 animate-pulse">Завантаження...</div>;
+
+    // Якщо нічого немає
     if (!activeSession && !targetArtwork) {
         return (
             <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-center">
-                <div className="bg-slate-900/50 p-8 rounded-full mb-6 border border-slate-800">
-                    <ClockIcon className="w-16 h-16 text-slate-600" />
-                </div>
-                
-                <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                    Немає активних сеансів
-                </h1>
-                
-                <p className="text-slate-500 mb-8 max-w-md text-sm leading-relaxed">
-                    Зараз таймер зупинено. Щоб почати відлік часу, оберіть картину зі своєї колекції та натисніть кнопку "Почати сеанс".
-                </p>
-                
-                <Link 
-                    to="/projects" 
-                    className="flex items-center gap-2 bg-cherry-600 hover:bg-cherry-500 text-white px-8 py-3 rounded-full font-bold transition shadow-lg shadow-cherry-900/40 hover:scale-105"
-                >
-                    <PaintBrushIcon className="w-5 h-5" />
-                    Перейти до архіву картин
+                <h1 className="text-xl font-bold text-white mb-4">Немає активних сеансів</h1>
+                <Link to="/projects" className="text-cherry-500 hover:text-cherry-400 font-bold border border-cherry-900/50 px-6 py-2 rounded-full">
+                    В архів
                 </Link>
             </div>
         );
     }
 
-    // 👇 ВАРІАНТ 2: Є ЩО ПОКАЗАТИ (Або активний, або підготовка до старту)
     const displayArtwork = activeSession 
         ? { title: activeSession.artwork_title, image_path: activeSession.image_path, id: activeSession.artwork_id }
         : targetArtwork;
 
-    if (!displayArtwork) return null; // На всяк випадок
+    if (!displayArtwork) return null;
+
+    // Форматування для історії
+    const formatDurationHistory = (s) => {
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        return h > 0 ? `${h}год ${m}хв` : `${m} хв`;
+    };
 
     return (
-        <div className="min-h-screen bg-black text-bone-200 flex flex-col">
-            {/* Хедер */}
-            <div className="p-4 border-b border-slate-900 flex justify-between items-center bg-slate-900/30 backdrop-blur-sm fixed top-0 w-full z-20">
-                <div className="flex items-center gap-4">
-                    <Link to={`/projects/${displayArtwork.id}`} className="text-slate-500 hover:text-white transition flex items-center gap-1 text-sm font-bold">
-                        &larr; Назад до проєкту
-                    </Link>
-                    <div className="h-4 w-px bg-slate-800 hidden sm:block"></div>
-                    <h1 className="text-lg font-bold text-slate-300 truncate max-w-[200px] sm:max-w-md">
-                        {displayArtwork.title} 
-                        <span className="text-cherry-500 text-xs font-normal ml-2 uppercase tracking-widest border border-cherry-900/30 px-2 py-0.5 rounded bg-cherry-900/10">
-                            {activeSession ? 'Триває сеанс' : 'Підготовка'}
-                        </span>
-                    </h1>
-                </div>
+        <div className="min-h-screen bg-black text-bone-200 flex flex-col relative overflow-hidden font-sans">
+            
+            {/* ФОН (Дуже темний і розмитий) */}
+            <div className="fixed inset-0 z-0 opacity-30 pointer-events-none">
+                <img 
+                    src={artworkService.getImageUrl(displayArtwork.image_path)} 
+                    className="w-full h-full object-cover blur-[100px] scale-125"
+                />
+                <div className="absolute inset-0 bg-black/70"></div>
             </div>
 
-            {/* Робоча зона (padding-top щоб не ховалось під хедер) */}
-            <div className="grow flex flex-col md:flex-row h-full pt-16">
-                
-                {/* ЛІВА ЧАСТИНА: Референс */}
-                <div className="w-full md:w-1/2 p-6 flex items-center justify-center bg-[#0a0a0a] border-r border-slate-900 relative overflow-hidden min-h-[50vh] md:min-h-0">
-                    {/* Фонова розмита картинка */}
-                    <div className="absolute inset-0 opacity-20 blur-3xl scale-125 z-0 pointer-events-none">
-                         {displayArtwork.image_path && <img src={artworkService.getImageUrl(displayArtwork.image_path)} className="w-full h-full object-cover" />}
-                    </div>
-
-                    <div className="z-10 relative w-full h-full flex items-center justify-center">
-                        {displayArtwork.image_path ? (
-                            <img 
-                                src={artworkService.getImageUrl(displayArtwork.image_path)} 
-                                alt="Reference" 
-                                className="max-h-[75vh] max-w-full object-contain shadow-2xl rounded-lg border border-slate-800"
-                            />
-                        ) : (
-                            <div className="text-slate-600 border border-slate-800 p-10 rounded bg-slate-900/50 flex flex-col items-center">
-                                <PaintBrushIcon className="w-8 h-8 mb-2 opacity-50" />
-                                <span>Без референсу</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* ПРАВА ЧАСТИНА: Таймер */}
-                <div className="w-full md:w-1/2 p-6 flex flex-col items-center justify-center bg-slate-950 relative border-t md:border-t-0 border-slate-900">
-                    <div className="w-full max-w-md z-10">
-                        <SessionTimer 
-                            initialSession={activeSession}
-                            artworkId={displayArtwork.id} 
-                            onSessionSaved={() => navigate(`/projects/${displayArtwork.id}`)} 
+            {/* 1. ХЕДЕР (Компактний рядок) */}
+            <header className="relative z-20 flex items-center justify-between p-4 md:p-6 border-b border-white/5 bg-black/20 backdrop-blur-md">
+                <Link 
+                    to={`/projects/${displayArtwork.id}`} 
+                    className="flex items-center gap-3 group max-w-[80%]"
+                >
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/10 group-hover:border-cherry-500 transition shrink-0">
+                        <img 
+                            src={artworkService.getImageUrl(displayArtwork.image_path)} 
+                            className="w-full h-full object-cover"
                         />
                     </div>
+                    <div className="flex flex-col overflow-hidden">
+                        <h1 className="text-sm md:text-base font-bold text-white truncate group-hover:text-cherry-400 transition">
+                            {displayArtwork.title}
+                        </h1>
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <ArrowLeftIcon className="w-3 h-3" /> Назад до перегляду
+                        </span>
+                    </div>
+                </Link>
+            </header>
+
+            {/* 2. ЦЕНТР (Таймер-віджет) */}
+            <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-4">
+                <div className="w-full max-w-sm">
+                    <SessionTimer 
+                        initialSession={activeSession}
+                        artworkId={displayArtwork.id} 
+                        onSessionSaved={handleSessionSaved}
+                    />
+                </div>
+            </main>
+
+            {/* 3. НИЗ (Історія - Scrollable area) */}
+            <div className="relative z-10 w-full max-w-2xl mx-auto px-4 pb-8 h-[30vh]">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 text-center">Історія сеансів</h3>
+                
+                <div className="h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800 mask-image-b-fade">
+                    {history.length === 0 ? (
+                        <div className="text-center text-slate-600 text-sm py-4">Пусто...</div>
+                    ) : (
+                        <div className="space-y-2">
+                            {history.map(session => (
+                                <div key={session.session_id} className="flex items-center gap-4 p-3 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition">
+                                    <div className="text-cherry-400 font-mono font-bold w-16 text-right shrink-0">
+                                        {formatDurationHistory(session.duration_seconds)}
+                                    </div>
+                                    <div className="h-4 w-px bg-white/10"></div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-slate-300 truncate">
+                                            {session.note_content || "Без нотатки"}
+                                        </p>
+                                        <p className="text-[10px] text-slate-500">
+                                            {new Date(session.created_at).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    {session.note_photo && (
+                                        <div className="w-8 h-8 rounded bg-black overflow-hidden shrink-0 border border-white/10">
+                                            <img src={artworkService.getImageUrl(session.note_photo)} className="w-full h-full object-cover"/>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

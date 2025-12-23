@@ -38,7 +38,14 @@ const sessionService = {
     getHistory: async (artworkId) => {
         const response = await api.get(`/sessions/history/${artworkId}`);
         return response.data;
-    }
+    },
+
+    // 👇 НОВИЙ МЕТОД
+    discard: async () => {
+        const response = await api.post('/sessions/discard');
+        return response.data;
+    },
+    // ...
 };
 
 export default sessionService;
