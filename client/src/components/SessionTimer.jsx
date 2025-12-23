@@ -18,30 +18,28 @@ const formatTime = (totalSeconds) => {
     return `${h}:${m}:${s}`;
 };
 
-// 👇 ВИПРАВЛЕНО: Тепер повертає час із секундами (slice(0, 19))
 const toLocalISO = (dateStringOrObject) => {
     if (!dateStringOrObject) return '';
     const date = new Date(dateStringOrObject);
     const offset = date.getTimezoneOffset() * 60000;
-    // Було slice(0, 16) -> "2023-12-22T14:30"
-    // Стало slice(0, 19) -> "2023-12-22T14:30:45"
     return (new Date(date.getTime() - offset)).toISOString().slice(0, 19);
 };
 
 const SessionTimer = ({ artworkId, initialSession, onSessionSaved }) => {
     const [status, setStatus] = useState(initialSession ? (initialSession.is_running ? 'RUNNING' : 'PAUSED') : 'IDLE');
     const [seconds, setSeconds] = useState(initialSession ? initialSession.current_total_seconds : 0);
+    const [sessionId, setSessionId] = useState(initialSession?.session_id || null);
     
     // Час
     const [startTime, setStartTime] = useState(initialSession ? initialSession.created_at : null);
     const [endTimeInput, setEndTimeInput] = useState('');
-    
-    // Чи редагував користувач час вручну?
     const [isTimeEdited, setIsTimeEdited] = useState(false);
 
     // Дані форми
     const [noteForm, setNoteForm] = useState({ content: '', image: null });
-    const [updateCover, setUpdateCover] = useState(false);
+    
+    // 👇 Змінили назву, щоб не плутатись. Це відповідає за додавання в загальну галерею.
+    const [addToGallery, setAddToGallery] = useState(false); 
     
     const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -69,6 +67,7 @@ const SessionTimer = ({ artworkId, initialSession, onSessionSaved }) => {
     const handleStart = async () => {
         try {
             const data = await sessionService.start(artworkId);
+            setSessionId(data.session_id); // Виправлено: бекенд повертає session_id
             setSeconds(data.current_total_seconds);
             setStartTime(data.created_at);
             setStatus('RUNNING');
@@ -98,12 +97,14 @@ const SessionTimer = ({ artworkId, initialSession, onSessionSaved }) => {
         if (file) {
             setNoteForm(prev => ({ ...prev, image: file }));
             setPreviewUrl(URL.createObjectURL(file));
+            setAddToGallery(false); // Скидаємо галочку при виборі нового фото
         }
     };
 
     const removeFile = () => {
         setNoteForm(prev => ({ ...prev, image: null }));
         setPreviewUrl(null);
+        setAddToGallery(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
@@ -120,18 +121,20 @@ const SessionTimer = ({ artworkId, initialSession, onSessionSaved }) => {
                 finalDuration = diff;
             }
 
+            // 👇 Відправляємо чіткий об'єкт
             await sessionService.stop({
+                sessionId: sessionId, // Переконайся, що сервіс приймає або ID окремо, або в об'єкті
                 manualDuration: finalDuration,
                 content: noteForm.content,
                 image: noteForm.image,
-                updateCover: updateCover
+                addToGallery: addToGallery // 👇 ТУТ ВАЖЛИВО: true або false
             });
 
             setStatus('IDLE');
             setSeconds(0);
             setNoteForm({ content: '', image: null });
             setPreviewUrl(null);
-            setUpdateCover(false);
+            setAddToGallery(false);
             if (onSessionSaved) onSessionSaved();
         } catch (error) {
             alert("Помилка: " + error.message);
@@ -147,7 +150,7 @@ const SessionTimer = ({ artworkId, initialSession, onSessionSaved }) => {
                 setStartTime(null);
                 setNoteForm({ content: '', image: null });
                 setPreviewUrl(null);
-                setUpdateCover(false);
+                setAddToGallery(false);
             } catch (error) {
                 alert("Помилка скидання: " + error.message);
             }
@@ -236,25 +239,21 @@ const SessionTimer = ({ artworkId, initialSession, onSessionSaved }) => {
                 </div>
                 
                 <form onSubmit={handleSaveSession} className="p-6 space-y-5">
+                    
+                    {/* Вибір часу */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-[10px] text-slate-500 uppercase font-bold">Початок</label>
-                            {/* Початок теж з секундами, але readonly */}
                             <input 
-                                type="datetime-local" 
-                                step="1" 
-                                disabled 
+                                type="datetime-local" step="1" disabled 
                                 value={startTime ? toLocalISO(startTime) : ''} 
                                 className="w-full bg-slate-800 rounded-lg p-2 text-xs text-slate-400 mt-1 cursor-not-allowed border border-transparent" 
                             />
                         </div>
                         <div>
                             <label className="text-[10px] text-cherry-400 uppercase font-bold">Кінець</label>
-                            {/* 👇 ДОДАНО step="1" для підтримки секунд */}
                             <input 
-                                type="datetime-local" 
-                                step="1"
-                                required 
+                                type="datetime-local" step="1" required 
                                 value={endTimeInput} 
                                 min={startTime ? toLocalISO(startTime) : ''} 
                                 max={toLocalISO(new Date())} 
@@ -264,32 +263,63 @@ const SessionTimer = ({ artworkId, initialSession, onSessionSaved }) => {
                         </div>
                     </div>
 
+                    {/* Нотатка */}
                     <div>
                         <label className="text-[10px] text-slate-500 uppercase font-bold">Нотатка</label>
                         <textarea rows="2" className="w-full bg-slate-800 rounded-lg p-3 text-sm text-bone-200 mt-1 focus:ring-1 focus:ring-cherry-500 outline-none resize-none border border-slate-700 placeholder-slate-600" value={noteForm.content} onChange={(e) => setNoteForm({...noteForm, content: e.target.value})} placeholder="На чому зупинились?" />
                     </div>
                     
+                    {/* СЕКЦІЯ ФОТО (БЕЗ ХОВЕРІВ) */}
                     <div>
                         <label className="text-[10px] text-slate-500 uppercase font-bold mb-1 block">Фото</label>
+                        
                         {previewUrl ? (
-                            <div className="relative rounded-xl overflow-hidden border border-white/20 aspect-video group">
-                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                                    <button type="button" onClick={() => fileInputRef.current.click()} className="p-2 bg-slate-700 rounded-full hover:bg-white hover:text-black transition text-white shadow-lg"><PhotoIcon className="w-5 h-5" /></button>
-                                    <button type="button" onClick={removeFile} className="p-2 bg-red-600 rounded-full hover:bg-red-500 text-white transition shadow-lg"><XMarkIcon className="w-5 h-5" /></button>
+                            <div className="space-y-3">
+                                {/* 1. Саме фото з кнопкою видалення (Завжди видна) */}
+                                <div className="relative rounded-xl overflow-hidden border border-slate-600 bg-black aspect-video">
+                                    <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
+                                    
+                                    {/* Кнопка видалення (фіксована) */}
+                                    <button 
+                                        type="button" 
+                                        onClick={removeFile} 
+                                        className="absolute top-2 right-2 p-2 bg-red-600 rounded-lg text-white shadow-lg active:bg-red-700 transition"
+                                    >
+                                        <XMarkIcon className="w-5 h-5" />
+                                    </button>
                                 </div>
-                                <div className="absolute bottom-2 left-2 right-2">
-                                    <label className={`flex items-center justify-center gap-2 p-2 rounded-lg cursor-pointer transition-all border ${updateCover ? 'bg-cherry-600 border-cherry-500 text-white shadow-lg' : 'bg-black/60 border-white/10 text-slate-300 backdrop-blur-sm hover:bg-black/80'}`}>
-                                        <input type="checkbox" checked={updateCover} onChange={(e) => setUpdateCover(e.target.checked)} className="hidden" />
-                                        {updateCover ? <CheckIcon className="w-4 h-4" /> : <div className="w-4 h-4 rounded-full border-2 border-slate-400"></div>}
-                                        <span className="text-xs font-bold">Обкладинка</span>
-                                    </label>
+
+                                {/* 2. Галочка "Додати в галерею" (Тільки якщо є фото) */}
+                                <div 
+                                    onClick={() => setAddToGallery(!addToGallery)}
+                                    className={`
+                                        flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all select-none
+                                        ${addToGallery 
+                                            ? 'bg-cherry-900/20 border-cherry-500/50' 
+                                            : 'bg-slate-900 border-slate-700 hover:border-slate-500'}
+                                    `}
+                                >
+                                    <div className={`
+                                        w-6 h-6 rounded border flex items-center justify-center transition-colors shrink-0
+                                        ${addToGallery ? 'bg-cherry-600 border-cherry-600' : 'border-slate-500 bg-transparent'}
+                                    `}>
+                                        {addToGallery && <CheckIcon className="w-4 h-4 text-white" />}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className={`text-sm font-bold ${addToGallery ? 'text-white' : 'text-slate-300'}`}>
+                                            Додати фото в галерею
+                                        </span>
+                                        <span className="text-[10px] text-slate-500">
+                                            Фото буде видно не тільки в історії, а й у "Деталях" роботи
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
-                            <div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed border-slate-700 hover:border-cherry-500/50 hover:bg-slate-800/50 rounded-xl p-4 text-center cursor-pointer transition-all h-24 flex flex-col items-center justify-center group">
+                            // Кнопка завантаження
+                            <div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed border-slate-700 hover:border-cherry-500/50 hover:bg-slate-800/50 rounded-xl p-4 text-center cursor-pointer transition-all h-24 flex flex-col items-center justify-center group active:scale-95">
                                 <CloudArrowUpIcon className="w-6 h-6 text-slate-500 group-hover:text-cherry-500 transition-colors mb-1" />
-                                <span className="text-[10px] text-slate-500 group-hover:text-slate-300">Додати фото</span>
+                                <span className="text-[10px] text-slate-500 group-hover:text-slate-300">Додати фото процесу</span>
                             </div>
                         )}
                         <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />

@@ -16,19 +16,21 @@ const sessionService = {
         return response.data;
     },
 
-    // 👇 ГОЛОВНЕ ВИПРАВЛЕННЯ ТУТ
     stop: async (data) => {
         const formData = new FormData();
         
         if (data.manualDuration) formData.append('manualDuration', data.manualDuration);
         formData.append('content', data.content || '');
-        formData.append('updateCover', data.updateCover ? 'true' : 'false');
+        
+        // 👇 ВИПРАВЛЕНО: Ми дивимось на addToGallery, бо так ми назвали це в Timer
+        // Якщо data.addToGallery true -> шлемо 'true', інакше 'false'
+        const shouldAdd = data.addToGallery || data.updateCover; 
+        formData.append('updateCover', shouldAdd ? 'true' : 'false');
         
         if (data.image) {
             formData.append('image', data.image);
         }
 
-        // 👇 ЯВНО ВКАЗУЄМО, ЩО ЦЕ ФОРМА З ФАЙЛОМ
         const response = await api.post('/sessions/stop', formData, {
             headers: { "Content-Type": "multipart/form-data" }
         });

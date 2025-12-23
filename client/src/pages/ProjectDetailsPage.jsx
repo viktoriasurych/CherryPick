@@ -16,16 +16,24 @@ import collectionService from '../services/collectionService';
 // Компоненти
 import AddToCollectionModal from '../components/AddToCollectionModal';
 import Tabs from '../components/ui/Tabs';
-import AtmosphereImage from '../components/ui/AtmosphereImage'; // 👈 Красиве фото
-import ArtworkInfoPanel from '../components/ArtworkInfoPanel';   // 👈 Вся інфа про картину (DRY)
+import AtmosphereImage from '../components/ui/AtmosphereImage';
+import ArtworkInfoPanel from '../components/ArtworkInfoPanel';
 import BackButton from '../components/ui/BackButton';
+import SessionHistoryList from '../components/SessionHistoryList'; // 👇 Імпорт
+import LoadMoreTrigger from '../components/ui/LoadMoreTrigger'; // 👇 Імпорт
+
+const ITEMS_PER_LOAD = 5; // Скільки показувати спочатку
 
 const ProjectDetailsPage = () => {
     const { id } = useParams();
     
     // --- STATE ---
     const [artwork, setArtwork] = useState(null);
-    const [history, setHistory] = useState([]);
+    
+    // Історія: повна і видима частина
+    const [fullHistory, setFullHistory] = useState([]);
+    const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
+
     const [inCollections, setInCollections] = useState([]);
     const [loading, setLoading] = useState(true);
     
@@ -53,7 +61,7 @@ const ProjectDetailsPage = () => {
             ]);
 
             setArtwork(artData);
-            setHistory(historyData);
+            setFullHistory(historyData); // Зберігаємо повну історію
 
             if (collectionsIds.length > 0) {
                 const allCols = await collectionService.getAll();
@@ -106,17 +114,24 @@ const ProjectDetailsPage = () => {
         }
     };
 
-    // --- HELPERS ---
-    const formatDuration = (s) => {
-         const h = Math.floor(s / 3600);
-         const m = Math.floor((s % 3600) / 60);
-         if (h > 0) return `${h} год ${m} хв`;
-         return `${m} хв`;
+    const handleHistoryImageClick = (src) => {
+        setSelectedImage(src);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    const handleLoadMoreHistory = () => {
+        setVisibleCount(prev => prev + ITEMS_PER_LOAD);
+    };
+
+    // --- HELPERS ---
     
-    const formatDate = (d) => new Date(d).toLocaleDateString('uk-UA', { 
-        day: 'numeric', month: 'long', hour: '2-digit', minute:'2-digit' 
-    });
+    // Підрахунок загального часу
+    const getTotalTime = (hist) => {
+        const total = hist.reduce((acc, s) => acc + s.duration_seconds, 0);
+        const h = Math.floor(total / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        return h > 0 ? `${h}г ${m}хв` : `${m}хв`;
+    };
 
     const STATUSES = { 
         'PLANNED': '📅 Заплановано', 
@@ -149,23 +164,24 @@ const ProjectDetailsPage = () => {
     }
 
     const currentSrc = selectedImage || artwork.image_path;
+    
+    // Зріз історії для відображення
+    const visibleHistory = fullHistory.slice(0, visibleCount);
+    const hasMoreHistory = visibleCount < fullHistory.length;
 
     return (
         <div className="p-4 md:p-8 relative min-h-screen max-w-7xl mx-auto">
             
-            {/* <Link to="/projects" className="text-slate-500 hover:text-cherry-500 mb-6 inline-flex items-center gap-2 transition">
-                <ArrowLeftIcon className="w-4 h-4" /> Назад до архіву
-            </Link> */}
             <div className="mb-6">
-            <BackButton label="Назад" fallbackPath="/projects" />
-        </div>
+                <BackButton label="Назад" fallbackPath="/projects" />
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
                 {/* === ЛІВА КОЛОНКА (7/12): ВІЗУАЛ === */}
                 <div className="lg:col-span-7 space-y-4">
                     
-                    {/* ГОЛОВНЕ ФОТО (Atmosphere) */}
+                    {/* ГОЛОВНЕ ФОТО */}
                     <div className="relative h-[500px] md:h-[600px] rounded-xl overflow-hidden shadow-2xl border border-slate-800 group bg-black">
                         <AtmosphereImage 
                             src={artworkService.getImageUrl(currentSrc)} 
@@ -241,10 +257,8 @@ const ProjectDetailsPage = () => {
                         {/* --- TAB 1: INFO --- */}
                         {activeTab === 'INFO' && (
                             <div className="space-y-6 h-full flex flex-col">
-                                {/* 👇 ВИКОРИСТОВУЄМО СПІЛЬНИЙ КОМПОНЕНТ */}
                                 <ArtworkInfoPanel artwork={artwork} showEditButton={true} />
 
-                                {/* Додаткова кнопка "Малювати", яка потрібна тільки тут */}
                                 <div className="mt-4">
                                     <Link to={`/projects/${id}/session`} className="block w-full bg-green-700 hover:bg-green-600 text-white font-bold py-3 rounded-lg shadow-lg shadow-green-900/20 text-center transition flex items-center justify-center gap-2 text-sm">
                                         <ClockIcon className="w-5 h-5" /> Малювати
@@ -253,39 +267,35 @@ const ProjectDetailsPage = () => {
                             </div>
                         )}
 
-                        {/* --- TAB 2: HISTORY --- */}
+                        {/* --- TAB 2: HISTORY (Оновлено) --- */}
                         {activeTab === 'HISTORY' && (
-                            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800">
-                                <div className="flex justify-between items-end mb-2">
-                                    <span className="text-slate-500 text-xs uppercase font-bold">Сесій: {history.length}</span>
+                            <div className="space-y-0 h-full flex flex-col">
+                                {/* Заголовок з підсумками */}
+                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
+                                    <span className="text-slate-500 text-xs uppercase font-bold tracking-wider">
+                                        Всього сесій: <span className="text-white">{fullHistory.length}</span>
+                                    </span>
+                                    <span className="text-[10px] font-mono text-cherry-500 bg-cherry-900/10 px-2 py-0.5 rounded border border-cherry-900/30">
+                                        Σ {getTotalTime(fullHistory)}
+                                    </span>
                                 </div>
-                                {history.map((session) => (
-                                    <div key={session.session_id} className="bg-slate-900 border border-slate-800 rounded-lg p-4 hover:border-slate-600 transition flex gap-4">
-                                        <div className="text-center min-w-[60px]">
-                                            <div className="text-cherry-400 font-bold font-mono text-lg">{formatDuration(session.duration_seconds)}</div>
-                                        </div>
-                                        <div className="border-l border-slate-800 pl-4 grow">
-                                            <div className="text-slate-500 text-xs mb-1">{formatDate(session.end_time)}</div>
-                                            <p className="text-sm text-slate-300 whitespace-pre-wrap">{session.note_content || <span className="italic opacity-50">Без нотаток</span>}</p>
-                                        </div>
-                                        {session.note_photo && (
-                                            <div 
-                                                className="w-16 h-16 bg-black rounded overflow-hidden shrink-0 cursor-pointer border border-slate-700 group/zoom"
-                                                onClick={() => {
-                                                    setSelectedImage(session.note_photo);
-                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                }}
-                                            >
-                                                <img src={artworkService.getImageUrl(session.note_photo)} className="w-full h-full object-cover group-hover/zoom:scale-110 transition duration-500" alt="Progress" />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                                {history.length === 0 && (
-                                    <div className="text-center py-10 text-slate-500 italic border border-dashed border-slate-800 rounded">
-                                        Історія поки порожня. Почніть першу сесію!
-                                    </div>
-                                )}
+                                
+                                {/* Контейнер з прокруткою */}
+                                <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800 custom-scrollbar max-h-[500px]">
+                                    {/* 👇 Використовуємо наш красивий компонент */}
+                                    <SessionHistoryList 
+                                        history={visibleHistory} 
+                                        onImageClick={handleHistoryImageClick} 
+                                    />
+
+                                    {/* 👇 Кнопка "Завантажити ще" */}
+                                    <LoadMoreTrigger 
+                                        hasMore={hasMoreHistory} 
+                                        onLoadMore={handleLoadMoreHistory} 
+                                        totalLoaded={visibleHistory.length}
+                                        totalItems={fullHistory.length}
+                                    />
+                                </div>
                             </div>
                         )}
 

@@ -51,59 +51,38 @@ class SessionService {
         return this.getCurrentSession(userId);
     }
 
-    // 👇 ОНОВЛЕНИЙ STOP (Найважливіше місце)
-    async stopSession(userId, noteData, manualDuration, updateCover) {
+    async stopSession(userId, noteData, manualDuration, addToGallery) { // addToGallery = це те саме що updateCover з контролера
         const session = await this.getCurrentSession(userId);
         if (!session) throw new Error("Немає активної сесії");
 
-        // 1. Визначаємо час
+        // 1. Час
         const finalDuration = manualDuration !== null && manualDuration !== undefined
             ? manualDuration 
             : session.current_total_seconds;
         
-        // 2. Закриваємо сесію в таблиці SESSIONS (тільки час)
+        // 2. Стоп в БД
         await sessionDAO.stop(session.id, finalDuration);
 
-        // 3. 👇 Створюємо запис у таблиці NOTES (Текст + Фото)
+        // 3. Нотатка (історія)
         const noteContent = noteData?.content || '';
         const photoPath = noteData?.photo_path || null;
 
-        // Якщо є хоч щось (текст або фото), створюємо запис в notes
         if (noteContent || photoPath) {
+            // Фото ЗАВЖДИ зберігається в історії сесій (session_notes)
             await sessionDAO.createNote(session.id, noteContent, photoPath);
         }
 
-        // 4. Логіка Галереї та Обкладинки (твоя стара логіка)
-        const artworkId = session.artwork_id;
-
-        if (photoPath && artworkId) {
-            // ... (тут без змін, бо ти працюєш через artworkDAO, який ми не чіпали)
-            if (updateCover) {
-                const existing = await artworkDAO.findById(artworkId);
-                if (existing) {
-                    if (existing.image_path && existing.image_path !== photoPath) {
-                        const exists = await artworkDAO.checkGalleryImageExists(artworkId, existing.image_path);
-                        if (!exists) await artworkDAO.addGalleryImage(artworkId, existing.image_path, 'Архівна обкладинка');
-                    }
-
-                    const updateData = {
-                        title: existing.title, description: existing.description, status: existing.status,
-                        style_id: existing.style_id, genre_id: existing.genre_id,
-                        material_ids: existing.material_ids, tag_ids: existing.tag_ids,
-                        started_year: existing.started_year, started_month: existing.started_month, started_day: existing.started_day,
-                        finished_year: existing.finished_year, finished_month: existing.finished_month, finished_day: existing.finished_day,
-                        image_path: photoPath 
-                    };
-                    await artworkDAO.update(artworkId, userId, updateData);
-
-                    const newExists = await artworkDAO.checkGalleryImageExists(artworkId, photoPath);
-                    if (!newExists) await artworkDAO.addGalleryImage(artworkId, photoPath, 'Фото з сесії');
-                }
-            } else {
-                const exists = await artworkDAO.checkGalleryImageExists(artworkId, photoPath);
-                if (!exists) await artworkDAO.addGalleryImage(artworkId, photoPath, 'Фото з сесії');
+        // 4. 👇 ГОЛОВНА ГАЛЕРЕЯ
+        // Додаємо в галерею artwork ТІЛЬКИ якщо є фото І якщо галочка (addToGallery) == true
+        if (photoPath && session.artwork_id && addToGallery) {
+            const exists = await artworkDAO.checkGalleryImageExists(session.artwork_id, photoPath);
+            if (!exists) {
+                // Додаємо як "Фото з сесії"
+                await artworkDAO.addGalleryImage(session.artwork_id, photoPath, 'Фото з сесії');
             }
         }
+        // ❌ БЛОК ELSE ПРИБРАНО!
+        // Раніше тут був else, який додавав фото, якщо галочка була false. Це була помилка.
 
         return { message: "Сесію успішно завершено", duration: finalDuration };
     }
