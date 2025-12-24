@@ -110,59 +110,45 @@ class CollectionController {
     async getOne(req, res) {
         try {
             const collectionId = req.params.id;
-            
-            // --- ПОЧАТОК РОЗПІЗНАВАННЯ ---
             let userId = null;
-            
-            // 1. Спробуємо взяти з req.user (якщо спрацював optionalAuthMiddleware)
-            if (req.user) {
-                userId = req.user.id;
-                console.log(`🔑 АВТОРИЗАЦІЯ (Middleware): Впізнав UserID=${userId}`);
-            } 
-            // 2. Якщо ні, пробуємо розшифрувати вручну (Запасний план)
-            else {
-                try {
-                    const authHeader = req.headers.authorization;
-                    if (authHeader) {
-                        const token = authHeader.split(' ')[1];
-                        const jwt = require('jsonwebtoken');
-                        // ⚠️ УВАГА: Тут має бути ТОЙ САМИЙ ключ, що в authMiddleware!
-                        // Якщо в тебе там 'fallback_secret', то і тут має бути він.
-                        const secret = process.env.JWT_SECRET || 'fallback_secret'; 
-                        
+
+            // Спроба дістати юзера (для is_saved і перевірки приватності)
+            try {
+                const authHeader = req.headers.authorization;
+                if (authHeader) {
+                    const token = authHeader.split(' ')[1];
+                    if (token) {
+                        // 👇 ВАЖЛИВО: Використовуємо ту ж бібліотеку і ключ
                         const decoded = jwt.verify(token, secret);
                         userId = decoded.id;
-                        console.log(`🔑 АВТОРИЗАЦІЯ (Manual): Впізнав UserID=${userId}`);
-                    } else {
-                        console.log(`👤 АВТОРИЗАЦІЯ: Токена немає, це Гість.`);
                     }
-                } catch (e) {
-                    console.log(`❌ АВТОРИЗАЦІЯ ПОМИЛКА: ${e.message}`);
                 }
+            } catch (e) {
+                // Ігноруємо помилки токена (це просто гість)
+                console.log("Гість переглядає колекцію");
             }
-            // --- КІНЕЦЬ РОЗПІЗНАВАННЯ ---
 
             // Шукаємо колекцію
             const collection = await collectionService.getCollectionDetails(collectionId, userId);
             
             if (!collection) {
-                console.log(`🚫 БАЗА ДАНИХ: Колекцію ID=${collectionId} не знайдено для UserID=${userId}`);
                 return res.status(404).json({ message: "Колекцію не знайдено (або вона приватна)" });
             }
 
-            // Статистика (пропускаємо помилки, щоб не крашило)
+            // Статистика
             try {
                 const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+                // Не чекаємо (await), хай записується фоном
                 viewStatsService.recordView(collectionId, userId, ip).catch(() => {});
+                
                 const views = await viewStatsService.getViewsCount(collectionId);
                 res.json({ ...collection, views });
             } catch (statErr) {
-                // Якщо статистика впала - віддаємо хоча б колекцію
                 res.json({ ...collection, views: 0 });
             }
 
         } catch (e) {
-            console.error("CRITICAL ERROR:", e);
+            console.error("Помилка отримання колекції:", e);
             res.status(500).json({ message: e.message });
         }
     }

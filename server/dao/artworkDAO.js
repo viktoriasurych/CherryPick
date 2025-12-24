@@ -195,10 +195,18 @@ class ArtworkDAO {
             ], function(err) {
                 if (err) return reject(err);
 
+                // 👇 ЛОГІКА 1: Якщо статус не 'FINISHED', видаляємо з колекцій
+                if (data.status && data.status !== 'FINISHED') {
+                    db.run(`DELETE FROM collection_items WHERE artwork_id = ?`, [id], (delErr) => {
+                        if (delErr) console.error("Auto-remove form collections error:", delErr);
+                    });
+                }
+
                 if (data.image_path) {
                     db.run(`UPDATE artworks SET image_path=? WHERE id=?`, [data.image_path, id]);
                 }
 
+                // ... (оновлення матеріалів і тегів без змін) ...
                 if (data.material_ids !== undefined) {
                     db.run(`DELETE FROM artwork_materials_link WHERE artwork_id=?`, [id], () => {
                         const ids = Array.isArray(data.material_ids) ? data.material_ids : String(data.material_ids).split(',').filter(Boolean);
@@ -251,8 +259,17 @@ class ArtworkDAO {
             }
 
             db.run(sql, params, function(err) {
-                if (err) reject(err);
-                else resolve({ id, status });
+                if (err) return reject(err);
+
+                // 👇 ЛОГІКА 2: Автоматичне видалення з колекцій при зміні статусу
+                if (status !== 'FINISHED') {
+                    console.log(`Artwork ${id} status changed to ${status}. Removing from collections...`);
+                    db.run(`DELETE FROM collection_items WHERE artwork_id = ?`, [id], (delErr) => {
+                        if (delErr) console.error("Error cleaning up collections:", delErr);
+                    });
+                }
+
+                resolve({ id, status });
             });
         });
     }

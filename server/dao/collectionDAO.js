@@ -131,29 +131,33 @@ class CollectionDAO {
         });
     }
 
-   // 👇 ОНОВЛЕНИЙ МЕТОД getById
+   // 👇 ОНОВЛЕНИЙ МЕТОД getById (Виправлено для гостей)
    getById(id, currentUserId = null) {
     return new Promise((resolve, reject) => {
-        // Формуємо запит динамічно
-        // 1. Якщо є юзер -> перевіряємо чи ВІН зберіг (is_saved)
-        // 2. Рахуємо ЗАГАЛЬНУ кількість збережень (save_count)
-        let sql = `
+        // Формуємо частину запиту про is_saved динамічно
+        // Якщо currentUserId є — додаємо підзапит і параметр
+        // Якщо немає — просто повертаємо 0 (false)
+        
+        const isSavedQuery = currentUserId 
+            ? `, (SELECT 1 FROM saved_collections WHERE user_id = ? AND collection_id = c.id) as is_saved`
+            : `, 0 as is_saved`; // Для гостя завжди false
+
+        const sql = `
             SELECT 
                 c.*, 
                 u.nickname as author_name, 
                 u.avatar_url as author_avatar,
                 u.id as author_id,
-                -- 👇 ПІДРАХУНОК ВСІХ ЗБЕРЕЖЕНЬ
                 (SELECT COUNT(*) FROM saved_collections WHERE collection_id = c.id) as save_count
-                
-                ${currentUserId ? `, (SELECT 1 FROM saved_collections WHERE user_id = ? AND collection_id = c.id) as is_saved` : ''}
+                ${isSavedQuery}
             FROM collections c
             JOIN users u ON c.user_id = u.id
             WHERE c.id = ?
         `;
         
-        // Якщо є currentUserId, то параметри: [userId, collectionId]
-        // Якщо немає (гість), то параметри: [collectionId]
+        // Якщо є currentUserId, параметри: [userId, collectionId]
+        // Якщо немає, параметри: [collectionId]
+        // Порядок важливий! userId йде першим, бо він вставляється в ${isSavedQuery} перед WHERE c.id = ?
         const params = currentUserId ? [currentUserId, id] : [id];
 
         db.get(sql, params, (err, row) => {
@@ -161,10 +165,12 @@ class CollectionDAO {
             if (row) {
                 // Конвертуємо 1/0 в true/false
                 row.is_saved = !!row.is_saved;
+                row.is_public = !!row.is_public; // Також корисно
             }
             resolve(row);
         });
     });
+
 }
 
     // Видалити
@@ -381,14 +387,25 @@ class CollectionDAO {
     }
 
     // Отримати список збережених (Для сторінки "Збережене")
+    // Отримати список збережених (Для сторінки "Збережене")
     getSaved(userId) {
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT 
-                    c.*, 
+                    -- 👇 Беремо ID з таблиці збережених, бо c.id може бути NULL (якщо видалено)
+                    sc.collection_id as id, 
+                    sc.saved_at,
+                    
+                    c.title,
+                    c.description,
+                    c.type,
+                    c.is_public,
+                    c.cover_image,
+                    c.user_id as author_id, -- Щоб знати, чи це моя колекція
+                    
                     u.nickname as author_name,
                     u.avatar_url as author_avatar,
-                    sc.saved_at,
+                    
                     COUNT(ci.id) as item_count,
                     (
                         SELECT a.image_path 
@@ -399,16 +416,25 @@ class CollectionDAO {
                         LIMIT 1
                     ) as latest_image
                 FROM saved_collections sc
-                JOIN collections c ON sc.collection_id = c.id
-                JOIN users u ON c.user_id = u.id
+                -- 👇 LEFT JOIN важливий! Він поверне рядок, навіть якщо колекції вже немає
+                LEFT JOIN collections c ON sc.collection_id = c.id
+                LEFT JOIN users u ON c.user_id = u.id
                 LEFT JOIN collection_items ci ON c.id = ci.collection_id
                 WHERE sc.user_id = ?
-                GROUP BY c.id
+                GROUP BY sc.collection_id
                 ORDER BY sc.saved_at DESC
             `;
             db.all(sql, [userId], (err, rows) => {
                 if (err) return reject(err);
-                resolve(rows);
+                
+                // Конвертуємо is_public (SQLite повертає 1/0 або NULL)
+                const processed = rows.map(r => ({
+                    ...r,
+                    is_public: r.is_public === 1, // true, false або false (якщо null)
+                    is_deleted: !r.title // Якщо немає назви - значить запису в collections немає
+                }));
+                
+                resolve(processed);
             });
         });
     }
