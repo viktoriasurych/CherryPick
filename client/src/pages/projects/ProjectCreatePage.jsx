@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import artworkService from '../../services/artworkService';
-import ProjectForm from '../components/ProjectForm';
+
+// 👇 ProjectForm лежить у components/projects
+import ProjectForm from '../../components/projects/ProjectForm';
 
 const ProjectCreatePage = () => {
     const navigate = useNavigate();

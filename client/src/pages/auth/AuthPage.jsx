@@ -2,11 +2,17 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google'; 
 import api from '../../api/axios';
+
+// 👇 Шлях до UI компонентів
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
+
 import { useAuth } from '../../hooks/useAuth';
-import AuthLayout from '../../components/layouts/AuthLayout'; // 👇 Використовуємо лейаут
-import RULES from '../../config/validationRules.json'; 
+
+// 👇 Шлях до Лейаута (layouts)
+import AuthLayout from '../../components/layouts/AuthLayout'; 
+
+import RULES from '../../config/validationRules.json';
 
 const AuthPage = () => {
     const navigate = useNavigate();

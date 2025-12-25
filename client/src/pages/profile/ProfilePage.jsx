@@ -4,9 +4,15 @@ import { useAuth } from '../../hooks/useAuth';
 import api from '../../api/axios';
 import collectionService from '../../services/collectionService';
 import userService from '../../services/userService';
+
+// 👇 UI
 import Button from '../../components/ui/Button';
-import StatsSection from '../components/StatsSection'; 
-import CollectionCard from '../components/CollectionCard'; 
+
+// 👇 Stats
+import StatsSection from '../../components/stats/StatsSection'; 
+
+// 👇 Collections
+import CollectionCard from '../../components/collections/CollectionCard';
 
 import { 
     LinkIcon, EnvelopeIcon, PaperAirplaneIcon, 
@@ -15,9 +21,12 @@ import {
 
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
-import { SortableItem } from '../components/SortableItem';
 
-import defaultAvatar from '../assets/default-avatar.png'; 
+// 👇 SortableItem лежить у ui
+import { SortableItem } from '../../components/ui/SortableItem';
+
+// 👇 Ассет на два рівні вгору
+import defaultAvatar from '../../assets/default-avatar.png';
 
 const ProfilePage = () => {
     const { id } = useParams(); 

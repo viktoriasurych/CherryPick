@@ -5,6 +5,8 @@ import {
     QueueListIcon, 
     SparklesIcon 
 } from '@heroicons/react/24/outline';
+
+// 👇 Виходимо з collections (..), потрапляємо в components, заходимо в ui
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 

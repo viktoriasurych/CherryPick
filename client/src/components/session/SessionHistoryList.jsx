@@ -1,6 +1,6 @@
+// 👇 Два рівні вгору
 import artworkService from '../../services/artworkService';
 import { ClockIcon } from '@heroicons/react/24/outline';
-
 const SessionHistoryList = ({ history, onImageClick }) => {
     
     // 1. Формат 00:00:00 (для кожного рядка - вже є)

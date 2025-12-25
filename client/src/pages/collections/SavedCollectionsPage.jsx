@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { BookmarkIcon } from '@heroicons/react/24/outline';
 import collectionService from '../../services/collectionService';
-import CollectionCard from '../components/CollectionCard';
-import CollectionToolbar from '../components/CollectionToolbar';
+
+// 👇 Компоненти колекцій
+import CollectionCard from '../../components/collections/CollectionCard';
+import CollectionToolbar from '../../components/collections/CollectionToolbar';
+
 import Pagination from '../../components/ui/Pagination';
 import useCollectionFilters from '../../hooks/useCollectionFilters';
 

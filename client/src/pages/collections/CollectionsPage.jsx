@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import collectionService from '../../services/collectionService';
-import CollectionToolbar from '../components/CollectionToolbar';
+
+// 👇 Компоненти колекцій лежать у components/collections
+import CollectionToolbar from '../../components/collections/CollectionToolbar';
+import CollectionCard from '../../components/collections/CollectionCard';
+
 import Pagination from '../../components/ui/Pagination';
-import CollectionCard from '../components/CollectionCard';
 import useCollectionFilters from '../../hooks/useCollectionFilters';
-// 👇 Імпортуємо хук створення
 import { useCreateCollection } from '../../hooks/useCreateCollection';
 
 const CollectionsPage = () => {

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import artworkService from '../../services/artworkService';
-import ProjectForm from '../components/ProjectForm';
+
+// 👇 Projects
+import ProjectForm from '../../components/projects/ProjectForm';
 
 const ProjectEditPage = () => {
     const { id } = useParams();

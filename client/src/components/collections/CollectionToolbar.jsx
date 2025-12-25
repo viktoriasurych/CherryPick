@@ -3,8 +3,9 @@ import {
     BarsArrowDownIcon, 
     BarsArrowUpIcon 
 } from '@heroicons/react/24/outline';
-import Tabs from '../ui/Tabs'; // 👈 Імпортуємо наш новий компонент
 
+// 👇 Один крок назад до components, потім в ui
+import Tabs from '../ui/Tabs';
 const TABS = [
     { id: 'ALL', label: 'Усі' },
     { id: 'MOODBOARD', label: 'Мудборди' },

@@ -6,6 +6,8 @@ import {
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
+
+// 👇 ВИПРАВЛЕНО: Два рівні вгору до utils
 import { formatHeatmapTooltip } from '../../utils/formatters';
 
 const COLORS = ['#e11d48', '#db2777', '#c026d3', '#9333ea', '#7c3aed', '#4f46e5'];

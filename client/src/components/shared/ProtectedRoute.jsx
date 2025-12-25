@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
 
+// 👇 Два рівні вгору
+import { useAuth } from '../../hooks/useAuth';
 const ProtectedRoute = ({ children }) => {
     const { isAuth } = useAuth();
 

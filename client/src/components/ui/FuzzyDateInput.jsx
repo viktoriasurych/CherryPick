@@ -23,10 +23,9 @@ const FuzzyDateInput = ({ label, value, onChange, error }) => {
         let val = e.target.value;
         const currentYear = new Date().getFullYear();
 
-        // Валідація року: макс 4 цифри, не більше поточного року
         if (val.length > 4) val = val.slice(0, 4);
         if (parseInt(val) > currentYear) val = currentYear.toString();
-        if (val < 0) val = ''; // Заборона мінусів
+        if (val < 0) val = ''; 
 
         setYear(val);
 
@@ -54,7 +53,6 @@ const FuzzyDateInput = ({ label, value, onChange, error }) => {
         updateParent(year, month, val);
     };
 
-    // Логіка днів
     const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
     const getDaysInMonth = (y, m) => {
         if (!m) return 31;
@@ -66,16 +64,17 @@ const FuzzyDateInput = ({ label, value, onChange, error }) => {
 
     const maxDays = getDaysInMonth(year, month);
     const daysOptions = Array.from({ length: maxDays }, (_, i) => i + 1);
+    
+    // Англійські назви місяців
     const months = [
-        { id: 1, name: 'Січ' }, { id: 2, name: 'Лют' }, { id: 3, name: 'Бер' }, // Скорочені назви для економії місця на мобілці
-        { id: 4, name: 'Кві' }, { id: 5, name: 'Тра' }, { id: 6, name: 'Чер' },
-        { id: 7, name: 'Лип' }, { id: 8, name: 'Сер' }, { id: 9, name: 'Вер' },
-        { id: 10, name: 'Жов' }, { id: 11, name: 'Лис' }, { id: 12, name: 'Гру' }
+        { id: 1, name: 'Jan' }, { id: 2, name: 'Feb' }, { id: 3, name: 'Mar' }, 
+        { id: 4, name: 'Apr' }, { id: 5, name: 'May' }, { id: 6, name: 'Jun' },
+        { id: 7, name: 'Jul' }, { id: 8, name: 'Aug' }, { id: 9, name: 'Sep' },
+        { id: 10, name: 'Oct' }, { id: 11, name: 'Nov' }, { id: 12, name: 'Dec' }
     ];
 
     return (
-        <div className="mb-4 w-full">
-            {/* Стилі для приховання спінерів (стрілочок) в інпуті number */}
+        <div className="mb-4 w-full font-mono text-left text-xs">
             <style>{`
                 input[type=number]::-webkit-inner-spin-button, 
                 input[type=number]::-webkit-outer-spin-button { 
@@ -84,26 +83,21 @@ const FuzzyDateInput = ({ label, value, onChange, error }) => {
                 input[type=number] { -moz-appearance: textfield; }
             `}</style>
 
-            <label className="block text-sm font-medium text-slate-400 mb-1 justify-between">
+            <label className="block text-[10px] font-bold text-muted mb-1.5 uppercase tracking-[0.2em] flex justify-between">
                 <span>{label}</span>
-                {error && <span className="text-red-500 text-xs animate-pulse">{error}</span>}
             </label>
             
-            {/* 👇 СІТКА ВИПРАВЛЕНА: 
-               grid-cols-[70px_1fr_60px] -> Рік фіксовано 70px, День 60px, Місяць забирає решту.
-               Це гарантує, що рік не стиснеться в крапку.
-            */}
-            <div className={`grid grid-cols-[70px_1fr_60px] gap-2 p-1 rounded border ${error ? 'border-red-500 bg-red-900/10' : 'border-transparent'}`}>
+            <div className={`grid grid-cols-[80px_1fr_60px] gap-2 p-1 border rounded-sm transition-colors ${error ? 'border-blood bg-blood/5' : 'border-transparent'}`}>
                 
                 {/* 1. РІК */}
                 <input
                     type="number"
-                    placeholder="Рік"
+                    placeholder="Year"
                     value={year}
                     onChange={handleYearChange}
                     min="1900"
-                    max={new Date().getFullYear()} // Максимум поточний рік
-                    className={`w-full bg-slate-950 border border-slate-700 rounded p-2 text-bone-200 focus:border-cherry-500 outline-none text-center text-sm ${!year && 'border-dashed border-slate-600'}`}
+                    max={new Date().getFullYear()} 
+                    className={`w-full bg-void border border-border rounded-sm p-2 text-bone focus:border-blood outline-none text-center transition-colors ${!year && 'border-dashed border-border/50'}`}
                 />
 
                 {/* 2. МІСЯЦЬ */}
@@ -111,11 +105,11 @@ const FuzzyDateInput = ({ label, value, onChange, error }) => {
                     value={month}
                     onChange={handleMonthChange}
                     disabled={!year || String(year).length < 4}
-                    className={`w-full bg-slate-950 border border-slate-700 rounded p-2 text-bone-200 focus:border-cherry-500 outline-none text-sm cursor-pointer
-                        ${(!year || String(year).length < 4) ? 'opacity-50 cursor-not-allowed' : ''}
+                    className={`w-full bg-void border border-border rounded-sm p-2 text-bone focus:border-blood outline-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed appearance-none transition-colors
+                        ${(!year || String(year).length < 4) ? 'opacity-30' : ''}
                     `}
                 >
-                    <option value="">Місяць</option>
+                    <option value="">Month</option>
                     {months.map(m => (
                         <option key={m.id} value={m.id}>{m.name}</option>
                     ))}
@@ -126,16 +120,17 @@ const FuzzyDateInput = ({ label, value, onChange, error }) => {
                     value={day}
                     onChange={handleDayChange}
                     disabled={!month}
-                    className={`w-full bg-slate-950 border border-slate-700 rounded p-2 text-bone-200 focus:border-cherry-500 outline-none text-sm cursor-pointer
-                        ${!month ? 'opacity-50 cursor-not-allowed' : ''}
+                    className={`w-full bg-void border border-border rounded-sm p-2 text-bone focus:border-blood outline-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed appearance-none transition-colors
+                        ${!month ? 'opacity-30' : ''}
                     `}
                 >
-                    <option value="">Дн</option>
+                    <option value="">Day</option>
                     {daysOptions.map(d => (
                         <option key={d} value={d}>{d}</option>
                     ))}
                 </select>
             </div>
+             {error && <span className="text-blood text-[10px] mt-1 block uppercase animate-pulse">{error}</span>}
         </div>
     );
 };

@@ -11,15 +11,23 @@ import sessionService from '../../services/sessionService';
 import collectionService from '../../services/collectionService';
 
 // Компоненти
-import AddToCollectionModal from '../components/AddToCollectionModal';
+// 👇 Collections
+import AddToCollectionModal from '../../components/collections/AddToCollectionModal';
+
+// 👇 UI
 import Tabs from '../../components/ui/Tabs';
 import AtmosphereImage from '../../components/ui/AtmosphereImage';
-import ArtworkInfoPanel from '../components/ArtworkInfoPanel';
 import BackButton from '../../components/ui/BackButton';
-import SessionHistoryList from '../components/SessionHistoryList';
 import LoadMoreTrigger from '../../components/ui/LoadMoreTrigger';
-// 👇 1. Імпорт модалки підтвердження
-import ConfirmModal from '../components/ConfirmModal'; 
+
+// 👇 Projects
+import ArtworkInfoPanel from '../../components/projects/ArtworkInfoPanel';
+
+// 👇 Session
+import SessionHistoryList from '../../components/session/SessionHistoryList';
+
+// 👇 Shared
+import ConfirmModal from '../../components/shared/ConfirmModal';
 
 const ITEMS_PER_LOAD = 5; 
 

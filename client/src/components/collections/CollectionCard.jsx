@@ -3,12 +3,14 @@ import {
     Squares2X2Icon, QueueListIcon, SparklesIcon,
     GlobeAltIcon, LockClosedIcon, TrashIcon
 } from '@heroicons/react/24/outline';
-import artworkService from '../../services/artworkService';
-import { useAuth } from '../../hooks/useAuth'; // 👇 Треба знати, хто ми
 
-// 👇 Імпортуємо ОБИДВІ заглушки
-import defaultCollectionImg from '../assets/default-collection.png';
-import defaultAvatar from '../assets/default-avatar.png'; 
+// 👇 Подвійний вихід назад
+import artworkService from '../../services/artworkService';
+import { useAuth } from '../../hooks/useAuth'; 
+
+// 👇 Асети теж на два рівні вище
+import defaultCollectionImg from '../../assets/default-collection.png';
+import defaultAvatar from '../../assets/default-avatar.png';
 
 const CollectionCard = ({ collection, onUnsave }) => {
     const { user } = useAuth();

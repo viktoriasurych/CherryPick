@@ -2,12 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import userService from '../../services/userService';
-import EditorLayout from '../components/EditorLayout';
+
+// 👇 EditorLayout лежить у components/layouts
+import EditorLayout from '../../components/layouts/EditorLayout';
+
 import Input from '../../components/ui/Input';
 import { PhotoIcon, CloudArrowUpIcon, TrashIcon } from '@heroicons/react/24/outline';
-import defaultAvatar from '../assets/default-avatar.png';
-// 👇 1. Імпортуємо правила (щоб знати ліміти)
-import RULES from '../../config/validationRules.json'; 
+
+// 👇 Ассет
+import defaultAvatar from '../../assets/default-avatar.png';
+
+import RULES from '../../config/validationRules.json';
 
 const ProfileEditPage = () => {
     const { user, login } = useAuth(); 

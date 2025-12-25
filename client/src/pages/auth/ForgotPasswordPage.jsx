@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
+
+// 👇 UI з папки ui
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import AuthLayout from '../../components/layouts/AuthLayout'; // 👇 Лейаут
+
+// 👇 Layouts
+import AuthLayout from '../../components/layouts/AuthLayout';
 
 const ForgotPasswordPage = () => {
     const [email, setEmail] = useState('');

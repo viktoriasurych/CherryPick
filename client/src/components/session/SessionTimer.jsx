@@ -7,9 +7,12 @@ import {
     CloudArrowUpIcon,
     CheckIcon
 } from '@heroicons/react/24/solid'; 
-import sessionService from '../../services/sessionService';
-import Button from '../ui/Button';
 
+// 👇 Два рівні вгору
+import sessionService from '../../services/sessionService';
+
+// 👇 Один рівень вгору (до ui)
+import Button from '../ui/Button';
 // Форматування (00:00:00)
 const formatTime = (totalSeconds) => {
     const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');

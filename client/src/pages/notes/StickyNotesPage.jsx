@@ -5,6 +5,9 @@ import {
     Bars3BottomLeftIcon, ArrowLeftIcon 
 } from '@heroicons/react/24/outline';
 
+// Якщо тут використовуються компоненти, то шлях буде такий:
+// import NoteCard from '../../components/notes/NoteCard'; (якщо ти його створиш)
+
 // --- КОНСТАНТИ ---
 const COLORS = {
     yellow: 'bg-[#fff7d1] text-slate-900',

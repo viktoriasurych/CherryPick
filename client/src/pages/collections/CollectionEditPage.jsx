@@ -9,11 +9,12 @@ import artworkService from '../../services/artworkService';
 
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { SortableItem } from '../components/SortableItem';
 
-// 👇 ІМПОРТ ДЕФОЛТНОГО ФОТО
-import defaultCollectionImg from '../assets/default-collection.png'; 
+// 👇 SortableItem лежить у ui
+import { SortableItem } from '../../components/ui/SortableItem';
 
+// 👇 Ассет на два рівні вгору
+import defaultCollectionImg from '../../assets/default-collection.png';
 const CollectionEditPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();

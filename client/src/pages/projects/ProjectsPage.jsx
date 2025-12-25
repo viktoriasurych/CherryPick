@@ -7,8 +7,12 @@ import {
 } from '@heroicons/react/24/outline';
 
 import artworkService from '../../services/artworkService';
-import FilterSidebar from '../components/FilterSidebar';
-import ProjectCard from '../components/ProjectCard';
+
+// 👇 Layouts (фільтр це частина лейауту сторінки)
+import FilterSidebar from '../../components/layouts/FilterSidebar';
+
+// 👇 Projects
+import ProjectCard from '../../components/projects/ProjectCard';
 
 const ProjectsPage = () => {
     // --- STATE ---

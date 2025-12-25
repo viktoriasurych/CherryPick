@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { FireIcon, ClockIcon, Square3Stack3DIcon, Squares2X2Icon, PaintBrushIcon } from '@heroicons/react/24/solid';
 
 import statsService from '../../services/statsService';
+
+// 👇 UI
 import Tabs from '../../components/ui/Tabs'; 
 import SearchableSelect from '../../components/ui/SearchableSelect';
 
-// Імпорти UI
+// 👇 Імпорти UI статистики (з папки stats)
 import { SectionTitle, KpiCard, ChartContainer } from '../../components/stats/StatsUI';
-// Імпорти графіків
+
+// 👇 Імпорти графіків (з папки stats)
 import { MyPieChart, MyBarChart, MyCalendarHeatmap } from '../../components/stats/StatsCharts';
 
 const StatsPage = () => {

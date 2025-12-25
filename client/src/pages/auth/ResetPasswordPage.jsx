@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios';
+
+// 👇 UI
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
+
+// 👇 Layouts
 import AuthLayout from '../../components/layouts/AuthLayout';
 
 const ResetPasswordPage = () => {

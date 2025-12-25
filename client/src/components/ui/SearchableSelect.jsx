@@ -1,40 +1,36 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
-/**
- * Універсальний селект з пошуком
- */
 const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const wrapperRef = useRef(null);
 
-    // 1. Синхронізація: Коли ззовні змінюється value, оновлюємо текст в інпуті
+    // 1. Синхронізація значення з текстом
     useEffect(() => {
         const selected = options.find(o => o.value == value);
         if (selected) {
             setSearchTerm(selected.label.toString());
-        } else if (!value) {
+        } else if (!value && !isOpen) { // Очищаємо, тільки якщо список закритий
             setSearchTerm('');
         }
-    }, [value, options]);
+    }, [value, options, isOpen]);
 
-    // 2. Закриття при кліку зовні (відновлюємо текст, якщо нічого не вибрали)
+    // 2. Клік зовні
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
                 setIsOpen(false);
-                // Якщо користувач щось писав, але не вибрав -> повертаємо попереднє значення
+                // Повертаємо старе значення, якщо нічого не вибрали
                 const selected = options.find(o => o.value == value);
                 if (selected) setSearchTerm(selected.label.toString());
-                else setSearchTerm('');
+                else if (!value) setSearchTerm('');
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [value, options]);
 
-    // Фільтрація
     const filteredOptions = options.filter(opt => 
         opt.label.toString().toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -45,70 +41,75 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
         setIsOpen(false);
     };
 
-    // 👇 Хендлер для кліку/фокусу
     const handleOpen = () => {
         setIsOpen(true);
-        setSearchTerm(''); // 🔥 ОЧИЩАЄМО текст, щоб показати ВЕСЬ список
+        setSearchTerm(''); // Очищаємо для пошуку
     };
 
     return (
-        <div className="relative w-full" ref={wrapperRef}>
-            <div className="relative">
+        <div className="relative w-full font-mono" ref={wrapperRef}>
+            <div className="relative group">
                 <input 
                     type="text"
                     value={searchTerm}
-                    // Якщо користувач почав писати - просто оновлюємо
                     onChange={(e) => {
                         setSearchTerm(e.target.value);
                         setIsOpen(true);
                         if (e.target.value === '') onChange(null);
                     }}
-                    // 👇 ГОЛОВНА ЗМІНА: При кліку або фокусі очищаємо фільтр
                     onClick={handleOpen}
                     onFocus={handleOpen}
-                    
                     placeholder={placeholder}
                     className={`
-                        w-full bg-slate-900 border text-white pl-3 pr-8 py-2 rounded-lg outline-none transition font-medium text-sm cursor-pointer
-                        ${isOpen ? 'border-cherry-500 ring-1 ring-cherry-500' : 'border-slate-800 hover:border-slate-600'}
+                        w-full bg-void border p-3 pr-10 text-sm text-bone rounded-sm outline-none transition-all cursor-pointer
+                        ${isOpen 
+                            ? 'border-blood ring-1 ring-blood shadow-[0_0_10px_rgba(159,18,57,0.2)]' 
+                            : 'border-border group-hover:border-muted'}
                     `}
-                    readOnly={false} // Дозволяємо писати
                 />
                 
                 {/* Стрілочка */}
                 <ChevronDownIcon 
-                    className={`w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 transition pointer-events-none ${isOpen ? 'rotate-180 text-cherry-500' : ''}`} 
+                    className={`
+                        w-4 h-4 text-muted absolute right-3 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none
+                        ${isOpen ? 'rotate-180 text-blood' : 'group-hover:text-bone'}
+                    `} 
                 />
             </div>
 
+            {/* Випадаючий список */}
             {isOpen && (
-                <div className="absolute top-full right-0 mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                    <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
+                <div className="absolute top-full left-0 mt-1 w-full bg-ash border border-border rounded-sm shadow-2xl shadow-black z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map(opt => (
                                 <div 
                                     key={opt.value}
                                     onClick={() => handleSelect(opt)}
                                     className={`
-                                        px-3 py-2 text-sm cursor-pointer hover:bg-slate-800 transition truncate
-                                        ${opt.value === value ? 'text-cherry-400 font-bold bg-cherry-900/10' : 'text-slate-300'}
+                                        px-4 py-3 text-xs cursor-pointer transition-colors border-b border-border/10 last:border-none
+                                        /* 👇 Довгий текст переноситься */
+                                        whitespace-normal break-words leading-relaxed
+                                        ${opt.value === value 
+                                            ? 'text-blood font-bold bg-blood/5' 
+                                            : 'text-muted hover:text-bone hover:bg-void'}
                                     `}
                                 >
                                     {opt.label}
                                 </div>
                             ))
                         ) : (
-                            <div className="px-3 py-3 text-xs text-slate-500 text-center italic">
-                                Не знайдено
+                            <div className="px-4 py-3 text-[10px] text-muted text-center italic tracking-wider">
+                                Nothing found...
                             </div>
                         )}
 
-                        {onCreate && searchTerm && filteredOptions.length === 0 && (
+                        {onCreate && searchTerm && !filteredOptions.some(o => o.label.toLowerCase() === searchTerm.toLowerCase()) && (
                             <div 
                                 onClick={() => { onCreate(searchTerm); setIsOpen(false); }}
-                                className="border-t border-slate-800 px-3 py-2 text-sm text-cherry-400 hover:bg-slate-800 cursor-pointer font-bold flex items-center gap-2"
+                                className="border-t border-border px-4 py-3 text-xs text-blood hover:text-white hover:bg-blood cursor-pointer font-bold flex items-center gap-2 transition-colors uppercase tracking-wider"
                             >
-                                <span>+ Створити "{searchTerm}"</span>
+                                <span>+ Create "{searchTerm}"</span>
                             </div>
                         )}
                     </div>

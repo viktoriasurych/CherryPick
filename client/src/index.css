@@ -1,74 +1,113 @@
 /* client/src/index.css */
-
 @import "tailwindcss";
 
+/* 1. Імпорт шрифтів */
+/* Cinzel - замість нечитабельної готики. Це стиль "Dark Academia" / Римська класика */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@100..800&display=swap');
+
 @theme {
-  /* 🍒 ТВОЇ ОСНОВНІ КОЛЬОРИ CHERRY */
-  --color-cherry-500: #be123c; /* Яскравий акцент (Cherry Pop) */
-  --color-cherry-700: #9f1239; /* Основний акцент (Cherry Blood) */
-  --color-cherry-900: #881337; /* Глибокий тон для тіней/рамок */
+  /* --- ТИПОГРАФІЯ --- */
+  /* Cinzel - для заголовків. Читається ідеально, виглядає дорого і готично */
+  --font-gothic: "Cinzel", "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", monospace;
 
-  /* 🧛 ГОТИЧНА ПАЛІТРА */
-  --color-vampire-950: #0d010e; /* Майже чорний, але з відтінком червоного */
-  --color-slate-900: #1a1520;  /* Темний фон для карток */
-  --color-bone-200: #d6d3d1;   /* Світлий акцент/текст (Bone) */
-  --font-gothic: "Playfair Display", serif; /* Готичний шрифт для заголовків (якщо підключиш) */
+  /* --- КОЛЬОРИ --- */
+  --color-eyes: #ff0000;
+  /* Фони */
+  /* Deep - для Хедера і Футера (найтемніший, майже чорний) */
+  --color-deep: #050505; 
+  
+  /* Void - для основного фону (пом'якшений, "мокрий асфальт") */
+  --color-void: #121212;       
+  
+  /* Ash - для карток (ще трохи світліший, щоб виділялися) */
+  --color-ash: #1a1a1a;        
+  
+  /* Charcoal - для ховеру */
+  --color-charcoal: #262626;   
+  
+  /* Текст */
+  --color-bone: #e5e5e5;       /* Основний текст */
+  --color-muted: #a3a3a3;      /* Другорядний текст */
+
+  /* Акценти (Кров) */
+  --color-blood: #9f1239;      /* Основна кров */
+  --color-blood-hover: #e11d48; /* Яскрава кров */
+  
+  /* Декор */
+  --color-border: #333333;     /* Рамки трохи помітніші */
 }
+
+/* 2. Глобальні стилі */
+body {
+  background-color: var(--color-void); /* М'якший фон */
+  color: var(--color-bone);
+  font-family: var(--font-mono); 
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 3. Скролбар (робимо його менш помітним) */
 ::-webkit-scrollbar {
-  width: 14px; /* Робимо зону ширшою, щоб було зручно влучити мишкою... */
+  width: 10px;
 }
-
 ::-webkit-scrollbar-track {
-  background-color: transparent; /* ...але фон робимо прозорим */
+  background-color: var(--color-deep); 
 }
-
 ::-webkit-scrollbar-thumb {
-  background-color: #475569;     /* Колір самого овальчика (Slate-600) */
-  border-radius: 20px;           /* Повністю круглі краї */
-  border: 4px solid transparent; /* 🔥 Прозорий відступ навколо овальчика */
-  background-clip: content-box;  /* Малюємо колір тільки всередині, не чіпаючи відступи */
+  background-color: #333;     
+  border-radius: 4px;
+  border: 2px solid var(--color-deep);
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #94a3b8;     /* Світлішає при наведенні (Slate-400) */
+  background-color: var(--color-blood);
 }
 
-/* Для Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #475569 transparent;
+/* Календар */
+.react-calendar-heatmap text { font-size: 10px; fill: var(--color-muted); font-family: var(--font-mono); }
+.react-calendar-heatmap .color-empty { fill: var(--color-charcoal); rx: 2px; }
+.react-calendar-heatmap .color-scale-1 { fill: #4c0519; }
+.react-calendar-heatmap .color-scale-2 { fill: #881337; }
+.react-calendar-heatmap .color-scale-3 { fill: #be123c; }
+.react-calendar-heatmap .color-scale-4 { fill: #e11d48; }
+.react-calendar-heatmap rect { transition: all 0.2s ease; }
+.react-calendar-heatmap rect:hover { stroke: var(--color-bone); stroke-width: 1px; cursor: pointer; }
+
+
+
+/* Анімація Спрайта (Walking Cat) */
+@keyframes cat-walk {
+  from { background-position: 0 0; }
+  to { background-position: 100% 0; }
 }
 
-/* ... твій попередній код ... */
-
-/* 👇 СПЕЦІАЛЬНИЙ КЛАС ДЛЯ ПРИХОВУВАННЯ СКРОЛУ (Але скрол працює) */
-.no-scrollbar::-webkit-scrollbar {
-  display: none !important; /* Ховає для Chrome/Safari */
+.cat-sprite {
+  /* Тобі треба підібрати ці розміри під твою картинку! */
+  /* Припустимо, один котик це 32x32 пікселі */
+  width: 32px; 
+  height: 32px;
+  
+  background-image: url('./assets/cat-sprite.png'); /* Перевір шлях! */
+  background-size: cover; /* Або auto, залежить від картинки */
+  background-repeat: no-repeat;
+  
+  /* Магія пікселів */
+  image-rendering: pixelated; 
+  
+  /* Анімація: 15 кроків (бо 15 кадрів), 1 секунда, нескінченно */
+  animation: cat-walk 1s steps(15) infinite; 
+}
+/* Анімація кота (15 кадрів) */
+@keyframes spriteRun {
+  100% { transform: translateX(-100%); }
 }
 
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+.animate-sprite-run {
+  /* Ширина картинки = 15 кадрів * 100% ширини контейнера */
+  width: 1500%; 
+  max-width: none;
+  /* steps(15) - ключовий момент, робить рух "ривками" по кадрах */
+  animation: spriteRun 5s steps(15) infinite; 
 }
-
-/* ... твої стилі скролбару ... */
-
-/* 👇 HEATMAP STYLES (GitHub Style) */
-.react-calendar-heatmap text {
-  font-size: 10px;
-  fill: #64748b; /* slate-500 */
-}
-
-.react-calendar-heatmap .color-empty { fill: #1e293b; } /* slate-800 (пустий день) */
-
-/* Градація активності (від 1 до 4) */
-.react-calendar-heatmap .color-scale-1 { fill: #4c0519; } /* cherry-950 (мало) */
-.react-calendar-heatmap .color-scale-2 { fill: #9f1239; } /* cherry-800 */
-.react-calendar-heatmap .color-scale-3 { fill: #e11d48; } /* cherry-600 */
-.react-calendar-heatmap .color-scale-4 { fill: #ff4d6d; } /* cherry-400 (багато) */
-
-.react-calendar-heatmap rect:hover { stroke: #fff; stroke-width: 1px; }
-
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

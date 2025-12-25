@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import FilterAccordion from '../ui/FilterAccordion';
-import dictionaryService from '../../services/dictionaryService';
 
+// 👇 Виходимо з layouts (..), заходимо в ui
+import FilterAccordion from '../ui/FilterAccordion';
+
+// 👇 Виходимо з layouts (..), виходимо з components (..), заходимо в services
+import dictionaryService from '../../services/dictionaryService';
 const FilterSidebar = ({ isOpen, onClose, filters, setFilters, onApply, onReset }) => {
     const [genres, setGenres] = useState([]);
     const [styles, setStyles] = useState([]);

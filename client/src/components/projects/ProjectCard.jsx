@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import artworkService from '../../services/artworkService';
 
+// 👇 Додаємо імпорт заглушки (на два рівні вгору)
+import defaultArtImg from '../../assets/default-art.png';
+
 const ProjectCard = ({ project }) => { // 👈 Прибрали onDelete
     
     const isInactive = ['FINISHED', 'DROPPED', 'ON_HOLD'].includes(project.status);

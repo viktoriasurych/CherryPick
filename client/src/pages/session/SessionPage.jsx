@@ -3,9 +3,12 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import artworkService from '../../services/artworkService';
 import sessionService from '../../services/sessionService';
-import SessionTimer from '../components/SessionTimer';
-import SessionHistoryList from '../components/SessionHistoryList';
-// 👇 Імпортуємо наш новий компонент
+
+// 👇 ВИПРАВЛЕНО: Тепер вони в папці components/session
+import SessionTimer from '../../components/session/SessionTimer';
+import SessionHistoryList from '../../components/session/SessionHistoryList';
+
+// 👇 Імпортуємо LoadMore з ui
 import LoadMoreTrigger from '../../components/ui/LoadMoreTrigger';
 
 const ITEMS_PER_LOAD = 5; 

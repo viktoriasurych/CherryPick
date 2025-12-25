@@ -4,11 +4,12 @@ import {
     EyeIcon, EyeSlashIcon, GlobeAltIcon, BookmarkIcon
 } from '@heroicons/react/24/solid';
 
+// 👇 Два рівні вгору
 import statsService from '../../services/statsService';
 import userService from '../../services/userService'; 
 
+// 👇 Лежать поруч у папці stats (./)
 import { MiniKpi, HiddenBlock } from './StatsUI';
-// 👇 Імпортуємо той самий календар
 import { MyCalendarHeatmap } from './StatsCharts';
 
 const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => {

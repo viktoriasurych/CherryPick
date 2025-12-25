@@ -2,30 +2,29 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 
 import HomePage from './pages/HomePage'; 
-import AuthPage from './pages/AuthPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
+import AuthPage from './pages/auth/AuthPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 
-import ProjectsPage from './pages/ProjectsPage';
-import ProjectDetailsPage from './pages/ProjectDetailsPage';
-import ProjectCreatePage from './pages/ProjectCreatePage'; 
-import ProjectEditPage from './pages/ProjectEditPage';
-import StatsPage from './pages/StatsPage';
+import ProjectsPage from './pages/projects/ProjectsPage';
+import ProjectDetailsPage from './pages/projects/ProjectDetailsPage';
+import ProjectCreatePage from './pages/projects/ProjectCreatePage'; 
+import ProjectEditPage from './pages/projects/ProjectEditPage';
+import StatsPage from './pages/stats/StatsPage';
 
-import CollectionsPage from './pages/CollectionsPage';
-import CollectionDetailsPage from './pages/CollectionDetailsPage';
-import CollectionEditPage from './pages/CollectionEditPage';
-import SavedCollectionsPage from './pages/SavedCollectionsPage';
+import CollectionsPage from './pages/collections/CollectionsPage';
+import CollectionDetailsPage from './pages/collections/CollectionDetailsPage';
+import CollectionEditPage from './pages/collections/CollectionEditPage';
+import SavedCollectionsPage from './pages/collections/SavedCollectionsPage';
 
-import ProfilePage from './pages/ProfilePage';
-import ProfileEditPage from './pages/ProfileEditPage';
-import StickyNotesPage from './pages/StickyNotesPage';
+import ProfilePage from './pages/profile/ProfilePage';
+import ProfileEditPage from './pages/profile/ProfileEditPage';
+import StickyNotesPage from './pages/notes/StickyNotesPage';
 
-// 👇 Твоя єдина сторінка для таймера
-import SessionPage from './pages/SessionPage'; 
+import SessionPage from './pages/session/SessionPage'; 
 
-import ProtectedRoute from './components/ProtectedRoute'; 
-import Layout from './components/Layout';
+import ProtectedRoute from './components/shared/ProtectedRoute'; 
+import Layout from './components/layouts/Layout';
 
 function App() {
   const { user } = useAuth();

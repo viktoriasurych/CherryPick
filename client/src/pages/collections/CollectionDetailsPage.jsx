@@ -9,8 +9,13 @@ import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 import collectionService from '../../services/collectionService';
 import artworkService from '../../services/artworkService'; 
 import { useAuth } from '../../hooks/useAuth';
-import defaultAvatar from '../assets/default-avatar.png';
-import ImageModal from '../components/ImageModal';
+
+// 👇 Ассет на два рівні вгору
+import defaultAvatar from '../../assets/default-avatar.png';
+
+// 👇 ImageModal лежить у shared
+import ImageModal from '../../components/shared/ImageModal';
+
 import MasonryGrid from '../../components/ui/MasonryGrid';
 import AtmosphereImage from '../../components/ui/AtmosphereImage';
 

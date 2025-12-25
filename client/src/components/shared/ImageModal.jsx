@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import artworkService from '../../services/artworkService';
-import ArtworkInfoPanel from './ArtworkInfoPanel'; 
 
+// 👇 Два рівні вгору
+import artworkService from '../../services/artworkService';
+
+// 👇 ВИПРАВЛЕНО: Виходимо з shared (..), заходимо в projects
+import ArtworkInfoPanel from '../projects/ArtworkInfoPanel';
 const ImageModal = ({ artwork: initialArtwork, onClose }) => {
     const [fullArtwork, setFullArtwork] = useState(initialArtwork);
     const [selectedImage, setSelectedImage] = useState(null);
