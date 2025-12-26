@@ -104,8 +104,8 @@ class ArtworkController {
     try {
         const userId = req.user.id;
         
-        const parseStringArray = (input) => { /* ... (твій код) ... */ if (!input) return []; if (Array.isArray(input)) return input; return input.split(','); };
-        const parseNumberArray = (input) => { /* ... (твій код) ... */ if (!input) return []; if (Array.isArray(input)) return input.map(Number); return input.split(',').map(Number).filter(n => !isNaN(n)); };
+        const parseStringArray = (input) => { if (!input) return []; if (Array.isArray(input)) return input; return input.split(','); };
+        const parseNumberArray = (input) => { if (!input) return []; if (Array.isArray(input)) return input.map(Number); return input.split(',').map(Number).filter(n => !isNaN(n)); };
 
         const filters = {
             status: req.query.status ? parseStringArray(req.query.status) : [],
@@ -114,20 +114,18 @@ class ArtworkController {
             material_ids: req.query.material_ids ? parseNumberArray(req.query.material_ids) : [],
             tag_ids: req.query.tag_ids ? parseNumberArray(req.query.tag_ids) : [],
             yearFrom: req.query.yearFrom || null,
-            yearTo: req.query.yearTo || null
+            yearTo: req.query.yearTo || null,
+            search: req.query.search || null // 👈 ДОДАЙ ЦЕЙ РЯДОК
         };
 
-        // 👇 ОТРИМУЄМО ПАРАМЕТРИ СОРТУВАННЯ
         const sort = {
-            by: req.query.sortBy || 'updated', // За замовчуванням "Останні оновлення"
+            by: req.query.sortBy || 'updated',
             dir: req.query.sortDir || 'DESC'
         };
 
-        // Передаємо filters та sort у сервіс
         const projects = await artworkService.getAll(userId, filters, sort);
         res.status(200).json(projects);
     } catch (error) {
-        console.error('Error fetching projects:', error.message);
         res.status(500).json({ message: 'Не вдалося завантажити проєкти.' });
     }
 }

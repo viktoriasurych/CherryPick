@@ -11,7 +11,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
         const selected = options.find(o => o.value == value);
         if (selected) {
             setSearchTerm(selected.label.toString());
-        } else if (!value && !isOpen) { // Очищаємо, тільки якщо список закритий
+        } else if (!value && !isOpen) { 
             setSearchTerm('');
         }
     }, [value, options, isOpen]);
@@ -21,7 +21,6 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
         const handleClickOutside = (event) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
                 setIsOpen(false);
-                // Повертаємо старе значення, якщо нічого не вибрали
                 const selected = options.find(o => o.value == value);
                 if (selected) setSearchTerm(selected.label.toString());
                 else if (!value) setSearchTerm('');
@@ -43,7 +42,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
 
     const handleOpen = () => {
         setIsOpen(true);
-        setSearchTerm(''); // Очищаємо для пошуку
+        setSearchTerm(''); 
     };
 
     return (
@@ -68,7 +67,6 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
                     `}
                 />
                 
-                {/* Стрілочка */}
                 <ChevronDownIcon 
                     className={`
                         w-4 h-4 text-muted absolute right-3 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none
@@ -77,7 +75,6 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
                 />
             </div>
 
-            {/* Випадаючий список */}
             {isOpen && (
                 <div className="absolute top-full left-0 mt-1 w-full bg-ash border border-border rounded-sm shadow-2xl shadow-black z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                     <div className="max-h-60 overflow-y-auto custom-scrollbar">
@@ -88,7 +85,6 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
                                     onClick={() => handleSelect(opt)}
                                     className={`
                                         px-4 py-3 text-xs cursor-pointer transition-colors border-b border-border/10 last:border-none
-                                        /* 👇 Довгий текст переноситься */
                                         whitespace-normal break-words leading-relaxed
                                         ${opt.value === value 
                                             ? 'text-blood font-bold bg-blood/5' 

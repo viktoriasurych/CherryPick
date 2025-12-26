@@ -1,27 +1,23 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { TagIcon, SwatchIcon } from '@heroicons/react/24/outline';
+import { 
+    TagIcon, SwatchIcon, PaintBrushIcon, 
+    IdentificationIcon, CalendarIcon 
+} from '@heroicons/react/24/outline';
 
 const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
     const navigate = useNavigate();
 
     if (!artwork) return null;
 
-    // 👇 1. Логіка переходу на сторінку проектів з фільтром
     const goToFilter = (filterKey, id) => {
         if (!id) return;
-        
-        // Переходимо на /projects і передаємо state, який "зловить" useEffect в ProjectsPage
         navigate('/projects', { 
-            state: { 
-                applyFilter: { [filterKey]: [id.toString()] } 
-            } 
+            state: { applyFilter: { [filterKey]: [id.toString()] } } 
         });
     };
 
-    // 👇 2. Хелпер для розбиття рядків ("1,2" та "Олія,Полотно") на об'єкти
     const parseList = (idsStr, namesStr) => {
         if (!idsStr || !namesStr) return [];
-        // Якщо раптом прийшов масив, а не рядок - обробляємо і це
         const ids = Array.isArray(idsStr) ? idsStr : String(idsStr).split(',');
         const names = Array.isArray(namesStr) ? namesStr : String(namesStr).split(',');
         
@@ -31,94 +27,127 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
         }));
     };
 
-    // 3. Форматування дати
     const renderFuzzyDate = (y, m, d) => {
         if (!y) return '—';
-        const months = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         let str = `${y}`;
         if (m) str = `${months[m-1]} ${str}`;
         if (d) str = `${d}, ${str}`;
         return str;
     };
 
+    // 👇 Універсальний "Чіп" (Клікабельний елемент)
+    const MetaChip = ({ label, onClick }) => (
+        <span 
+            onClick={onClick}
+            className="
+                inline-block 
+                bg-void border border-border 
+                px-2.5 py-1.5 rounded-sm 
+                text-xs text-muted font-bold 
+                cursor-pointer 
+                transition-all duration-300
+                hover:border-blood hover:text-bone hover:shadow-[0_0_10px_rgba(159,18,57,0.2)]
+                select-none
+                max-w-full truncate
+            "
+        >
+            {label}
+        </span>
+    );
+
     return (
-        <div className="space-y-6 h-full flex flex-col">
+        <div className="space-y-6 h-full flex flex-col font-mono">
             
             {/* Опис */}
-            <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 shadow-inner">
-                <p className="text-bone-100 whitespace-pre-wrap leading-relaxed text-sm md:text-base break-words">
-                    {artwork.description || <span className="italic text-slate-500">Опис відсутній...</span>}
+            <div className="bg-ash/30 p-6 rounded-sm border border-border/50 shadow-inner min-h-[100px]">
+                <p className="text-bone whitespace-pre-wrap leading-relaxed text-sm break-words opacity-90">
+                    {artwork.description || <span className="italic text-muted/30">Silence... No lore recorded.</span>}
                 </p>
             </div>
             
-            {/* Грід з метаданими */}
+            {/* Дати (Окремий рядок, бо вони не клікабельні фільтри) */}
             <div className="grid grid-cols-2 gap-4">
-                
-                {/* ЖАНР (Клікабельний) */}
-                <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-slate-500 uppercase block mb-1">Жанр</span>
-                    <span 
-                        onClick={() => goToFilter('genre_ids', artwork.genre_id)}
-                        className={`font-bold text-sm text-cherry-300 ${artwork.genre_id ? 'cursor-pointer hover:underline hover:text-cherry-400 transition' : ''}`}
-                    >
-                        {artwork.genre_name || '—'}
+                <div className="bg-void p-3 rounded-sm border border-border flex items-center justify-between">
+                    <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Genesis</span>
+                    <span className="text-xs font-bold text-bone">{renderFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day)}</span>
+                </div>
+                <div className="bg-void p-3 rounded-sm border border-border flex items-center justify-between">
+                    <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Conclusion</span>
+                    {/* 👇 Ніякого зеленого. Якщо є дата - то blood, інакше bone */}
+                    <span className={`text-xs font-bold ${artwork.finished_year ? 'text-blood' : 'text-bone'}`}>
+                        {renderFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day)}
                     </span>
                 </div>
+            </div>
 
-                {/* СТИЛЬ (Клікабельний) */}
-                <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
-                    <span className="text-[10px] text-slate-500 uppercase block mb-1">Стиль</span>
-                    <span 
-                        onClick={() => goToFilter('style_ids', artwork.style_id)}
-                        className={`font-bold text-sm text-bone-200 ${artwork.style_id ? 'cursor-pointer hover:underline hover:text-white transition' : ''}`}
-                    >
-                        {artwork.style_name || '—'}
-                    </span>
-                </div>
-
-                {/* Дати (Статичні) */}
-                <InfoBlock label="Початок" value={renderFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day)} />
-                <InfoBlock label="Кінець" value={renderFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day)} highlight="text-green-400" />
+            {/* БЛОКИ АТРИБУТІВ (Тепер всі однакові) */}
+            <div className="space-y-4">
                 
-                {/* МАТЕРІАЛИ (Список клікабельний) */}
-                <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 col-span-2">
-                    <div className="flex items-center gap-2 mb-2">
-                        <SwatchIcon className="w-3 h-3 text-slate-500" />
-                        <span className="text-[10px] text-slate-500 uppercase block">Матеріали</span>
+                {/* 1. GENRE & STYLE (В одному ряду) */}
+                <div className="grid grid-cols-2 gap-4">
+                    {/* Genre */}
+                    <div className="bg-ash/20 p-4 rounded-sm border border-border flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                            <IdentificationIcon className="w-4 h-4 text-muted" />
+                            <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Genre</span>
+                        </div>
+                        <div>
+                            {artwork.genre_id ? (
+                                <MetaChip label={artwork.genre_name} onClick={() => goToFilter('genre_ids', artwork.genre_id)} />
+                            ) : <span className="text-xs text-muted/30 italic">—</span>}
+                        </div>
                     </div>
-                    <div className="flex flex-wrap gap-1">
+
+                    {/* Style */}
+                    <div className="bg-ash/20 p-4 rounded-sm border border-border flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                            <PaintBrushIcon className="w-4 h-4 text-muted" />
+                            <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Style</span>
+                        </div>
+                        <div>
+                            {artwork.style_id ? (
+                                <MetaChip label={artwork.style_name} onClick={() => goToFilter('style_ids', artwork.style_id)} />
+                            ) : <span className="text-xs text-muted/30 italic">—</span>}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. MATERIALS */}
+                <div className="bg-ash/20 p-4 rounded-sm border border-border flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                        <SwatchIcon className="w-4 h-4 text-muted" />
+                        <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Materials</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                         {artwork.material_names ? (
                             parseList(artwork.material_ids, artwork.material_names).map((item, i) => (
-                                <span 
+                                <MetaChip 
                                     key={i} 
-                                    onClick={() => goToFilter('material_ids', item.id)}
-                                    className="inline-block bg-slate-800 px-2 py-1 rounded text-xs text-slate-300 border border-slate-700 cursor-pointer hover:border-slate-500 hover:text-white transition select-none"
-                                >
-                                    {item.name}
-                                </span>
+                                    label={item.name} 
+                                    onClick={() => goToFilter('material_ids', item.id)} 
+                                />
                             ))
-                        ) : <span className="text-sm text-slate-500">—</span>}
+                        ) : <span className="text-xs text-muted/30 italic">—</span>}
                     </div>
                 </div>
 
-                {/* ТЕГИ (Список клікабельний) */}
-                <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 col-span-2">
-                    <div className="flex items-center gap-2 mb-2">
-                        <TagIcon className="w-3 h-3 text-slate-500" />
-                        <span className="text-[10px] text-slate-500 uppercase block">Теги</span>
+                {/* 3. TAGS */}
+                <div className="bg-ash/20 p-4 rounded-sm border border-border flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                        <TagIcon className="w-4 h-4 text-muted" />
+                        <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Tags</span>
                     </div>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-2">
                         {artwork.tag_names ? (
                             parseList(artwork.tag_ids, artwork.tag_names).map((item, i) => (
-                                <span 
+                                <MetaChip 
                                     key={i} 
-                                    onClick={() => goToFilter('tag_ids', item.id)}
-                                    className="inline-block bg-cherry-900/20 px-2 py-1 rounded text-xs text-cherry-200 border border-cherry-900/30 cursor-pointer hover:bg-cherry-900/40 hover:border-cherry-500 transition select-none"
-                                >
-                                    #{item.name}
-                                </span>
+                                    label={`#${item.name}`} 
+                                    onClick={() => goToFilter('tag_ids', item.id)} 
+                                />
                             ))
-                        ) : <span className="text-sm text-slate-500">—</span>} 
+                        ) : <span className="text-xs text-muted/30 italic">—</span>} 
                     </div>
                 </div>
             </div>
@@ -126,21 +155,16 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
             {/* Кнопка редагування */}
             {showEditButton && (
                 <div className="pt-4 mt-auto">
-                    <Link to={`/projects/${artwork.id}/edit`} className="block w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-lg border border-slate-700 hover:border-cherry-500 transition text-center text-sm">
-                        ✎ Редагувати
+                    <Link 
+                        to={`/projects/${artwork.id}/edit`} 
+                        className="block w-full bg-transparent hover:bg-ash text-muted hover:text-white font-bold py-3 rounded-sm border border-border hover:border-blood transition text-center text-xs uppercase tracking-widest"
+                    >
+                        Edit Codex
                     </Link>
                 </div>
             )}
         </div>
     );
 };
-
-// Простий блок для інформації (не клікабельний)
-const InfoBlock = ({ label, value, highlight = "text-bone-200" }) => (
-    <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
-        <span className="text-[10px] text-slate-500 uppercase block mb-1">{label}</span>
-        <span className={`${highlight} font-bold text-sm`}>{value || '—'}</span>
-    </div>
-);
 
 export default ArtworkInfoPanel;

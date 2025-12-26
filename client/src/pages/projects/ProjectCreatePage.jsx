@@ -1,38 +1,46 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import artworkService from '../../services/artworkService';
-
-// 👇 ProjectForm лежить у components/projects
 import ProjectForm from '../../components/projects/ProjectForm';
+import ConfirmModal from '../../components/shared/ConfirmModal';
 
 const ProjectCreatePage = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [errorModal, setErrorModal] = useState({ isOpen: false, message: '' });
 
     const handleCreate = async (formData) => {
         try {
             setLoading(true);
-            
-            // Створюємо проект і отримуємо відповідь
             const response = await artworkService.create(formData);
-            
-            // Витягуємо ID нового проекту з відповіді (response.artwork.id)
             const newId = response.artwork.id;
-            
-            // Переходимо на сторінку перегляду
             navigate(`/projects/${newId}`);
         } catch (error) {
-            alert('Помилка: ' + error.message);
             setLoading(false);
+            setErrorModal({ 
+                isOpen: true, 
+                message: error.response?.data?.message || error.message 
+            });
         }
     };
 
     return (
-        <ProjectForm 
-            title="Новий шедевр ✨" 
-            onSubmit={handleCreate} 
-            isLoading={loading} 
-        />
+        <>
+            <ProjectForm 
+                title="New Masterpiece ✨" 
+                onSubmit={handleCreate} 
+                isLoading={loading} 
+            />
+
+            <ConfirmModal 
+                isOpen={errorModal.isOpen}
+                onClose={() => setErrorModal({ isOpen: false, message: '' })}
+                onConfirm={() => setErrorModal({ isOpen: false, message: '' })}
+                title="Creation Failed"
+                message={errorModal.message}
+                confirmText="Understood"
+            />
+        </>
     );
 };
 

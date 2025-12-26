@@ -56,6 +56,12 @@ class ArtworkDAO {
             
             const params = [userId];
 
+            // 👇 НОВИЙ БЛОК: ПОШУК (Додаємо перед іншими фільтрами)
+        if (filters.search) {
+            sql += ` AND a.title LIKE ?`;
+            params.push(`%${filters.search}%`); // Шукаємо входження слова в будь-якому місці
+        }
+
             // --- ФІЛЬТРИ ---
             if (filters.status && filters.status.length > 0) {
                 const placeholders = filters.status.map(() => '?').join(',');

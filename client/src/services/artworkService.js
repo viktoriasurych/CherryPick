@@ -10,16 +10,19 @@ const artworkService = {
         
         Object.keys(filters).forEach(key => {
             const value = filters[key];
+            // Додаємо перевірку для search окремо або дозволяємо йому пройти як звичайне поле
             if (Array.isArray(value) && value.length > 0) {
                 params.append(key, value.join(',')); 
             } else if (value && !Array.isArray(value)) {
                 params.append(key, value);
             }
         });
-
+    
+        // Якщо search прийшов окремо в об'єкті filters, він вже доданий вище.
+        // Переконайся, що sortBy та sortDir додаються коректно
         params.append('sortBy', sort.by);
         params.append('sortDir', sort.dir);
-
+    
         const response = await api.get('/artworks', { params });
         return response.data;
     },
