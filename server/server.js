@@ -14,7 +14,7 @@ const statsRoutes = require('./routes/statsRoutes');
 const userRoutes = require('./routes/userRoutes'); // <--- НОВЕ: Імпорт роутів профілю
 const searchRoutes = require('./routes/searchRoutes');
 const stickyNoteRoutes = require('./routes/stickyNoteRoutes')
-
+const quoteRouter = require('./routes/quoteRouter');
 
 const app = express();
 const PORT = 3000;
@@ -36,7 +36,7 @@ app.use('/api/users', userRoutes); // <--- НОВЕ: Підключили /api/u
 app.use('/api/search', searchRoutes);
 app.use('/api/sticky-notes', stickyNoteRoutes);
 
-
+app.use('/api/quotes', quoteRouter);
 // Тестові маршрути
 app.get('/api', (req, res) => {
     res.json({ message: 'Вітаю! Сервер CherryPick працює 🍒' });

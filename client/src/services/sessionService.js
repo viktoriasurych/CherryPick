@@ -19,11 +19,13 @@ const sessionService = {
     stop: async (data) => {
         const formData = new FormData();
         
+        // 👇 ДОДАЙ ЦЕЙ РЯДОК! Без нього сервер не знає, що зупиняти.
+        formData.append('sessionId', data.sessionId); 
+
         if (data.manualDuration) formData.append('manualDuration', data.manualDuration);
         formData.append('content', data.content || '');
         
-        // 👇 ВИПРАВЛЕНО: Ми дивимось на addToGallery, бо так ми назвали це в Timer
-        // Якщо data.addToGallery true -> шлемо 'true', інакше 'false'
+        // Логіка з галочкою правильна (перетворення boolean на рядок для FormData)
         const shouldAdd = data.addToGallery || data.updateCover; 
         formData.append('updateCover', shouldAdd ? 'true' : 'false');
         

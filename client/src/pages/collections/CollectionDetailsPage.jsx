@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
-    PencilSquareIcon, ArrowLeftIcon, GlobeAltIcon, LockClosedIcon, 
-    EyeIcon, BookmarkIcon
+    PencilSquareIcon, ArrowLongLeftIcon, GlobeAltIcon, LockClosedIcon, 
+    EyeIcon, BookmarkIcon, Squares2X2Icon, QueueListIcon, SparklesIcon
 } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 
@@ -10,16 +10,22 @@ import collectionService from '../../services/collectionService';
 import artworkService from '../../services/artworkService'; 
 import { useAuth } from '../../hooks/useAuth';
 
-// 👇 Ассет на два рівні вгору
 import defaultAvatar from '../../assets/default-avatar.png';
-
-// 👇 ImageModal лежить у shared
 import ImageModal from '../../components/shared/ImageModal';
-
 import MasonryGrid from '../../components/ui/MasonryGrid';
 import AtmosphereImage from '../../components/ui/AtmosphereImage';
 
-// Обгортка для кліку
+// --- ДОПОМІЖНІ ФУНКЦІЇ ---
+const getTypeIcon = (type) => {
+    switch (type) {
+        case 'MOODBOARD': return Squares2X2Icon;
+        case 'SERIES': return QueueListIcon;
+        case 'EXHIBITION': return SparklesIcon;
+        default: return Squares2X2Icon;
+    }
+};
+
+// --- ЕЛЕМЕНТИ ГАЛЕРЕЇ ---
 const ArtWrapper = ({ artwork, isOwner, setSelectedArtwork, children, className }) => {
     if (isOwner) {
         return <Link to={`/projects/${artwork.id}`} className={className}>{children}</Link>;
@@ -31,21 +37,17 @@ const ArtWrapper = ({ artwork, isOwner, setSelectedArtwork, children, className 
     );
 };
 
-// --- ВЮШКИ (MOODBOARD, SERIES, EXHIBITION) ---
-// (Залишаємо код вюшок без змін, він був правильний)
 const MoodboardView = ({ items, ...props }) => (
-    <div className="px-4 max-w-[1920px] mx-auto">
+    <div className="px-4 max-w-[1920px] mx-auto animate-in fade-in duration-700">
         <MasonryGrid>
             {items.map(art => (
                 <div key={art.link_id} className="relative group break-inside-avoid mb-4">
                     <ArtWrapper artwork={art} {...props}>
-                        <img 
-                            src={artworkService.getImageUrl(art.image_path)} 
-                            alt={art.title} 
-                            className="w-full h-auto object-cover rounded-lg transition duration-500 group-hover:scale-[1.02] group-hover:shadow-xl border border-slate-900" 
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition rounded-lg flex items-end p-4 pointer-events-none">
-                            <span className="text-white text-sm font-bold truncate w-full">{art.title}</span>
+                        <div className="relative overflow-hidden rounded-sm border border-border group-hover:border-blood/50 transition-colors duration-500 bg-black">
+                            <img src={artworkService.getImageUrl(art.image_path)} alt={art.title} className="w-full h-auto object-cover transition duration-700 group-hover:scale-[1.02] opacity-90 group-hover:opacity-100" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex items-end p-4 pointer-events-none">
+                                <span className="text-bone text-xs font-bold truncate w-full uppercase tracking-widest font-gothic drop-shadow-md">{art.title}</span>
+                            </div>
                         </div>
                     </ArtWrapper>
                 </div>
@@ -54,64 +56,99 @@ const MoodboardView = ({ items, ...props }) => (
     </div>
 );
 
+// 👇 ОНОВЛЕНИЙ SERIES VIEW (Без номерів, з жанром/стилем)
 const SeriesView = ({ items, ...props }) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-4 max-w-[1920px] mx-auto">
-        {items.map((art) => (
-            <div key={art.link_id} className="group flex flex-col h-full">
-                <div className="aspect-[4/5] overflow-hidden rounded-sm mb-4 border border-slate-900 relative bg-black">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-6 max-w-[1920px] mx-auto animate-in fade-in duration-700">
+        {items.map((art, index) => (
+            <div key={art.link_id} className="group flex flex-col h-full bg-void border border-border hover:border-blood/30 transition-colors rounded-sm p-2 shadow-sm hover:shadow-md">
+                <div className="aspect-[4/5] overflow-hidden rounded-sm mb-3 border border-border relative bg-black">
                     <ArtWrapper artwork={art} className="block w-full h-full" {...props}>
                         <img 
                             src={artworkService.getImageUrl(art.image_path)} 
                             alt={art.title} 
-                            className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition duration-700" 
+                            className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition duration-700" 
                         />
                     </ArtWrapper>
+                    {/* Номерацію прибрано */}
                 </div>
-                <h3 className="text-xl font-bold text-slate-200 group-hover:text-cherry-400 transition break-words break-all">
-                    {art.title}
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">{art.finished_year || 'Рік невідомий'}</p>
+                
+                <div className="mt-auto px-1 pb-1">
+                    {/* Назва */}
+                    <h3 className="text-sm font-bold text-bone group-hover:text-blood transition-colors break-words break-all uppercase tracking-wide font-gothic leading-tight mb-1">
+                        {art.title}
+                    </h3>
+                    
+                    {/* Рік */}
+                    <p className="text-[10px] text-muted font-mono uppercase tracking-wider opacity-60 mb-2">
+                        {art.finished_year || '—'}
+                    </p>
+
+                    {/* Жанр | Стиль (Новий рядок) */}
+                    <div className="flex flex-wrap items-center gap-2 text-[9px] text-muted/50 font-mono uppercase tracking-wider border-t border-border/30 pt-2">
+                        <span className="truncate max-w-[45%]">{art.genre_name || 'N/A'}</span>
+                        <span className="text-blood/40">|</span>
+                        <span className="truncate max-w-[45%]">{art.style_name || 'N/A'}</span>
+                    </div>
+                </div>
             </div>
         ))}
     </div>
 );
 
 const ExhibitionView = ({ items, ...props }) => (
-    <div className="max-w-7xl mx-auto space-y-32 px-4 py-10">
-        {items.map((art) => {
-            let layoutClasses = "flex flex-col items-center gap-8"; 
-            let textAlign = "text-center max-w-lg";
+    <div className="max-w-6xl mx-auto space-y-32 px-6 py-10 animate-in fade-in duration-1000">
+        {items.map((art, index) => {
+            let layoutClasses = "flex flex-col items-center gap-12"; 
+            let textAlign = "text-center max-w-xl w-full";
             
             if (art.layout_type === 'LEFT_TEXT') {
-                layoutClasses = "flex flex-col md:flex-row items-center gap-12 md:gap-20";
-                textAlign = "text-left max-w-md";
+                layoutClasses = "flex flex-col md:flex-row items-center gap-16";
+                textAlign = "text-left max-w-md w-full";
             } else if (art.layout_type === 'RIGHT_TEXT') {
-                layoutClasses = "flex flex-col md:flex-row-reverse items-center gap-12 md:gap-20";
-                textAlign = "text-left max-w-md";
+                layoutClasses = "flex flex-col md:flex-row-reverse items-center gap-16";
+                textAlign = "text-left max-w-md w-full";
             }
 
-            const imageWrapperClass = art.layout_type === 'CENTER' ? 'w-full max-w-5xl h-[600px]' : 'w-full md:w-1/2 h-[500px] md:h-[600px]';
+            const imageWrapperClass = art.layout_type === 'CENTER' 
+                ? 'w-full max-w-4xl h-[60vh]' 
+                : 'w-full md:w-1/2 h-[50vh] md:h-[70vh]';
 
             return (
                 <div key={art.link_id} className={layoutClasses}>
-                    <div className={`relative shadow-2xl rounded-sm overflow-hidden border-[8px] border-white bg-black ${imageWrapperClass}`}>
+                    
+                    {/* КАРТИНА */}
+                    <div className={`relative overflow-hidden border border-border bg-black group ${imageWrapperClass}`}>
                         <ArtWrapper artwork={art} className="block w-full h-full" {...props}>
                             <AtmosphereImage 
                                 src={artworkService.getImageUrl(art.image_path)} 
                                 alt={art.title} 
-                                className="w-full h-full"
+                                className="w-full h-full object-cover opacity-95 group-hover:opacity-100 group-hover:scale-[1.01] transition duration-[1.5s]"
                             />
                         </ArtWrapper>
                     </div>
+                    
+                    {/* ТЕКСТ */}
                     <div className={textAlign}>
-                        <h2 className="text-4xl font-bold text-white mb-4 font-serif tracking-tight break-words break-all">{art.title}</h2>
-                        <p className="text-cherry-500 text-xs font-bold mb-8 uppercase tracking-[0.2em] border-b border-cherry-900/30 pb-4 inline-block">
-                            {art.finished_year || 'N/A'} • {art.material_names || 'Змішана техніка'}
-                        </p>
+                        {/* 1. НАЗВА */}
+                        <h2 className="text-3xl md:text-4xl font-bold text-bone font-gothic tracking-wide uppercase leading-tight mb-3 break-words hyphens-auto">
+                            {art.title}
+                        </h2>
+
+                        {/* 2. РІК • ЖАНР • СТИЛЬ */}
+                        <div className={`flex flex-wrap items-center gap-3 text-[10px] font-bold text-muted/60 uppercase tracking-[0.15em] mb-6 font-mono ${art.layout_type === 'CENTER' ? 'justify-center' : 'justify-start'}`}>
+                            <span className="text-bone/80">{art.finished_year || 'Year N/A'}</span>
+                            <span className="text-muted/40">|</span>
+                            <span className="whitespace-nowrap"><span className="text-blood">Genre:</span> {art.genre_name || 'N/A'}</span>
+                            <span className="text-muted/40">|</span>
+                            <span className="whitespace-nowrap"><span className="text-blood">Style:</span> {art.style_name || 'N/A'}</span>
+                        </div>
+                        
+                        {/* 3. ОПИС */}
                         {art.context_description && (
-                            <div className="relative">
-                                <span className="text-cherry-900/50 text-6xl absolute -top-8 -left-6 font-serif">“</span>
-                                <p className="text-bone-200 leading-8 font-serif text-lg italic relative z-10 break-words whitespace-pre-wrap">{art.context_description}</p>
+                            <div className={`border-l-2 border-blood/40 pl-6 py-1 ${art.layout_type === 'CENTER' ? 'text-left max-w-2xl mx-auto' : ''}`}>
+                                <p className="text-bone/80 text-sm leading-relaxed font-mono uppercase tracking-wide whitespace-pre-wrap break-words">
+                                    {art.context_description}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -120,6 +157,8 @@ const ExhibitionView = ({ items, ...props }) => (
         })}
     </div>
 );
+
+// --- ГОЛОВНА СТОРІНКА ---
 
 const CollectionDetailsPage = () => {
     const { id } = useParams();
@@ -137,7 +176,7 @@ const CollectionDetailsPage = () => {
                 const data = await collectionService.getById(id);
                 setCollection(data);
             } catch (error) {
-                console.error("Помилка при завантаженні:", error);
+                console.error("Error:", error);
                 navigate('/collections');
             } finally {
                 setLoading(false);
@@ -149,7 +188,6 @@ const CollectionDetailsPage = () => {
     const handleSaveToggle = async () => {
         if (!user) { navigate('/auth'); return; }
         if (isSaving) return;
-
         setIsSaving(true);
         try {
             if (collection.is_saved) {
@@ -159,99 +197,135 @@ const CollectionDetailsPage = () => {
                 await collectionService.saveCollection(id);
                 setCollection(prev => ({ ...prev, is_saved: true, save_count: (prev.save_count || 0) + 1 }));
             }
-        } catch (error) {
-            console.error("Помилка збереження:", error);
-        } finally {
-            setIsSaving(false);
-        }
+        } catch (error) { console.error("Save Error:", error); } 
+        finally { setIsSaving(false); }
     };
 
-    if (loading) return <div className="text-center py-20 text-slate-500 animate-pulse">Завантаження...</div>;
+    if (loading) return <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-muted animate-pulse font-mono"><span className="text-xs uppercase tracking-[0.3em]">Summoning...</span></div>;
     if (!collection) return null;
 
     const isOwner = user && String(user.id) === String(collection.user_id);
-    const authorAvatarSrc = collection.author_avatar ? `http://localhost:3000${collection.author_avatar}` : defaultAvatar;
+    const authorAvatarSrc = collection.author_avatar ? artworkService.getImageUrl(collection.author_avatar) : defaultAvatar;
     const viewProps = { isOwner, setSelectedArtwork };
+    const TypeIcon = getTypeIcon(collection.type);
 
     return (
-        <div className="min-h-screen pb-20 relative">
-            {/* HEADER */}
-            <div className="mb-12 text-center border-b border-slate-900 pb-12 relative px-4 pt-8">
-                <div className="absolute top-8 left-4 md:left-8">
-                    <Link to="/collections" className="text-slate-500 hover:text-cherry-500 text-sm inline-flex items-center gap-2 transition">
-                        <ArrowLeftIcon className="w-4 h-4" /> <span className="hidden sm:inline">Всі колекції</span>
-                    </Link>
-                </div>
-
-                <div className="absolute top-8 right-4 md:right-8 flex items-center gap-4">
-                    {!isOwner && (
-                        <button 
-                            onClick={handleSaveToggle}
-                            disabled={isSaving}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition border ${collection.is_saved ? 'bg-cherry-900/20 text-cherry-400 border-cherry-900/50 hover:bg-cherry-900/30' : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white hover:border-slate-500'}`}
-                        >
-                            {collection.is_saved ? <BookmarkSolidIcon className="w-5 h-5"/> : <BookmarkIcon className="w-5 h-5"/>}
-                            <span className="hidden sm:inline">{collection.is_saved ? 'Збережено' : 'Зберегти'}</span>
-                        </button>
-                    )}
-                    {isOwner && (
-                        <Link to={`/collections/${id}/edit`} className="text-slate-500 hover:text-white text-sm inline-flex items-center gap-2 transition">
-                            <span className="hidden sm:inline">Налаштування</span> <PencilSquareIcon className="w-5 h-5" />
-                        </Link>
-                    )}
-                </div>
-
-                <div className="max-w-4xl mx-auto mt-16 md:mt-0 px-2">
-                    <h1 className="text-4xl md:text-6xl font-bold text-cherry-500 font-pixel tracking-wider mb-6 uppercase break-words break-all leading-tight">
-                        {collection.title}
-                    </h1>
-
-                    <div className="flex items-center justify-center gap-3 mb-6">
-                        <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-700 shadow-sm">
-                            <img src={authorAvatarSrc} alt="Author" className="w-full h-full object-cover" />
-                        </div>
-                        <div className="text-sm text-slate-400 flex items-center gap-3">
-                            <Link to={isOwner ? "/profile" : `/user/${collection.author_name}`} className="font-bold text-slate-200 hover:text-cherry-400 transition cursor-pointer">
-                                {collection.author_name} {isOwner && "(Ви)"}
+        <div className="min-h-screen pb-40 font-mono bg-void text-bone selection:bg-blood selection:text-white">
+            
+            {/* --- HEADER WRAPPER --- */}
+            <div className="pt-8 pb-8 px-4 md:px-8 mb-8 border-b border-border/30">
+                <div className="max-w-[1920px] mx-auto">
+                    
+                    {/* 1. TOP CONTROL PANEL */}
+                    <div className="flex flex-col md:flex-row justify-between md:items-center mb-12">
+                        
+                        {/* ЛІВО: Кнопка Назад */}
+                        <div className="mb-6 md:mb-0 self-start">
+                            <Link to="/collections" className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-muted hover:text-bone transition-colors">
+                                <ArrowLongLeftIcon className="w-4 h-4 text-blood group-hover:-translate-x-1 transition-transform" />
+                                <span>Back</span>
                             </Link>
-                            <span className="text-slate-700">•</span>
-                            <span>{new Date(collection.created_at).toLocaleDateString()}</span>
-                            <span className="text-slate-700">•</span>
-                            <div className="flex items-center gap-1 text-slate-500" title="Переглядів">
-                                <EyeIcon className="w-4 h-4" /> <span>{collection.views || 0}</span>
+                        </div>
+
+                        {/* ПРАВО: Бейджі + Кнопка */}
+                        <div className="w-full md:w-auto flex flex-wrap justify-between md:justify-end items-center gap-4">
+                            
+                            <div className="flex gap-3">
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm border border-border text-[9px] font-bold uppercase tracking-[0.15em] text-muted/80">
+                                    <TypeIcon className="w-3 h-3" />
+                                    <span className="hidden sm:inline">{collection.type}</span>
+                                </div>
+
+                                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border text-[9px] font-bold uppercase tracking-[0.15em] ${collection.is_public ? 'border-border text-muted/80' : 'border-blood/40 text-blood'}`}>
+                                    {collection.is_public ? <GlobeAltIcon className="w-3 h-3"/> : <LockClosedIcon className="w-3 h-3"/>}
+                                    <span className="hidden sm:inline">{collection.is_public ? 'Public' : 'Private'}</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1.5 text-slate-500 ml-3" title={`Збережено ${collection.save_count || 0} користувачами`}>
-                                <BookmarkIcon className="w-4 h-4" /> <span className="text-xs font-bold">{collection.save_count || 0}</span>
+
+                            <span className="text-muted/40 hidden md:block">|</span>
+
+                            {/* Кнопка Дії */}
+                            <div>
+                                {!isOwner ? (
+                                    <button 
+                                        onClick={handleSaveToggle}
+                                        disabled={isSaving}
+                                        className={`
+                                            flex items-center gap-2 px-6 py-2 rounded-sm text-[10px] font-bold uppercase tracking-[0.2em] transition-all border
+                                            ${collection.is_saved 
+                                                ? 'bg-blood border-blood text-white shadow-[0_0_15px_rgba(159,18,57,0.4)]' 
+                                                : 'bg-transparent text-bone border-bone/30 hover:border-blood hover:text-blood hover:shadow-[0_0_10px_rgba(159,18,57,0.2)]'}
+                                        `}
+                                    >
+                                        {collection.is_saved ? <BookmarkSolidIcon className="w-3 h-3"/> : <BookmarkIcon className="w-3 h-3"/>}
+                                        <span className="hidden sm:inline">{collection.is_saved ? 'Saved' : 'Save'}</span>
+                                    </button>
+                                ) : (
+                                    <Link 
+                                        to={`/collections/${id}/edit`} 
+                                        className="flex items-center gap-2 px-6 py-2 rounded-sm text-[10px] font-bold uppercase tracking-[0.2em] transition-all border bg-transparent text-bone border-bone/30 hover:bg-blood hover:border-blood hover:text-white hover:shadow-[0_0_15px_rgba(159,18,57,0.3)]"
+                                    >
+                                        <span className="hidden sm:inline">Edit</span> 
+                                        <PencilSquareIcon className="w-3 h-3" />
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {collection.description && (
-                        <p className="text-slate-400 text-lg italic font-serif break-words whitespace-pre-wrap max-w-2xl mx-auto">"{collection.description}"</p>
-                    )}
+                    {/* 2. CENTER CONTENT */}
+                    <div className="max-w-3xl mx-auto text-center">
+                        <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-bone font-gothic tracking-widest mb-6 uppercase leading-tight drop-shadow-2xl break-words hyphens-auto max-w-full">
+                            {collection.title}
+                        </h1>
 
-                    <div className="mt-6 flex justify-center flex-wrap gap-2">
-                        <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded text-xs text-slate-500 uppercase tracking-widest font-bold">
-                            {collection.type}
-                        </span>
-                        <span className={`border px-3 py-1 rounded text-xs uppercase tracking-widest font-bold flex items-center gap-1 ${collection.is_public ? 'border-green-900 text-green-600 bg-green-900/10' : 'border-slate-800 text-slate-600 bg-slate-900'}`}>
-                            {collection.is_public ? <GlobeAltIcon className="w-3 h-3"/> : <LockClosedIcon className="w-3 h-3"/>}
-                            {collection.is_public ? 'Публічна' : 'Приватна'}
-                        </span>
+                        <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] text-muted font-mono uppercase tracking-wider mb-8">
+                            <div className="flex items-center gap-2 group cursor-pointer">
+                                <div className="w-6 h-6 rounded-full overflow-hidden border border-border group-hover:border-blood transition-all">
+                                    <img src={authorAvatarSrc} alt={collection.author_name} className="w-full h-full object-cover" />
+                                </div>
+                                <Link to={isOwner ? "/profile" : `/user/${collection.author_name}`} className="transition-colors font-bold hover:text-blood">
+                                    {collection.author_name}
+                                </Link>
+                            </div>
+                            
+                            <span className="text-muted/40">|</span>
+                            <span>{new Date(collection.created_at).toLocaleDateString('en-GB').replace(/\//g, '.')}</span>
+                            <span className="text-muted/40">|</span>
+                            
+                            <div className="flex items-center gap-3 opacity-60">
+                                <div className="flex items-center gap-1" title="Views"><EyeIcon className="w-3 h-3" /> <span>{collection.views || 0}</span></div>
+                                <div className="flex items-center gap-1" title="Saves"><BookmarkIcon className="w-3 h-3" /> <span>{collection.save_count || 0}</span></div>
+                            </div>
+                        </div>
+
+                        {collection.description && (
+                            <div className="relative inline-block px-10 max-w-2xl mx-auto">
+                                <span className="absolute top-0 left-0 text-3xl text-blood/40 font-gothic leading-none">“</span>
+                                <p className="text-muted text-sm leading-relaxed font-mono break-words">{collection.description}</p>
+                                <span className="absolute bottom-0 right-0 text-3xl text-blood/40 font-gothic leading-none">”</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* ВМІСТ */}
-            {collection.type === 'MOODBOARD' && <MoodboardView items={collection.items} {...viewProps} />}
-            {collection.type === 'SERIES' && <SeriesView items={collection.items} {...viewProps} />}
-            {collection.type === 'EXHIBITION' && <ExhibitionView items={collection.items} {...viewProps} />}
+            {/* --- CONTENT --- */}
+            <div className="relative z-10 pb-20">
+                {collection.type === 'MOODBOARD' && <MoodboardView items={collection.items} {...viewProps} />}
+                {collection.type === 'SERIES' && <SeriesView items={collection.items} {...viewProps} />}
+                {collection.type === 'EXHIBITION' && <ExhibitionView items={collection.items} {...viewProps} />}
+                
+                {collection.items?.length === 0 && (
+                    <div className="text-center py-20 text-muted opacity-40 font-mono uppercase tracking-widest flex flex-col items-center gap-3">
+                        <div className="w-8 h-px bg-blood/50 mb-2"></div>
+                        The Void is Empty
+                        {isOwner && <Link to="/projects" className="text-[10px] text-blood hover:text-white border-b border-blood/30 pb-0.5 transition-colors">Add Artifacts</Link>}
+                    </div>
+                )}
+            </div>
 
-            {/* 👇 МОДАЛКА (Передаємо просто artwork і onClose) */}
-            <ImageModal 
-                    artwork={selectedArtwork} 
-                    onClose={() => setSelectedArtwork(null)} 
-                />
+            <ImageModal artwork={selectedArtwork} onClose={() => setSelectedArtwork(null)} />
         </div>
     );
 };

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { 
     TagIcon, SwatchIcon, PaintBrushIcon, 
-    IdentificationIcon, CalendarIcon 
+    IdentificationIcon
 } from '@heroicons/react/24/outline';
 
 const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
@@ -36,7 +36,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
         return str;
     };
 
-    // 👇 Універсальний "Чіп" (Клікабельний елемент)
+    // 👇 Універсальний "Чіп"
     const MetaChip = ({ label, onClick }) => (
         <span 
             onClick={onClick}
@@ -66,25 +66,30 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                 </p>
             </div>
             
-            {/* Дати (Окремий рядок, бо вони не клікабельні фільтри) */}
+            {/* 👇 ДАТИ: ВИПРАВЛЕНО НА ДВА РЯДКИ (flex-col) */}
             <div className="grid grid-cols-2 gap-4">
-                <div className="bg-void p-3 rounded-sm border border-border flex items-center justify-between">
+                
+                {/* Genesis */}
+                <div className="bg-void p-3 rounded-sm border border-border flex flex-col justify-center gap-1">
                     <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Genesis</span>
-                    <span className="text-xs font-bold text-bone">{renderFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day)}</span>
+                    <span className="text-xs font-bold text-bone truncate">
+                        {renderFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day)}
+                    </span>
                 </div>
-                <div className="bg-void p-3 rounded-sm border border-border flex items-center justify-between">
+
+                {/* Conclusion */}
+                <div className="bg-void p-3 rounded-sm border border-border flex flex-col justify-center gap-1">
                     <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Conclusion</span>
-                    {/* 👇 Ніякого зеленого. Якщо є дата - то blood, інакше bone */}
-                    <span className={`text-xs font-bold ${artwork.finished_year ? 'text-blood' : 'text-bone'}`}>
+                    <span className={`text-xs font-bold truncate ${artwork.finished_year ? 'text-blood' : 'text-bone'}`}>
                         {renderFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day)}
                     </span>
                 </div>
             </div>
 
-            {/* БЛОКИ АТРИБУТІВ (Тепер всі однакові) */}
+            {/* БЛОКИ АТРИБУТІВ */}
             <div className="space-y-4">
                 
-                {/* 1. GENRE & STYLE (В одному ряду) */}
+                {/* 1. GENRE & STYLE */}
                 <div className="grid grid-cols-2 gap-4">
                     {/* Genre */}
                     <div className="bg-ash/20 p-4 rounded-sm border border-border flex flex-col gap-3">
@@ -92,7 +97,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                             <IdentificationIcon className="w-4 h-4 text-muted" />
                             <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Genre</span>
                         </div>
-                        <div>
+                        <div className="truncate">
                             {artwork.genre_id ? (
                                 <MetaChip label={artwork.genre_name} onClick={() => goToFilter('genre_ids', artwork.genre_id)} />
                             ) : <span className="text-xs text-muted/30 italic">—</span>}
@@ -105,7 +110,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                             <PaintBrushIcon className="w-4 h-4 text-muted" />
                             <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Style</span>
                         </div>
-                        <div>
+                        <div className="truncate">
                             {artwork.style_id ? (
                                 <MetaChip label={artwork.style_name} onClick={() => goToFilter('style_ids', artwork.style_id)} />
                             ) : <span className="text-xs text-muted/30 italic">—</span>}

@@ -51,9 +51,16 @@ class SessionService {
         return this.getCurrentSession(userId);
     }
 
-    async stopSession(userId, noteData, manualDuration, addToGallery) { // addToGallery = це те саме що updateCover з контролера
+    async stopSession(userId, sessionId, noteData, manualDuration, addToGallery) { 
         const session = await this.getCurrentSession(userId);
         if (!session) throw new Error("Немає активної сесії");
+
+        // 👇 ВАЖЛИВА ПЕРЕВІРКА: 
+        // Переконуємось, що ми зупиняємо саме ту сесію, яку бачить клієнт.
+        // Це захищає від багів, коли клієнт думає про одну сесію, а сервер про іншу.
+        if (sessionId && parseInt(sessionId) !== session.id) {
+            throw new Error("Помилка синхронізації: ID сесії не співпадає.");
+        }
 
         // 1. Час
         const finalDuration = manualDuration !== null && manualDuration !== undefined
@@ -68,21 +75,16 @@ class SessionService {
         const photoPath = noteData?.photo_path || null;
 
         if (noteContent || photoPath) {
-            // Фото ЗАВЖДИ зберігається в історії сесій (session_notes)
             await sessionDAO.createNote(session.id, noteContent, photoPath);
         }
 
-        // 4. 👇 ГОЛОВНА ГАЛЕРЕЯ
-        // Додаємо в галерею artwork ТІЛЬКИ якщо є фото І якщо галочка (addToGallery) == true
+        // 4. Галерея
         if (photoPath && session.artwork_id && addToGallery) {
             const exists = await artworkDAO.checkGalleryImageExists(session.artwork_id, photoPath);
             if (!exists) {
-                // Додаємо як "Фото з сесії"
                 await artworkDAO.addGalleryImage(session.artwork_id, photoPath, 'Фото з сесії');
             }
         }
-        // ❌ БЛОК ELSE ПРИБРАНО!
-        // Раніше тут був else, який додавав фото, якщо галочка була false. Це була помилка.
 
         return { message: "Сесію успішно завершено", duration: finalDuration };
     }

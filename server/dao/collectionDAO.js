@@ -223,26 +223,38 @@ class CollectionDAO {
     }
 
     // Отримати елементи колекції
-    getCollectionItems(collectionId) {
-        return new Promise((resolve, reject) => {
-            const sql = `
-                SELECT 
-                    ci.id as link_id,
-                    a.*, 
-                    ci.sort_order,
-                    ci.layout_type,
-                    ci.context_description
-                FROM collection_items ci
-                JOIN artworks a ON ci.artwork_id = a.id
-                WHERE ci.collection_id = ?
-                ORDER BY ci.sort_order ASC, ci.created_at DESC
-            `;
-            db.all(sql, [collectionId], (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
+   // Отримати елементи колекції (ВИПРАВЛЕНО: Додано Join стилів і жанрів)
+   getCollectionItems(collectionId) {
+    return new Promise((resolve, reject) => {
+        const sql = `
+            SELECT 
+                ci.id as link_id,
+                a.*, 
+                s.name as style_name,  -- 👈 Додано
+                g.name as genre_name,  -- 👈 Додано
+                
+                -- Матеріали теж треба, якщо ми їх виводимо!
+                (SELECT GROUP_CONCAT(am.name, ', ') 
+                 FROM artwork_materials_link link 
+                 JOIN art_materials am ON link.material_id = am.id 
+                 WHERE link.artwork_id = a.id) as material_names,
+
+                ci.sort_order,
+                ci.layout_type,
+                ci.context_description
+            FROM collection_items ci
+            JOIN artworks a ON ci.artwork_id = a.id
+            LEFT JOIN art_styles s ON a.style_id = s.id -- 👈 Додано
+            LEFT JOIN art_genres g ON a.genre_id = g.id -- 👈 Додано
+            WHERE ci.collection_id = ?
+            ORDER BY ci.sort_order ASC, ci.created_at DESC
+        `;
+        db.all(sql, [collectionId], (err, rows) => {
+            if (err) return reject(err);
+            resolve(rows);
         });
-    }
+    });
+}
 
     // Оновити елемент
     updateItem(itemId, data) {

@@ -1,32 +1,45 @@
-// client/src/components/layouts/AuthLayout.jsx
 import React from 'react';
+import catWalk from '../../assets/cat-walk.gif'; 
 
 const AuthLayout = ({ title, subtitle, children, footer }) => {
     return (
-        <div className="min-h-screen bg-slate-950 font-sans flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-lg shadow-2xl overflow-hidden relative animate-in fade-in zoom-in duration-300">
+        <div className="min-h-screen bg-deep font-mono flex items-center justify-center p-4 relative overflow-hidden">
+            
+            <div className="w-full max-w-[350px] bg-void/95 border border-border/50 rounded-sm shadow-2xl relative z-10 backdrop-blur-md flex flex-col">
                 
-                {/* Декоративна смужка */}
-                <div className="h-1 bg-gradient-to-r from-cherry-900 via-cherry-500 to-cherry-900"></div>
-
-                <div className="p-8">
-                    <h1 className="font-pixel text-2xl md:text-3xl text-center text-cherry-500 mb-2 tracking-wide">
+                {/* 1. ВЕРХ (Заголовок) */}
+                <div className="p-6 pb-2 text-center">
+                    <h1 className="font-gothic text-xl text-blood mb-1 tracking-[0.2em] uppercase">
                         {title}
                     </h1>
                     {subtitle && (
-                        <p className="text-center text-slate-500 text-sm mb-6 uppercase tracking-widest font-medium">
+                        <p className="text-muted text-[10px] uppercase tracking-[0.3em] font-bold opacity-60">
                             {subtitle}
                         </p>
                     )}
-
-                    {children}
-
-                    {footer && (
-                        <div className="mt-8 text-center text-sm border-t border-slate-800 pt-6">
-                            {footer}
-                        </div>
-                    )}
                 </div>
+
+                {/* 2. КОНТЕНТ (Форма) */}
+                <div className="px-6 py-2 flex-grow">
+                    {children}
+                </div>
+
+                {/* 3. 🐈‍⬛ КОТЯЧА ДОРОГА */}
+                {/* 👇 ЗМІНИ ТУТ: h-14 (вище), h-32 (більший кіт), -bottom-4 (нижче лапи) */}
+                <div className="h-14 border-t border-border/30 relative overflow-hidden w-full mt-4 bg-void/50">
+                    <img 
+                        src={catWalk} 
+                        alt="Walking Cat" 
+                        className="cat-anim h-32 max-w-none -bottom-4 opacity-90" 
+                    />
+                </div>
+
+                {/* 4. ФУТЕР */}
+                {footer && (
+                    <div className="py-3 bg-deep/30 border-t border-border/30 text-center">
+                        {footer}
+                    </div>
+                )}
             </div>
         </div>
     );

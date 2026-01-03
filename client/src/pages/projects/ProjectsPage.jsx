@@ -3,16 +3,17 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
     AdjustmentsHorizontalIcon, 
     PlusIcon, 
-    ArrowPathIcon,
-    MagnifyingGlassIcon 
+    MagnifyingGlassIcon,
+    XMarkIcon 
 } from '@heroicons/react/24/outline';
 
 import artworkService from '../../services/artworkService';
 import FilterSidebar from '../../components/layouts/FilterSidebar';
 import ProjectCard from '../../components/projects/ProjectCard';
 import SortDropdown from '../../components/ui/SortDropdown';
-
-import sleepingCatGif from '../../assets/sleeping-cat.gif';
+import EmptyState from '../../components/ui/EmptyState';
+// 👇 1. Імпортуємо наш новий Лоадер
+import Loader from '../../components/ui/Loader'; 
 
 const ProjectsPage = () => {
     // --- СТЕЙТ ---
@@ -32,11 +33,10 @@ const ProjectsPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // --- ЗАВАНТАЖЕННЯ ДАНИХ ---
+    // --- ФУНКЦІЯ ЗАВАНТАЖЕННЯ ---
     const loadProjects = async (currentFilters = filters, query = searchQuery) => {
         try {
             setLoading(true);
-            // Передаємо пошуковий запит разом з фільтрами
             const data = await artworkService.getAll({ ...currentFilters, search: query }, sortConfig);
             setProjects(data);
         } catch (error) {
@@ -46,16 +46,7 @@ const ProjectsPage = () => {
         }
     };
 
-    // 1. Ефект для Debounce пошуку (чекає 500мс після останнього вводу)
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            loadProjects(filters, searchQuery);
-        }, 500);
-        return () => clearTimeout(timer);
-        // eslint-disable-next-line
-    }, [searchQuery]);
-
-    // 2. Ефект для фільтрів, сортування та переходу по тегах
+    // --- ЕФЕКТИ ---
     useEffect(() => {
         if (location.state?.applyFilter) {
             const newFilters = { ...emptyFilters, ...location.state.applyFilter };
@@ -63,11 +54,27 @@ const ProjectsPage = () => {
             setIsFilterOpen(true);
             navigate(location.pathname, { replace: true, state: {} });
             loadProjects(newFilters, searchQuery);
-        } else {
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.state]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!location.state?.applyFilter) {
+                loadProjects(filters, searchQuery);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchQuery]); 
+
+    useEffect(() => {
+        if (!location.state?.applyFilter) {
             loadProjects(filters, searchQuery);
         }
-        // eslint-disable-next-line
-    }, [location.state, sortConfig, filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filters, sortConfig]);
+
 
     // --- ХЕНДЛЕРИ ---
     const handleSortChange = (val) => setSortConfig(p => ({ ...p, by: val }));
@@ -104,10 +111,9 @@ const ProjectsPage = () => {
             <div className={`flex-1 p-4 md:p-8 transition-all duration-300 ease-in-out ${isFilterOpen ? 'mr-0 md:mr-80' : ''}`}>
                 <div className="max-w-[1920px] mx-auto">
                     
-                    {/* --- HEADER --- */}
+                    {/* --- HEADER (Зберігся повністю) --- */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 border-b border-border/50 pb-6 gap-6">
                         
-                        {/* Title & Search Group */}
                         <div className="flex flex-col gap-4 w-full md:max-w-xl">
                             <div>
                                 <h1 className="text-4xl font-gothic text-bone tracking-wide">Archives</h1>
@@ -116,7 +122,6 @@ const ProjectsPage = () => {
                                 </p>
                             </div>
 
-                            {/* SEARCH BAR */}
                             <div className="relative group w-full">
                                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-blood transition-colors" />
                                 <input 
@@ -129,7 +134,6 @@ const ProjectsPage = () => {
                             </div>
                         </div>
                         
-                        {/* Sort & Filter Controls */}
                         <div className="flex flex-wrap gap-3 items-center w-full md:w-auto h-10 shrink-0">
                             <SortDropdown 
                                 value={sortConfig.by} 
@@ -161,56 +165,57 @@ const ProjectsPage = () => {
 
                     {/* --- CONTENT --- */}
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-32 text-muted gap-4">
-                            <ArrowPathIcon className="w-8 h-8 animate-spin text-blood" />
-                            <span className="animate-pulse text-xs uppercase tracking-[0.3em]">Summoning Archives...</span>
-                        </div>
+                        // 👇 2. ТУТ ТЕПЕР НАШ ЛОАДЕР З КОТИКОМ
+                        <Loader text="Summoning Archives..." />
                     ) : (
                         <>
-                            {/* ПУСТО: Фільтри нічого не знайшли */}
+                            {/* СЦЕНАРІЙ 1: ПУСТО ЧЕРЕЗ ФІЛЬТРИ */}
                             {projects.length === 0 && hasActiveFilters && (
-                                <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
-                                    <img src={sleepingCatGif} alt="Sleeping Cat" className="w-32 h-32 object-contain opacity-80 mb-6 grayscale hover:grayscale-0 transition-all duration-500" />
-                                    <p className="text-bone text-lg font-gothic tracking-widest mb-2">Silence...</p>
-                                    <p className="text-muted text-xs font-mono mb-6">No artifacts match your query.</p>
-                                    <button 
-                                        onClick={handleResetFilters} 
-                                        className="text-blood hover:text-white font-bold text-xs uppercase tracking-widest border-b border-blood/30 hover:border-blood pb-1 transition-all"
-                                    >
-                                        Clear Search & Filters
-                                    </button>
-                                </div>
+                                <EmptyState 
+                                    title="Silence..."
+                                    message="No artifacts match your query. Try adjusting your filters."
+                                    actionLabel="Clear Search & Filters"
+                                    onAction={handleResetFilters}
+                                    icon={XMarkIcon}
+                                />
                             )}
 
-                            {/* ПУСТО: База взагалі порожня */}
+                            {/* СЦЕНАРІЙ 2: БАЗА ПУСТА */}
                             {projects.length === 0 && !hasActiveFilters && (
-                                <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
-                                    <img src={sleepingCatGif} alt="Sleeping Cat" className="w-32 h-32 object-contain opacity-80 mb-6 grayscale hover:grayscale-0 transition-all duration-500" />
-                                    <p className="text-bone text-lg font-gothic tracking-widest mb-2">The Archive is Empty</p>
-                                    <p className="text-muted text-xs font-mono mb-8">Start your journey by creating the first artifact.</p>
-                                    <Link 
-                                        to="/projects/new" 
-                                        className="bg-blood hover:bg-blood-hover text-white px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(159,18,57,0.3)] transition-all hover:scale-105 flex items-center gap-2"
-                                    >
-                                        <PlusIcon className="w-4 h-4" /> Create First Artifact
-                                    </Link>
-                                </div>
+                                <EmptyState 
+                                    title="The Archive is Empty"
+                                    message="Start your journey by creating the first artifact."
+                                    actionLabel="Create First Artifact"
+                                    actionLink="/projects/new"
+                                    icon={PlusIcon}
+                                />
                             )}
 
-                            {/* ГРІД */}
+                            {/* СЦЕНАРІЙ 3: ГРІД ПРОЄКТІВ */}
                             {projects.length > 0 && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500 items-stretch">
                                     
-                                    {/* КАРТКА "CREATE NEW" */}
+                                    {/* 1. КАРТКА "CREATE NEW" */}
                                     <Link 
                                         to="/projects/new" 
-                                        className="group relative w-full h-14 flex flex-row sm:h-auto sm:aspect-[3/4] sm:flex-col items-center justify-center gap-4 sm:gap-6 bg-void/50 border border-dashed border-border hover:border-blood hover:bg-void rounded-sm transition-all duration-500 cursor-pointer min-h-[200px]"
+                                        className="
+                                            group relative w-full
+                                            h-14 flex flex-row
+                                            sm:h-auto sm:aspect-[3/4] sm:flex-col
+                                            items-center justify-center gap-4 sm:gap-6
+                                            bg-void/50 border border-dashed border-border 
+                                            hover:border-blood hover:bg-void
+                                            rounded-sm transition-all duration-500 cursor-pointer
+                                            min-h-[200px]
+                                        "
                                     >
                                         <PlusIcon className="w-5 h-5 sm:w-12 sm:h-12 text-muted/30 stroke-[1] group-hover:text-blood group-hover:scale-110 transition-all duration-500" />
-                                        <span className="text-[10px] font-gothic text-muted group-hover:text-bone uppercase tracking-[0.2em] transition-colors">New Artifact</span>
+                                        <span className="text-[10px] font-gothic text-muted group-hover:text-bone uppercase tracking-[0.2em] transition-colors">
+                                            New Artifact
+                                        </span>
                                     </Link>
 
-                                    {/* СПИСОК КАРТОК */}
+                                    {/* 2. СПИСОК */}
                                     {projects.map(art => (
                                         <ProjectCard key={art.id} project={art} />
                                     ))}

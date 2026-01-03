@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
-// 👇 Два рівні вгору
 import artworkService from '../../services/artworkService';
-
-// 👇 ВИПРАВЛЕНО: Виходимо з shared (..), заходимо в projects
 import ArtworkInfoPanel from '../projects/ArtworkInfoPanel';
+
 const ImageModal = ({ artwork: initialArtwork, onClose }) => {
     const [fullArtwork, setFullArtwork] = useState(initialArtwork);
     const [selectedImage, setSelectedImage] = useState(null);
     const [loadingGallery, setLoadingGallery] = useState(false);
+    
+    // Стан для мобільної шторки
+    const [isInfoOpen, setIsInfoOpen] = useState(false);
 
     // Закриття по Esc
     useEffect(() => {
@@ -18,10 +19,10 @@ const ImageModal = ({ artwork: initialArtwork, onClose }) => {
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose]);
 
-    // Завантаження
+    // Завантаження даних
     useEffect(() => {
         if (!initialArtwork) {
-            setFullArtwork(null);
+            setFullArtwork(null);   
             return;
         }
 
@@ -39,31 +40,19 @@ const ImageModal = ({ artwork: initialArtwork, onClose }) => {
 
     if (!fullArtwork) return null;
 
-    // --- ФОРМУВАННЯ СПИСКУ ---
+    // --- ФОРМУВАННЯ СПИСКУ ФОТО ---
     const allImages = [];
     const addedPaths = new Set();
 
-    // 1. Обкладинка
     if (fullArtwork.image_path) {
-        allImages.push({ 
-            id: 'cover_main', 
-            src: fullArtwork.image_path, 
-            type: 'Обкладинка',
-            isCover: true 
-        });
+        allImages.push({ id: 'cover_main', src: fullArtwork.image_path, type: 'Cover', isCover: true });
         addedPaths.add(fullArtwork.image_path);
     }
 
-    // 2. Галерея (Тільки авторська)
     if (fullArtwork.gallery && Array.isArray(fullArtwork.gallery)) {
         fullArtwork.gallery.forEach(img => {
             if (!addedPaths.has(img.image_path)) {
-                allImages.push({ 
-                    id: `gal_${img.id}`, 
-                    src: img.image_path, 
-                    type: 'Деталь', 
-                    isCover: false 
-                });
+                allImages.push({ id: `gal_${img.id}`, src: img.image_path, type: 'Detail', isCover: false });
                 addedPaths.add(img.image_path);
             }
         });
@@ -72,32 +61,37 @@ const ImageModal = ({ artwork: initialArtwork, onClose }) => {
     const currentSrc = selectedImage || fullArtwork.image_path;
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-8 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-8 animate-in fade-in duration-300">
             
-            {/* Оверлей - Клік закриває */}
-            <div 
-                className="absolute inset-0 bg-black/95 backdrop-blur-sm transition-opacity" 
-                onClick={onClose}
-            ></div>
+            {/* Оверлей */}
+            <div className="absolute inset-0 bg-black/95 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
 
-            {/* Кнопка закриття (Фіксована) */}
+            {/* Кнопка закриття (ДЕСКТОП: праворуч зовні) */}
             <button 
                 onClick={(e) => { e.stopPropagation(); onClose(); }} 
-                className="fixed top-4 right-4 z-[220] p-2 md:p-3 text-slate-400 hover:text-white bg-black/50 hover:bg-slate-800 rounded-full transition-all cursor-pointer border border-slate-700/50"
+                className="fixed top-4 right-4 z-[250] p-2 text-white bg-transparent hover:text-blood transition-colors cursor-pointer hidden md:block"
             >
-                <XMarkIcon className="w-6 h-6 md:w-8 md:h-8" />
+                <XMarkIcon className="w-8 h-8" />
             </button>
 
-            {/* КОНТЕЙНЕР КОНТЕНТУ */}
+            {/* КОНТЕЙНЕР */}
             <div 
-                className="relative z-[210] bg-slate-950 md:rounded-2xl overflow-hidden shadow-2xl border-x md:border border-slate-800 w-full md:max-w-7xl h-full md:h-[85vh] flex flex-col lg:flex-row" 
+                className="relative z-[210] bg-deep md:rounded-sm overflow-hidden shadow-2xl shadow-black border-x md:border border-border w-full md:max-w-7xl h-full md:h-[90vh] flex flex-col lg:flex-row" 
                 onClick={(e) => e.stopPropagation()} 
             >
-                {/* ЛІВА ЧАСТИНА (ФОТО) */}
-                <div className="w-full lg:w-2/3 bg-black flex flex-col relative border-b lg:border-b-0 lg:border-r border-slate-800 h-[50vh] lg:h-full">
+                {/* === ЛІВА ЧАСТИНА (ФОТО) === */}
+                <div className="w-full lg:w-2/3 bg-black flex flex-col relative border-b lg:border-b-0 lg:border-r border-border h-full lg:h-full">
                     
+                    {/* Кнопка закриття (МОБІЛЬНА: праворуч всередині) */}
+                    <button 
+                        onClick={onClose} 
+                        className="absolute top-4 right-4 z-50 p-2 text-white/70 hover:text-white bg-black/40 backdrop-blur-md rounded-full md:hidden border border-white/10"
+                    >
+                        <XMarkIcon className="w-6 h-6" />
+                    </button>
+
                     {/* Велике фото */}
-                    <div className="flex-1 w-full h-full flex items-center justify-center p-4 overflow-hidden relative">
+                    <div className="flex-1 w-full h-full flex items-center justify-center p-0 md:p-4 overflow-hidden relative">
                         <img 
                             src={artworkService.getImageUrl(currentSrc)} 
                             alt={fullArtwork.title} 
@@ -105,50 +99,82 @@ const ImageModal = ({ artwork: initialArtwork, onClose }) => {
                         />
                     </div>
 
-                    {/* 👇 СТРІЧКА МІНІАТЮР (ЗАВЖДИ ПОКАЗУЄМО, навіть якщо 1 фото) */}
-                    {/* Це прибирає ефект "стрибання" інтерфейсу */}
-                    <div className="h-20 bg-slate-900 border-t border-slate-800 flex items-center gap-3 px-4 overflow-x-auto custom-scrollbar shrink-0">
-                        {loadingGallery && allImages.length <= 1 && (
-                            <span className="text-xs text-slate-500 animate-pulse ml-2">...</span>
-                        )}
-
-                        {allImages.map((img) => {
-                            const isSelected = currentSrc === img.src;
-                            return (
-                                <div 
-                                    key={img.id} 
-                                    onClick={() => setSelectedImage(img.src)} 
-                                    className="flex flex-col items-center gap-1 cursor-pointer group shrink-0 py-2"
-                                >
-                                    <div className={`
-                                        min-w-[50px] w-[50px] h-[40px] rounded overflow-hidden border-2 transition relative
-                                        ${isSelected ? 'border-cherry-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}
-                                    `}>
+                    {/* Стрічка мініатюр (Тільки якщо > 1 фото) */}
+                    {allImages.length > 1 && (
+                        <div className="h-20 bg-void border-t border-border flex items-center gap-3 px-4 overflow-x-auto custom-scrollbar shrink-0 z-20 relative">
+                            {allImages.map((img) => {
+                                const isSelected = currentSrc === img.src;
+                                return (
+                                    <div 
+                                        key={img.id} 
+                                        onClick={() => setSelectedImage(img.src)} 
+                                        className={`
+                                            min-w-[50px] w-[50px] h-[40px] rounded-sm overflow-hidden border transition-all cursor-pointer relative shrink-0
+                                            ${isSelected ? 'border-blood opacity-100' : 'border-border/50 opacity-50'}
+                                        `}
+                                    >
                                         <img src={artworkService.getImageUrl(img.src)} alt="" className="w-full h-full object-cover" />
                                     </div>
-                                    
-                                    {/* Підпис тільки для обкладинки */}
-                                    {img.isCover && (
-                                        <span className="text-[8px] text-cherry-500 font-bold uppercase tracking-wider leading-none">
-                                            Обкладинка
-                                        </span>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* === МОБІЛЬНИЙ ІНФО-БАР (ЗНИЗУ) === */}
+                    {/* Показується тільки на мобільному, коли шторка закрита */}
+                    {!isInfoOpen && (
+                        <div 
+                            onClick={() => setIsInfoOpen(true)}
+                            className="lg:hidden absolute bottom-0 inset-x-0 bg-void/90 backdrop-blur-md border-t border-blood/30 p-4 z-30 cursor-pointer flex items-center justify-between animate-in slide-in-from-bottom-2 duration-300"
+                        >
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-blood font-bold uppercase tracking-widest font-mono">Tap for details</span>
+                                <h2 className="text-sm font-bold text-bone font-gothic tracking-wide uppercase truncate max-w-[250px]">
+                                    {fullArtwork.title}
+                                </h2>
+                            </div>
+                            <ChevronUpIcon className="w-5 h-5 text-muted animate-bounce" />
+                        </div>
+                    )}
+                </div>
+
+                {/* === ПРАВА ЧАСТИНА (ІНФО - ДЕСКТОП) === */}
+                <div className="hidden lg:flex w-1/3 flex-col bg-deep h-full border-l border-border">
+                    <div className="p-8 border-b border-border shrink-0 bg-void/50 backdrop-blur-md">
+                        <h2 className="text-3xl font-bold text-bone font-gothic tracking-wide leading-tight uppercase">
+                            {fullArtwork.title}
+                        </h2>
+                        {fullArtwork.author_name && (
+                            <p className="text-xs text-muted mt-2 font-mono uppercase tracking-widest flex items-center gap-2">
+                                <span className="w-2 h-[1px] bg-blood"></span>
+                                {fullArtwork.author_name}
+                            </p>
+                        )}
+                    </div>
+                    <div className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-gradient-to-b from-void/20 to-deep">
+                        <ArtworkInfoPanel artwork={fullArtwork} showEditButton={false} />
                     </div>
                 </div>
 
-                {/* ПРАВА ЧАСТИНА (ІНФО) */}
-                <div className="w-full lg:w-1/3 flex flex-col bg-slate-950 h-[50vh] lg:h-full">
-                    <div className="p-4 md:p-6 border-b border-slate-800 shrink-0">
-                        <h2 className="text-xl md:text-2xl font-bold text-white font-serif line-clamp-2 pr-8">{fullArtwork.title}</h2>
-                        {fullArtwork.author_name && (
-                            <p className="text-xs md:text-sm text-slate-500 mt-1">Автор: <span className="text-slate-300">{fullArtwork.author_name}</span></p>
-                        )}
+                {/* === МОБІЛЬНА ШТОРКА (BOTTOM SHEET) === */}
+                <div className={`
+                    lg:hidden absolute inset-x-0 bottom-0 z-40 bg-deep border-t border-blood rounded-t-xl shadow-[0_-10px_50px_rgba(0,0,0,0.9)]
+                    transition-transform duration-300 ease-out flex flex-col max-h-[85vh]
+                    ${isInfoOpen ? 'translate-y-0' : 'translate-y-full'}
+                `}>
+                    {/* Хедер шторки */}
+                    <div 
+                        className="px-6 py-4 border-b border-border shrink-0 flex items-center justify-between bg-void/50 cursor-pointer"
+                        onClick={() => setIsInfoOpen(false)}
+                    >
+                        <h2 className="text-lg font-bold text-bone font-gothic tracking-wide uppercase truncate pr-4">
+                            {fullArtwork.title}
+                        </h2>
+                        <ChevronDownIcon className="w-5 h-5 text-muted hover:text-white" />
                     </div>
-                    
-                    <div className="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-1 pb-20 md:pb-6">
+
+                    {/* Контент шторки */}
+                    <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-deep">
                         <ArtworkInfoPanel artwork={fullArtwork} showEditButton={false} />
                     </div>
                 </div>

@@ -7,9 +7,10 @@ class StickyNoteService {
     }
 
     async create(userId, data) {
-        const title = data.title || 'Нова нотатка';
+        // 👇 1. ЗМІНИЛИ НА АНГЛІЙСЬКУ ТА КОЛІР 'PINK'
+        const title = data.title || 'New Scroll'; // Замість 'Нова нотатка'
         const content = data.content || '';
-        const color = data.color || 'yellow';
+        const color = data.color || 'pink';       // Замість 'yellow', бо ми вирішили, що pink (blood) головний
         
         return await stickyNoteDAO.create(userId, { title, content, color });
     }
@@ -17,8 +18,10 @@ class StickyNoteService {
     async update(id, userId, data) {
         // 1. Перевірка власності
         const note = await stickyNoteDAO.findById(id);
-        if (!note) throw new Error('Нотатку не знайдено');
-        if (note.user_id !== userId) throw new Error('Доступ заборонено');
+        
+        // 👇 2. ПОМИЛКИ ТЕЖ АНГЛІЙСЬКОЮ
+        if (!note) throw new Error('Scroll not found');
+        if (note.user_id !== userId) throw new Error('Access denied');
 
         // 2. Оновлення
         return await stickyNoteDAO.update(id, data);
@@ -27,8 +30,9 @@ class StickyNoteService {
     async delete(id, userId) {
         // 1. Перевірка власності
         const note = await stickyNoteDAO.findById(id);
-        if (!note) throw new Error('Нотатку не знайдено');
-        if (note.user_id !== userId) throw new Error('Доступ заборонено');
+        
+        if (!note) throw new Error('Scroll not found');
+        if (note.user_id !== userId) throw new Error('Access denied');
 
         // 2. Видалення
         return await stickyNoteDAO.delete(id);

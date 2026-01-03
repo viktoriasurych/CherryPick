@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline';
+
 import collectionService from '../../services/collectionService';
-
-// 👇 Компоненти колекцій лежать у components/collections
-import CollectionToolbar from '../../components/collections/CollectionToolbar';
 import CollectionCard from '../../components/collections/CollectionCard';
-
+import CollectionToolbar from '../../components/collections/CollectionToolbar';
 import Pagination from '../../components/ui/Pagination';
+import EmptyState from '../../components/ui/EmptyState'; // 👇 Імпортуємо наш компонент
 import useCollectionFilters from '../../hooks/useCollectionFilters';
 import { useCreateCollection } from '../../hooks/useCreateCollection';
 
@@ -21,10 +20,11 @@ const CollectionsPage = () => {
 
     const fetchCollections = async () => {
         try {
+            setLoading(true);
             const data = await collectionService.getAll();
             setCollections(data);
         } catch (error) {
-            console.error("Помилка:", error);
+            console.error("Load error:", error);
         } finally {
             setLoading(false);
         }
@@ -32,77 +32,105 @@ const CollectionsPage = () => {
 
     useEffect(() => { fetchCollections(); }, []);
 
-    // 👇 Використовуємо хук: передаємо функцію оновлення списку
     const { openModal, CreateModal } = useCreateCollection(fetchCollections);
 
+    const sortOptions = [
+        { value: 'created_at', label: 'Date Created' },
+        { value: 'title', label: 'Title' },
+        { value: 'item_count', label: 'Item Count' }
+    ];
+
+    const handleSortChange = (val) => setSortConfig(p => ({ ...p, key: val }));
+    const toggleSortDir = () => setSortConfig(p => ({ ...p, dir: p.dir === 'ASC' ? 'DESC' : 'ASC' }));
+    
+    const handleResetSearch = () => {
+        setSearch('');
+        setFilterType('ALL');
+    };
+
     return (
-        <div className="min-h-screen pb-20">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-cherry-500 font-pixel tracking-wide">Мої Колекції</h1>
-                    <p className="text-slate-500 text-sm mt-1">Керуйте своїми виставками, серіями та дошками натхнення</p>
-                </div>
+        <div className="relative min-h-screen pb-20 font-mono text-bone">
+            <div className="max-w-[1920px] mx-auto p-4 md:p-8">
                 
-                {/* 👇 Кнопка тепер просто викликає openModal */}
-                <button onClick={openModal} className="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 transition shadow-lg group">
-                    <PlusIcon className="w-5 h-5 group-hover:scale-110 transition" />
-                    <span className="font-bold text-sm">Створити нову</span>
-                </button>
-            </div>
+                <CollectionToolbar 
+                    title="My Collections"
+                    subTitle={loading ? 'Scanning...' : `${collections.length} Archives Found`}
+                    search={search}
+                    setSearch={setSearch}
+                    filterType={filterType}
+                    setFilterType={setFilterType}
+                    sortConfig={sortConfig}
+                    onSortChange={handleSortChange}
+                    onToggleDir={toggleSortDir}
+                    sortOptions={sortOptions}
+                />
 
-            {/* Toolbar */}
-            <CollectionToolbar 
-                search={search} setSearch={setSearch}
-                filter={filterType} setFilter={setFilterType}
-                sortConfig={sortConfig} setSortConfig={setSortConfig}
-            />
-
-            {/* Content */}
-            {loading ? (
-                <div className="text-center text-slate-500 py-20 animate-pulse">Завантаження...</div>
-            ) : (
-                <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500">
-                        {/* Картка "Створити нову" */}
-                        {currentPage === 1 && !search && filterType === 'ALL' && (
-                            <div
-                                onClick={openModal} // 👇 Тут теж openModal
-                                className="group border border-dashed border-slate-700 bg-slate-900/20 hover:bg-slate-900 hover:border-cherry-500 rounded-xl flex flex-col items-center justify-center cursor-pointer min-h-[320px] transition-all relative overflow-hidden"
-                            >
-                                <div className="absolute inset-0 bg-cherry-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center group-hover:scale-110 transition-transform group-hover:border-cherry-500/50 shadow-xl">
-                                    <PlusIcon className="w-8 h-8 text-slate-400 group-hover:text-cherry-500 transition-colors" />
-                                </div>
-                                <span className="mt-4 text-sm font-bold text-slate-400 group-hover:text-cherry-400 uppercase tracking-wider transition-colors">Створити колекцію</span>
-                            </div>
+                {/* --- CONTENT --- */}
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-32 text-muted gap-4">
+                        <ArrowPathIcon className="w-8 h-8 animate-spin text-blood" />
+                        <span className="animate-pulse text-xs uppercase tracking-[0.3em]">Loading Archives...</span>
+                    </div>
+                ) : (
+                    <>
+                        {/* 1. Нічого не знайдено пошуком (EmptyState) */}
+                        {processedItems.length === 0 && collections.length > 0 && (
+                            <EmptyState 
+                                title="Silence..."
+                                message="No collections match your query."
+                                actionLabel="Clear Search Filters"
+                                onAction={handleResetSearch}
+                                icon={XMarkIcon}
+                            />
                         )}
 
-                        {currentItems.map(col => (
-                            <CollectionCard key={col.id} collection={col} />
-                        ))}
-                    </div>
-                    
-                    {processedItems.length === 0 && (
-                        <div className="text-center py-24 border border-dashed border-slate-800 rounded-xl bg-slate-900/20">
-                            <p className="text-slate-400 font-bold">Нічого не знайдено</p>
-                        </div>
-                    )}
+                        {/* 2. Порожній архів (EmptyState) */}
+                        {collections.length === 0 && (
+                            <EmptyState 
+                                title="No Collections Yet"
+                                message="Organize your art into series or moodboards."
+                                actionLabel="Create First Collection"
+                                onAction={openModal} // Тут викликаємо модалку, а не перехід
+                                icon={PlusIcon}
+                            />
+                        )}
 
-                    <Pagination 
-                        totalItems={processedItems.length}
-                        itemsPerPage={ITEMS_PER_PAGE}
-                        currentPage={currentPage}
-                        onPageChange={(page) => {
-                            setCurrentPage(page);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                    />
-                </>
-            )}
+                        {/* 3. ГРІД */}
+                        {(processedItems.length > 0 || (currentPage === 1 && !search && filterType === 'ALL' && collections.length > 0)) && (
+                            <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500 items-stretch">
+                                    
+                                    {/* Картка "Create New" (тільки на першій сторінці без фільтрів) */}
+                                    {currentPage === 1 && !search && filterType === 'ALL' && (
+                                        <div onClick={openModal} className="group relative w-full cursor-pointer rounded-sm border border-dashed border-border bg-void/50 transition-all duration-500 hover:border-blood hover:bg-void flex flex-row items-center justify-center gap-3 h-auto py-3 min-h-0 sm:flex-col sm:h-auto sm:min-h-[300px] sm:gap-6 sm:py-0">
+                                            <PlusIcon className="w-5 h-5 sm:w-12 sm:h-12 text-muted/30 stroke-[1] group-hover:text-blood group-hover:scale-110 transition-all duration-500" />
+                                            <span className="text-[10px] font-gothic text-muted group-hover:text-bone uppercase tracking-[0.2em] transition-colors">Create New</span>
+                                        </div>
+                                    )}
 
-            {/* 👇 Вставляємо модалку одним рядком */}
-            <CreateModal />
+                                    {currentItems.map(col => (
+                                        <CollectionCard key={col.id} collection={col} />
+                                    ))}
+                                </div>
+
+                                {processedItems.length > ITEMS_PER_PAGE && (
+                                    <Pagination 
+                                        totalItems={processedItems.length}
+                                        itemsPerPage={ITEMS_PER_PAGE}
+                                        currentPage={currentPage}
+                                        onPageChange={(page) => {
+                                            setCurrentPage(page);
+                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        }}
+                                    />
+                                )}
+                            </>
+                        )}
+                    </>
+                )}
+
+                <CreateModal />
+            </div>
         </div>
     );
 };

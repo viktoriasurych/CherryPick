@@ -199,6 +199,42 @@ db.serialize(() => {
     seedDict('art_styles', ['Realism', 'Anime', 'Pixel Art', 'Abstract', 'Gothic', 'Sketch']);
     seedDict('art_materials', ['Oil', 'Watercolor', 'Digital', 'Pencil', 'Acrylic', 'Ink']);
     seedDict('art_genres', ['Portrait', 'Landscape', 'Still Life', 'Character Design', 'Concept Art']);
+
+// 11. CAT ORACLE QUOTES (🐈 Оракул)
+db.run(`CREATE TABLE IF NOT EXISTS cat_quotes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    content TEXT NOT NULL
+)`);
+
+// ... (тут твій код seedDict) ...
+
+// 👇 ДОДАЙ ЦЕ В КІНЕЦЬ (Заповнення цитат)
+const seedQuotes = () => {
+    db.get(`SELECT count(*) as count FROM cat_quotes`, (err, row) => {
+        if (row && row.count === 0) {
+            console.log(`🐈 Заповнюємо cat_quotes мудрістю...`);
+            const stmt = db.prepare(`INSERT INTO cat_quotes (content) VALUES (?)`);
+            const quotes = [
+                'The void stares back, but you stared longer. Good work.',
+                'Chaos is merely creation waiting to happen.',
+                'Another piece of soul captured on canvas.',
+                'Rest now. The shadows will wait.',
+                'Perfection is an illusion. Completion is reality.',
+                'Your demons are quiet when you create.',
+                'Art is the only way to run away without leaving home.',
+                'Silence is a canvas. You filled it well today.',
+                'The muse is pleased with your sacrifice of time.',
+                'Even the darkness needs a shape. You gave it one.',
+                'Creation is an act of defiance against the void.'
+            ];
+            quotes.forEach(quote => stmt.run(quote));
+            stmt.finalize();
+        }
+    });
+};
+seedQuotes();
+    
+    
 });
 
 module.exports = db;

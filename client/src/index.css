@@ -36,6 +36,52 @@
   
   /* Декор */
   --color-border: #333333;     /* Рамки трохи помітніші */
+
+  --color-chart-1: #9f1239; /* blood */
+  --color-chart-2: #be123c; /* lighter blood */
+  --color-chart-3: #e11d48; /* bright blood */
+  --color-chart-4: #f43f5e; /* rose */
+  --color-chart-5: #fb7185; /* light rose */
+  --color-chart-6: #881337; /* dark blood */
+
+  /* Виносимо сюди ті самі HEX, що були в JS */
+  --color-scale-0: #262626; /* Empty/Charcoal */
+  --color-scale-1: #4c0519; /* Low (Very Dark Blood) */
+  --color-scale-2: #881337; /* Med-Low */
+  --color-scale-3: #be123c; /* Med */
+  --color-scale-4: #e11d48; /* High */
+  --color-scale-5: #fb7185; /* Very High (Light Rose) */
+
+/* --- GOTHIC NOTE COLORS --- */
+  /* Yellow -> Old Gold (Темне золото) */
+  --note-yellow-bg: #422006; 
+  --note-yellow-border: #a16207;
+  --note-yellow-text: #fde047;
+
+  /* Pink -> Dried Blood / Rose (Темна троянда) */
+  --note-pink-bg: #4c0519;
+  --note-pink-border: #be123c;
+  --note-pink-text: #fda4af;
+
+  /* Blue -> Deep Abyss (Глибинний синій) */
+  --note-blue-bg: #0f172a;
+  --note-blue-border: #1d4ed8;
+  --note-blue-text: #93c5fd;
+
+  /* Green -> Swamp / Moss (Болотний) */
+  --note-green-bg: #14532d;
+  --note-green-border: #15803d;
+  --note-green-text: #86efac;
+
+  /* Purple -> Mystic Void (Містичний) */
+  --note-purple-bg: #3b0764;
+  --note-purple-border: #7e22ce;
+  --note-purple-text: #d8b4fe;
+
+  /* Dark -> Pure Void (Монохром) */
+  --note-dark-bg: #0a0a0a;
+  --note-dark-border: #404040;
+  --note-dark-text: #a3a3a3;
 }
 
 /* 2. Глобальні стилі */
@@ -63,15 +109,29 @@ body {
 }
 
 /* Календар */
+/* Календар */
+
+/* Календар */
+/* 👇 ФІКС ДЛЯ ВЕЛЕТЕНСЬКОГО КАЛЕНДАРЯ */
+.react-calendar-heatmap {
+  width: 100% !important;
+  height: auto !important; /* Ключовий момент: висота авто */
+  max-height: 160px !important; /* Обмежуємо максимальну висоту, щоб не розпирало */
+  display: block; /* Забираємо дивну поведінку інлайн-блоків */
+}
 .react-calendar-heatmap text { font-size: 10px; fill: var(--color-muted); font-family: var(--font-mono); }
-.react-calendar-heatmap .color-empty { fill: var(--color-charcoal); rx: 2px; }
-.react-calendar-heatmap .color-scale-1 { fill: #4c0519; }
-.react-calendar-heatmap .color-scale-2 { fill: #881337; }
-.react-calendar-heatmap .color-scale-3 { fill: #be123c; }
-.react-calendar-heatmap .color-scale-4 { fill: #e11d48; }
+
+
+/* Градація активності (від темного до яскравого) */
+.react-calendar-heatmap .color-empty   { fill: var(--color-scale-0); rx: 2px; }
+.react-calendar-heatmap .color-scale-1 { fill: var(--color-scale-1); }
+.react-calendar-heatmap .color-scale-2 { fill: var(--color-scale-2); }
+.react-calendar-heatmap .color-scale-3 { fill: var(--color-scale-3); }
+.react-calendar-heatmap .color-scale-4 { fill: var(--color-scale-4); }
+.react-calendar-heatmap .color-scale-5 { fill: var(--color-scale-5); }
+
 .react-calendar-heatmap rect { transition: all 0.2s ease; }
 .react-calendar-heatmap rect:hover { stroke: var(--color-bone); stroke-width: 1px; cursor: pointer; }
-
 
 
 /* Анімація Спрайта (Walking Cat) */
@@ -108,72 +168,61 @@ body {
   /* steps(15) - ключовий момент, робить рух "ривками" по кадрах */
   animation: spriteRun 5s steps(15) infinite; 
 }
-/* :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* Анімація руху зліва направо */
+/* ... твій попередній код ... */
+
+/* 👇 PRO-FIX: Плавний прохід крізь весь контейнер */
+@keyframes catRun {
+  0% {
+    left: 0;
+    /* Зсуваємо кота вліво на 100% його власної ширини. 
+       Він стартує ідеально за лівою межею. */
+    transform: translateX(-100%); 
+  }
+  100% {
+    left: 100%;
+    /* Доходимо до правого краю контейнера. 
+       Тут transform вже не потрібен, бо left: 100% виштовхує його за межі. */
+    transform: translateX(0%); 
+  }
+}
+
+.cat-anim {
+  position: absolute;
+  width: auto; /* Зберігаємо пропорції */
   
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Оптимізація продуктивності (GPU acceleration) */
+  will-change: left, transform;
+  
+  /* 12s - час проходу. linear - рівномірна швидкість без прискорень */
+  animation: catRun 12s linear infinite;
 }
 
+/* ... твій попередній код ... */
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* 👇 ФІКС ДЛЯ АВТОЗАПОВНЕННЯ (Щоб поля не ставали білими) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    /* Накладаємо темну тінь поверх білого фону браузера */
+    -webkit-box-shadow: 0 0 0 30px var(--color-void) inset !important;
+    
+    /* Робимо текст світлим (кістковим) */
+    -webkit-text-fill-color: var(--color-bone) !important;
+    
+    /* Змінюємо колір курсору */
+    caret-color: var(--color-bone) !important;
+    
+    /* Додатковий фікс для рамок */
+    border-color: var(--color-border) !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+/* Прибираємо синю підсвітку Chrome при кліку */
+input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: var(--color-blood) !important; /* Червона рамка при фокусі */
 }
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}  */

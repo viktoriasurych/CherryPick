@@ -6,44 +6,31 @@ import {
     SparklesIcon 
 } from '@heroicons/react/24/outline';
 
-// 👇 Виходимо з collections (..), потрапляємо в components, заходимо в ui
-import Button from '../ui/Button';
-import Input from '../ui/Input';
-
 const TYPES = [
     {
         id: 'MOODBOARD',
-        title: 'Мудборд',
-        desc: 'Хаотична сітка для натхнення. Ідеально для скетчів та ідей.',
+        title: 'Moodboard',
+        desc: 'Chaotic grid for inspiration. Perfect for sketches and raw ideas.',
         icon: Squares2X2Icon,
-        color: 'text-blue-400',
-        bg: 'bg-blue-900/20',
-        border: 'group-hover:border-blue-500'
     },
     {
         id: 'SERIES',
-        title: 'Збірка / Серія',
-        desc: 'Впорядкована сітка з назвами. Для завершених серій робіт.',
+        title: 'Series',
+        desc: 'Ordered grid with titles. Best for finished series of artworks.',
         icon: QueueListIcon,
-        color: 'text-green-400',
-        bg: 'bg-green-900/20',
-        border: 'group-hover:border-green-500'
     },
     {
         id: 'EXHIBITION',
-        title: 'Виставка',
-        desc: 'Преміальна вертикальна подача. Scrollytelling, блоки з описом.',
+        title: 'Exhibition',
+        desc: 'Premium vertical scroll. Scrollytelling, text blocks, immersion.',
         icon: SparklesIcon,
-        color: 'text-purple-400',
-        bg: 'bg-purple-900/20',
-        border: 'group-hover:border-purple-500'
     }
 ];
 
 const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
-    const [step, setStep] = useState(1); // 1 = Type Select, 2 = Details
+    const [step, setStep] = useState(1); 
     const [selectedType, setSelectedType] = useState(null);
-    const [formData, setFormData] = useState({ title: '', description: '' });
+    const [formData, setFormData] = useState({ title: '', description: '', is_public: true });
     const [loading, setLoading] = useState(false);
 
     if (!isOpen) return null;
@@ -55,9 +42,8 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
         setLoading(true);
         try {
             await onCreate({ ...formData, type: selectedType });
-            // Скидання
             setStep(1);
-            setFormData({ title: '', description: '' });
+            setFormData({ title: '', description: '', is_public: true });
             setSelectedType(null);
             onClose();
         } catch (error) {
@@ -68,21 +54,29 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div className="bg-slate-950 border border-slate-800 rounded-xl w-full max-w-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+        // 👇 1. Додано onClick={onClose} на фон (Backdrop)
+        <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
+            onClick={onClose}
+        >
+            {/* 👇 2. Додано e.stopPropagation(), щоб клік всередині не закривав модалку */}
+            <div 
+                className="bg-void border border-border rounded-sm w-full max-w-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col max-h-[90vh] cursor-default"
+                onClick={(e) => e.stopPropagation()}
+            >
                 
                 {/* Header */}
-                <div className="p-6 border-b border-slate-900 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-white">
-                        {step === 1 ? 'Створити нову колекцію' : `Нова: ${TYPES.find(t => t.id === selectedType)?.title}`}
+                <div className="p-6 border-b border-border flex justify-between items-center shrink-0">
+                    <h2 className="text-2xl font-gothic tracking-wide text-blood">
+                        {step === 1 ? 'New Archive' : `New ${TYPES.find(t => t.id === selectedType)?.title}`}
                     </h2>
-                    <button onClick={onClose} className="text-slate-500 hover:text-white">
+                    <button onClick={onClose} className="text-muted hover:text-white transition-colors">
                         <XMarkIcon className="w-6 h-6" />
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto">
+                <div className="p-6 overflow-y-auto custom-scrollbar">
                     
                     {/* КРОК 1: Вибір типу */}
                     {step === 1 && (
@@ -92,16 +86,21 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
                                     key={type.id}
                                     onClick={() => { setSelectedType(type.id); setStep(2); }}
                                     className={`
-                                        group relative p-4 rounded-lg border border-slate-800 bg-slate-900/50 
-                                        text-left hover:bg-slate-900 transition-all duration-300
-                                        hover:scale-[1.02] hover:shadow-lg ${type.border}
+                                        group relative p-5 rounded-sm border border-border bg-ash/50 
+                                        text-left transition-all duration-300
+                                        hover:border-blood hover:bg-void hover:shadow-[0_0_15px_rgba(159,18,57,0.1)]
+                                        flex flex-col h-full
                                     `}
                                 >
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${type.bg} ${type.color}`}>
-                                        <type.icon className="w-6 h-6" />
+                                    <div className={`w-10 h-10 mb-4 flex items-center justify-center rounded-sm bg-void border border-border group-hover:border-blood/50 transition-colors`}>
+                                        <type.icon className="w-5 h-5 text-muted group-hover:text-blood transition-colors" />
                                     </div>
-                                    <h3 className="font-bold text-slate-200 mb-1">{type.title}</h3>
-                                    <p className="text-xs text-slate-500 leading-relaxed">{type.desc}</p>
+                                    <h3 className="font-bold text-bone mb-2 font-mono uppercase tracking-wider text-sm group-hover:text-blood transition-colors">
+                                        {type.title}
+                                    </h3>
+                                    <p className="text-[10px] text-muted leading-relaxed font-mono opacity-70 group-hover:opacity-100 transition-opacity">
+                                        {type.desc}
+                                    </p>
                                 </button>
                             ))}
                         </div>
@@ -110,37 +109,69 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
                     {/* КРОК 2: Деталі */}
                     {step === 2 && (
                         <form onSubmit={handleCreate} className="space-y-6">
-                            <Input 
-                                label="Назва колекції" 
-                                value={formData.title}
-                                onChange={(e) => setFormData({...formData, title: e.target.value})}
-                                placeholder="Наприклад: Осінній сплін..."
-                                autoFocus
-                            />
                             
+                            {/* Назва */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Опис (необов'язково)</label>
+                                <label className="block text-xs font-bold text-muted uppercase tracking-widest mb-2 font-mono">
+                                    Title
+                                </label>
+                                <input 
+                                    className="w-full bg-ash border border-border rounded-sm p-3 text-bone focus:border-blood focus:outline-none transition font-mono placeholder-muted/30"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                    placeholder="Ex: Autumn Melancholy..."
+                                    autoFocus
+                                />
+                            </div>
+                            
+                            {/* Опис */}
+                            <div>
+                                <label className="block text-xs font-bold text-muted uppercase tracking-widest mb-2 font-mono">
+                                    Description (Optional)
+                                </label>
                                 <textarea 
-                                    className="w-full bg-black border border-slate-800 rounded-md p-3 text-slate-200 focus:border-cherry-500 focus:outline-none transition h-24 resize-none"
+                                    className="w-full bg-ash border border-border rounded-sm p-3 text-bone focus:border-blood focus:outline-none transition h-24 resize-none font-mono text-sm placeholder-muted/30"
                                     value={formData.description}
                                     onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                    placeholder="Про що ця збірка?"
+                                    placeholder="What is this collection about?"
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-4">
+                            {/* Чекбокс Публічності */}
+                            <div className="flex items-center gap-3 p-3 bg-ash/50 border border-border rounded-sm">
+                                <input 
+                                    type="checkbox" 
+                                    id="isPublic"
+                                    checked={formData.is_public}
+                                    onChange={(e) => setFormData({...formData, is_public: e.target.checked})}
+                                    className="w-4 h-4 accent-blood bg-void border-border rounded-sm cursor-pointer"
+                                />
+                                <label htmlFor="isPublic" className="cursor-pointer select-none">
+                                    <span className="block text-sm font-bold text-bone font-mono">Public Archive</span>
+                                    <span className="block text-[10px] text-muted font-mono">Visible to everyone on your profile</span>
+                                </label>
+                            </div>
+
+                            {/* Кнопки */}
+                            <div className="flex gap-4 pt-4 border-t border-border/50">
                                 <button 
                                     type="button" 
                                     onClick={() => setStep(1)} 
-                                    className="px-4 py-2 text-slate-400 hover:text-white transition"
+                                    className="px-6 py-3 text-xs font-bold uppercase tracking-widest text-muted hover:text-white transition hover:underline"
                                 >
-                                    ← Назад до вибору
+                                    ← Back
                                 </button>
-                                <Button 
-                                    text={loading ? "Створення..." : "Створити Колекцію"} 
-                                    className="bg-cherry-600 flex-1"
+                                <button 
+                                    type="submit"
                                     disabled={loading || !formData.title}
-                                />
+                                    className={`
+                                        flex-1 bg-blood hover:bg-blood-hover text-white px-6 py-3 rounded-sm 
+                                        text-xs font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(159,18,57,0.3)] 
+                                        transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed
+                                    `}
+                                >
+                                    {loading ? "Creating..." : "Create Collection"}
+                                </button>
                             </div>
                         </form>
                     )}

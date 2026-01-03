@@ -35,25 +35,23 @@ class SessionController {
     async stop(req, res) {
         try {
             const userId = req.user.id;
-            
-            // 1. Отримуємо файл, якщо він є
-            // req.file створюється multer-ом. Якщо фото не завантажили, буде undefined.
             const photo_path = req.file ? 'uploads/' + req.file.filename : null;
 
-            const { manualDuration, content, updateCover } = req.body;
+            // 👇 1. ТУТ БУЛА ПОМИЛКА: ми не діставали sessionId
+            const { manualDuration, content, updateCover, sessionId } = req.body;
 
-            // 2. Формуємо об'єкт нотатки
             const noteData = {
                 content: content || '',
-                photo_path: photo_path // Передаємо шлях далі
+                photo_path: photo_path 
             };
 
             const isUpdateCover = updateCover === 'true'; 
             const durationSeconds = manualDuration ? parseInt(manualDuration) : null;
 
-            // 3. Викликаємо сервіс
+            // 👇 2. Передаємо sessionId в сервіс
             const result = await sessionService.stopSession(
                 userId, 
+                sessionId, // <--- ДОДАЛИ ТУТ
                 noteData, 
                 durationSeconds, 
                 isUpdateCover

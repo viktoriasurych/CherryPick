@@ -2,11 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 
-// 👇 UI з папки ui
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-
-// 👇 Layouts
 import AuthLayout from '../../components/layouts/AuthLayout';
 
 const ForgotPasswordPage = () => {
@@ -20,12 +17,14 @@ const ForgotPasswordPage = () => {
         setStatus({ type: '', message: '' });
 
         try {
-            const res = await api.post('/auth/forgot-password', { email });
-            setStatus({ type: 'success', message: res.data.message });
+            await api.post('/auth/forgot-password', { email });
+            // 👇 ТУТ БУЛО: res.data.message
+            // 👇 СТАЛО: Пишемо свій текст англійською, ігноруючи сервер
+            setStatus({ type: 'success', message: "SCROLL DISPATCHED (IF EMAIL EXISTS)" });
         } catch (e) {
             setStatus({ 
                 type: 'error', 
-                message: e.response?.data?.message || "Не вдалося відправити запит." 
+                message: "User not found or connection failed." 
             });
         } finally {
             setLoading(false);
@@ -33,30 +32,35 @@ const ForgotPasswordPage = () => {
     };
 
     const footerContent = (
-        <Link to="/auth" className="text-sm text-slate-500 hover:text-white transition-colors">
-            &larr; Повернутися до входу
-        </Link>
+        <div className="flex justify-center">
+            <Link to="/auth" className="text-[10px] uppercase tracking-widest font-bold text-muted hover:text-bone transition-colors">
+                &larr; Return to Login
+            </Link>
+        </div>
     );
 
     return (
         <AuthLayout 
-            title="Відновлення доступу 🍒" 
-            subtitle="Введіть пошту для скидання паролю"
+            title="Recovery" 
+            subtitle="Summon Reset Link"
             footer={footerContent}
         >
             {status.message && (
-                <div className={`mb-6 p-3 rounded text-sm text-center border ${
-                    status.type === 'success' 
-                        ? 'bg-green-900/20 text-green-400 border-green-900/50' 
-                        : 'bg-red-900/20 text-red-400 border-red-900/50'
-                }`}>
+                <div className={`
+                    mb-6 p-4 rounded-sm text-[10px] text-center border font-mono uppercase tracking-widest shadow-lg
+                    ${status.type === 'success' 
+                        // 👇 УСПІХ: Темно-червоний фон, світлий текст (замість зеленого)
+                        ? 'bg-blood/20 text-bone border-blood shadow-blood/10' 
+                        // 👇 ПОМИЛКА: Майже чорний фон, яскраво-червоний текст
+                        : 'bg-void text-blood border-blood/50'}
+                `}>
                     {status.message}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <Input 
-                    label="Email" 
+                    label="Email Address" 
                     type="email"
                     placeholder="art@example.com"
                     value={email}
@@ -66,9 +70,9 @@ const ForgotPasswordPage = () => {
 
                 <div className="pt-2">
                     <Button 
-                        text={loading ? "Відправка..." : "Надіслати посилання"} 
+                        text={loading ? "Summoning..." : "Send Link"} 
                         disabled={loading}
-                        className="bg-cherry-700 hover:bg-cherry-600 text-white w-full transition-all shadow-lg shadow-cherry-900/20" 
+                        className="bg-blood hover:bg-blood-hover text-white w-full shadow-lg shadow-blood/10 rounded-sm font-gothic tracking-[0.2em] uppercase text-xs py-3 transition-all" 
                     />
                 </div>
             </form>

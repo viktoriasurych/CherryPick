@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google'; 
+// 👇 ЗАМІСТЬ GoogleLogin беремо хук useGoogleLogin для кастомної кнопки
+import { useGoogleLogin } from '@react-oauth/google'; 
 import api from '../../api/axios';
 
-// 👇 Шлях до UI компонентів
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-
 import { useAuth } from '../../hooks/useAuth';
-
-// 👇 Шлях до Лейаута (layouts)
 import AuthLayout from '../../components/layouts/AuthLayout'; 
 
 import RULES from '../../config/validationRules.json';
+
+// Іконка Google для кастомної кнопки
+const GoogleIcon = () => (
+    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+    </svg>
+);
 
 const AuthPage = () => {
     const navigate = useNavigate();
@@ -23,6 +27,28 @@ const AuthPage = () => {
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({ nickname: '', email: '', password: '' });
+
+    // 👇 Логіка кастомного входу через Google
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                setLoading(true);
+                // Відправляємо access_token на бекенд
+                const res = await api.post('/auth/google', { 
+                    token: tokenResponse.access_token, // бібліотека повертає access_token при використанні хука
+                    type: 'access_token' // помітка для бекенду, що це не ID token
+                });
+                login(res.data.token, res.data.user);
+                navigate('/projects');
+            } catch (e) {
+                console.error("Google Auth Error:", e);
+                setError("Google Login Failed.");
+            } finally {
+                setLoading(false);
+            }
+        },
+        onError: () => setError('Google Login Failed'),
+    });
 
     const handleChange = (e) => {
         let value = e.target.value;
@@ -40,12 +66,12 @@ const AuthPage = () => {
 
         if (!isLogin) {
             if (formData.nickname.length < RULES.USER.NICKNAME.MIN) {
-                setError(`Нікнейм має бути мінімум ${RULES.USER.NICKNAME.MIN} символи`);
+                setError(`Nickname must be at least ${RULES.USER.NICKNAME.MIN} characters`);
                 setLoading(false);
                 return;
             }
             if (!/^[a-zA-Z0-9_]+$/.test(formData.nickname)) {
-                setError("Нікнейм може містити тільки латинські літери, цифри та '_'");
+                setError("Nickname can only contain Latin letters, numbers, and '_'");
                 setLoading(false);
                 return;
             }
@@ -60,31 +86,17 @@ const AuthPage = () => {
                 navigate('/projects');
             }
         } catch (err) {
-            console.error("Помилка:", err);
-            setError(err.response?.data?.message || 'Щось пішло не так. Перевірте з’єднання.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleSuccess = async (credentialResponse) => {
-        try {
-            setLoading(true);
-            const res = await api.post('/auth/google', { token: credentialResponse.credential });
-            login(res.data.token, res.data.user);
-            navigate('/projects');
-        } catch (e) {
-            console.error("Google Auth Error:", e);
-            setError("Не вдалося увійти через Google. Спробуйте ще раз.");
+            console.error("Error:", err);
+            setError(err.response?.data?.message || 'Something went wrong.');
         } finally {
             setLoading(false);
         }
     };
 
     const footerContent = (
-        <>
-            <span className="text-slate-500 mr-2">
-                {isLogin ? 'Ще немає акаунту?' : 'Вже є акаунт?'}
+        <div className="flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider">
+            <span className="text-muted">
+                {isLogin ? 'No account?' : 'Have an account?'}
             </span>
             <button 
                 onClick={() => { 
@@ -92,29 +104,28 @@ const AuthPage = () => {
                     setError(''); 
                     setFormData({ nickname: '', email: '', password: '' });
                 }}
-                className="text-cherry-500 hover:text-cherry-400 font-bold hover:underline transition-colors"
+                className="text-blood hover:text-white font-bold transition-colors"
             >
-                {isLogin ? 'Реєстрація' : 'Увійти'}
+                {isLogin ? 'Register' : 'Log In'}
             </button>
-        </>
+        </div>
     );
 
     return (
         <AuthLayout 
-            title="CherryPick 🍒" 
-            subtitle={isLogin ? 'Вхід до архіву' : 'Новий художник'}
+            title="CherryPick" 
+            subtitle={isLogin ? 'Archive Access' : 'Join the Coven'}
             footer={footerContent}
         >
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4"> {/* 👇 space-y-4 замість 6 для компактності */}
                 {!isLogin && (
                     <Input 
-                        label="Нікнейм (для посилання)" 
+                        label="Nickname" 
                         name="nickname" 
                         placeholder="viky_sia" 
                         value={formData.nickname} 
                         onChange={handleChange} 
                         maxLength={RULES.USER.NICKNAME.MAX}
-                        hint="Тільки латиниця, цифри та '_'"
                     />
                 )}
 
@@ -129,57 +140,61 @@ const AuthPage = () => {
 
                 <div className="space-y-1">
                     <Input 
-                        label="Пароль" 
+                        label="Password" 
                         name="password" 
                         type="password"
                         placeholder="••••••••" 
                         value={formData.password} 
                         onChange={handleChange}
-                        error={error && error.toLowerCase().includes('пароль') ? error : null} 
+                        error={error && error.toLowerCase().includes('password') ? error : null} 
                     />
                     {isLogin && (
                         <div className="flex justify-end">
-                            <Link to="/forgot-password" class="text-[10px] text-slate-500 hover:text-cherry-400 transition-colors uppercase font-bold tracking-wider">
-                                Забули пароль?
+                            <Link to="/forgot-password" class="text-[9px] text-muted hover:text-blood transition-colors uppercase font-bold tracking-wider">
+                                Forgot Password?
                             </Link>
                         </div>
                     )}
                 </div>
 
-                {error && !error.toLowerCase().includes('пароль') && (
-                    <div className="text-red-500 text-xs text-center bg-red-500/10 p-2 rounded border border-red-500/20">
+                {error && !error.toLowerCase().includes('password') && (
+                    <div className="text-blood text-[10px] text-center bg-blood/5 p-2 border border-blood/20 font-mono uppercase tracking-wider">
                         {error}
                     </div>
                 )}
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-3">
                     <Button 
-                        text={loading ? "Обробка..." : (isLogin ? "Увійти" : "Створити акаунт")} 
+                        text={loading ? "Processing..." : (isLogin ? "Enter" : "Create Account")} 
                         disabled={loading}
-                        className="bg-cherry-700 hover:bg-cherry-600 text-white w-full transition-all shadow-lg shadow-cherry-900/20" 
+                        className="bg-blood hover:bg-blood-hover text-white w-full shadow-lg shadow-blood/10 rounded-sm font-gothic tracking-[0.2em] uppercase text-xs py-3" 
                     />
+
+                    {/* Розділювач */}
+                    <div className="relative flex py-1 items-center opacity-50">
+                        <div className="flex-grow border-t border-border"></div>
+                        <span className="flex-shrink-0 mx-2 text-muted text-[9px] uppercase font-bold tracking-widest">OR</span>
+                        <div className="flex-grow border-t border-border"></div>
+                    </div>
+
+                    {/* 👇 КАСТОМНА КНОПКА GOOGLE */}
+                    <button
+                        type="button"
+                        onClick={() => googleLogin()}
+                        className="
+                            w-full flex items-center justify-center 
+                            bg-void border border-border hover:border-blood 
+                            text-bone hover:text-white 
+                            py-2.5 rounded-sm transition-all duration-300
+                            text-[10px] font-bold uppercase tracking-widest
+                            group
+                        "
+                    >
+                        <GoogleIcon />
+                        {isLogin ? "Sign in with Google" : "Sign up with Google"}
+                    </button>
                 </div>
             </form>
-
-            <div className="mt-6 mb-4">
-                <div className="relative flex py-2 items-center">
-                    <div className="flex-grow border-t border-slate-800"></div>
-                    <span className="flex-shrink-0 mx-4 text-slate-600 text-[10px] uppercase font-bold tracking-widest">або</span>
-                    <div className="flex-grow border-t border-slate-800"></div>
-                </div>
-            </div>
-
-            <div className="flex justify-center w-full">
-                <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={() => setError('Google Login Failed')}
-                    theme="filled_black"
-                    shape="pill"
-                    width="350px" 
-                    locale="uk"
-                    text={isLogin ? "signin_with" : "signup_with"}
-                />
-            </div>
         </AuthLayout>
     );
 };

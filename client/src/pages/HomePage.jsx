@@ -2,139 +2,172 @@ import { Link } from 'react-router-dom';
 import { 
     PaintBrushIcon, 
     ChartBarSquareIcon, 
-    Square3Stack3DIcon, 
-    ArrowRightOnRectangleIcon 
+    Square3Stack3DIcon,
+    ChevronDownIcon // 👇 Додаємо іконку стрілочки
 } from '@heroicons/react/24/solid';
 
-const HomePage = () => {
+import Header from '../components/layouts/Header';
+import Footer from '../components/layouts/Footer';
+
+// Імпортуємо котика (сидячого)
+import catSitGif from '../assets/cat-wait.gif'; 
+const HomePage = ({ user, logout }) => {
+    
+    const scrollToFeatures = () => {
+        const element = document.getElementById('features');
+        if (element) {
+            const y = element.getBoundingClientRect().top + window.scrollY - 100;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col font-sans selection:bg-cherry-500 selection:text-white">
+        <div className="min-h-screen bg-void text-bone flex flex-col font-mono selection:bg-blood selection:text-white">
             
-            {/* === HEADER (Шапка) === */}
-            <header className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    {/* Логотип */}
-                    <div className="flex items-center gap-2">
-                        <PaintBrushIcon className="w-6 h-6 text-cherry-500" />
-                        <span className="text-xl font-bold font-pixel text-white tracking-wide">
-                            Cherry<span className="text-cherry-500">Pick</span>
-                        </span>
-                    </div>
+            <Header 
+                user={user} 
+                logout={logout} 
+                isSidebarOpen={false} 
+                setIsSidebarOpen={() => {}} 
+            />
 
-                    {/* Навігація (Кнопка входу) */}
-                    <nav>
-                        <Link 
-                            to="/auth" 
-                            className="flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-white transition-colors"
-                        >
-                            <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                            Увійти
-                        </Link>
-                    </nav>
-                </div>
-            </header>
-
-            {/* === HERO SECTION (Головний екран) === */}
-            <main className="flex-grow pt-24 pb-12 px-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
+            <main className="flex-grow flex flex-col items-center justify-center text-center relative overflow-hidden px-4 pt-16 pb-12">
                 
-                {/* Фоновий декоративний елемент */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cherry-900/20 rounded-full blur-[100px] -z-10"></div>
+                {/* Фонове світіння */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blood/5 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
 
-                <div className="mb-8 p-6 bg-slate-900/50 rounded-2xl border border-slate-800 shadow-2xl animate-in fade-in zoom-in duration-700">
-                    <PaintBrushIcon className="w-20 h-20 text-cherry-500 drop-shadow-[0_0_15px_rgba(225,29,72,0.5)]" />
+                {/* ВИШНЯ */}
+                <div className="mb-8 relative group">
+                    <div className="p-6 bg-black/20 rounded-2xl border border-blood/20 shadow-[0_0_30px_rgba(159,18,57,0.2)] backdrop-blur-sm transition-all duration-500 group-hover:border-blood/50 group-hover:shadow-[0_0_50px_rgba(159,18,57,0.4)]">
+                        <img 
+                            src="/cherry.svg" 
+                            alt="CherryPick" 
+                            className="w-14 h-14 md:w-16 md:h-16 drop-shadow-[0_0_15px_rgba(220,38,38,0.6)] opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-500"
+                        />
+                    </div>
                 </div>
 
-                <h1 className="text-5xl md:text-7xl font-bold text-white font-pixel mb-6 tracking-wide leading-tight">
-                    Твій простір <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-cherry-400 to-purple-500">
-                        для творчості
+                {/* ЗАГОЛОВОК */}
+                <h1 className="text-2xl md:text-4xl font-bold font-gothic mb-6 leading-tight">
+                    <span className="text-bone tracking-[0.3em] block mb-3 opacity-90">
+                        YOUR SPACE
+                    </span>
+                    <span className="tracking-[0.15em] font-bold text-transparent bg-clip-text bg-gradient-to-r from-blood to-red-500">
+                        FOR CREATIVITY
                     </span>
                 </h1>
 
-                <p className="text-slate-400 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed">
-                    Досить губити ідеї в нотатках. 
-                    <strong className="text-slate-200"> CherryPick</strong> — це персональний менеджер арт-проєктів. 
-                    Організовуй, слідкуй за прогресом та аналізуй свою продуктивність.
+                {/* ОПИС */}
+                <p className="text-muted text-xs max-w-lg mb-10 leading-relaxed font-mono tracking-wide px-4 opacity-60">
+                    Stop losing ideas in notes. <br className="hidden md:block" />
+                    <strong className="text-bone font-bold opacity-100">CherryPick</strong> is a personal art project manager. 
+                    Organize, track progress, and analyze your productivity.
                 </p>
 
-                <Link 
-                    to="/auth" 
-                    className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-200 bg-cherry-600 font-pixel rounded-xl shadow-lg hover:shadow-cherry-500/25 hover:bg-cherry-700 hover:-translate-y-1"
-                >
-                    Розпочати безкоштовно
-                    <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
-                </Link>
+                {/* КОТИК + КНОПКА */}
+                {!user && (
+                    <div className="flex items-end justify-center gap-6 relative pr-4 mb-8"> 
+                        <div className="w-16 h-16 md:w-20 md:h-20 -mb-1 shrink-0"> 
+                            <img 
+                                src={catSitGif} 
+                                alt="Companion" 
+                                className="w-full h-full object-contain contrast-125 drop-shadow-xl"
+                                style={{ imageRendering: 'pixelated' }}
+                            />
+                        </div>
 
-                {/* === FEATURES (Переваги) === */}
-                <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full text-left">
+                        <Link 
+                            to="/auth" 
+                            className="
+                                group flex items-center justify-center 
+                                px-8 py-3 
+                                text-xs font-bold text-blood 
+                                border border-blood 
+                                bg-transparent 
+                                hover:bg-blood hover:text-white 
+                                transition-all duration-300 
+                                font-mono uppercase tracking-[0.25em] rounded-sm 
+                                shadow-[0_0_10px_rgba(159,18,57,0.1)] 
+                                hover:shadow-[0_0_20px_rgba(159,18,57,0.4)]
+                                mb-2
+                            "
+                        >
+                            Start for Free
+                            <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                        </Link>
+                    </div>
+                )}
+
+                {/* КНОПКА СКРОЛУ (EXPLORE) */}
+                <button 
+                    onClick={scrollToFeatures}
+                    className="
+                        mt-2 md:mt-4
+                        flex flex-col items-center gap-1
+                        text-muted/30 hover:text-blood/80 
+                        transition-all duration-500 
+                        cursor-pointer group p-4
+                    "
+                    aria-label="Scroll down"
+                >
+                    <span className="text-[9px] font-mono tracking-[0.4em] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-500 h-3">
+                        Explore
+                    </span>
+                    <ChevronDownIcon className="w-6 h-6 animate-pulse" />
+                </button>
+
+                {/* === FEATURES GRID === */}
+                <div id="features" className="mt-16 md:mt-24 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full text-left px-2">
                     <FeatureCard 
                         icon={Square3Stack3DIcon}
-                        title="Організація"
-                        desc="Зберігай усі свої арти, скетчі та ідеї в одному місці. Створюй колекції та мудборди."
+                        title="Organization"
+                        desc="Keep all your arts, sketches, and ideas in one place. Create collections and moodboards."
                     />
                     <FeatureCard 
                         icon={ChartBarSquareIcon}
-                        title="Аналітика"
-                        desc="Слідкуй за своєю продуктивністю. Дивись статистику по жанрах, часу та стріках."
+                        title="Analytics"
+                        desc="Track your productivity. View statistics by genre, time spent, and creative streaks."
                     />
                     <FeatureCard 
                         icon={PaintBrushIcon}
-                        title="Прогрес"
-                        desc="Відслідковуй етапи роботи: від ідеї до фінального рендеру. Більше жодних забутих WIP-ів."
+                        title="Progress"
+                        desc="Track work stages: from idea to final render. No more forgotten Works-In-Progress."
                     />
                 </div>
             </main>
 
-            {/* === FOOTER (Підвал) === */}
-            <footer className="border-t border-slate-900 bg-slate-950 py-12">
-                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
-                    
-                    {/* Колонка 1: Лого */}
-                    <div className="md:col-span-2 space-y-4">
-                        <div className="font-pixel text-lg text-white">Cherry<span className="text-cherry-500">Pick</span></div>
-                        <p className="text-slate-500 max-w-xs">
-                            Створено художниками для художників. <br />
-                            Твій цифровий арт-асистент.
-                        </p>
-                    </div>
-
-                    {/* Колонка 2: Навігація */}
-                    <div className="space-y-3">
-                        <h4 className="font-bold text-white uppercase tracking-wider text-xs">Продукт</h4>
-                        <ul className="space-y-2 text-slate-500">
-                            <li><a href="#" className="hover:text-cherry-400 transition">Можливості</a></li>
-                            <li><a href="#" className="hover:text-cherry-400 transition">Оновлення</a></li>
-                            <li><a href="#" className="hover:text-cherry-400 transition">Roadmap</a></li>
-                        </ul>
-                    </div>
-
-                    {/* Колонка 3: Контакти */}
-                    <div className="space-y-3">
-                        <h4 className="font-bold text-white uppercase tracking-wider text-xs">Контакти</h4>
-                        <ul className="space-y-2 text-slate-500">
-                            <li><a href="#" className="hover:text-cherry-400 transition">GitHub</a></li>
-                            <li><a href="#" className="hover:text-cherry-400 transition">Twitter</a></li>
-                            <li><a href="#" className="hover:text-cherry-400 transition">Instagram</a></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div className="max-w-7xl mx-auto px-6 mt-12 pt-8 border-t border-slate-900 text-center text-slate-600 text-xs">
-                    © {new Date().getFullYear()} CherryPick Art Manager. Всі права захищено.
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 };
 
-// Міні-компонент для карток переваг
+// 👇 ОНОВЛЕНИЙ МІНІ-КОМПОНЕНТ КАРТКИ
 const FeatureCard = ({ icon: Icon, title, desc }) => (
-    <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-cherry-500/30 transition-colors group">
-        <div className="w-12 h-12 bg-slate-950 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 border border-slate-800">
-            <Icon className="w-6 h-6 text-cherry-500" />
+    <div className="
+        p-6 rounded-sm bg-ash/30 
+        border border-white/5 hover:border-blood/40 
+        transition-all duration-500 group 
+        hover:shadow-[0_5px_20px_rgba(0,0,0,0.5)] hover:-translate-y-1
+    ">
+        {/* Іконка */}
+        <div className="w-10 h-10 bg-void rounded-sm flex items-center justify-center mb-4 border border-white/5 group-hover:border-blood transition-colors duration-500">
+            <Icon className="w-5 h-5 text-muted group-hover:text-blood transition-colors duration-300" />
         </div>
-        <h3 className="text-lg font-bold text-white mb-2 font-pixel">{title}</h3>
-        <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+        
+        {/* 👇 ЗАГОЛОВОК: ТЕПЕР ТЕЖ СТАЄ КРИВАВИМ (group-hover:text-blood) */}
+        <h3 className="
+            text-sm font-bold text-bone mb-3 
+            font-gothic uppercase tracking-wider 
+            group-hover:text-blood 
+            transition-colors duration-300
+        ">
+            {title}
+        </h3>
+        
+        {/* Опис */}
+        <p className="text-muted text-[11px] leading-relaxed font-mono opacity-60 group-hover:opacity-100 transition-opacity">
+            {desc}
+        </p>
     </div>
 );
 

@@ -2,11 +2,8 @@ import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios';
 
-// 👇 UI
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-
-// 👇 Layouts
 import AuthLayout from '../../components/layouts/AuthLayout';
 
 const ResetPasswordPage = () => {
@@ -29,7 +26,7 @@ const ResetPasswordPage = () => {
             await api.post('/auth/reset-password', { email, token, newPassword: password });
             navigate('/auth'); 
         } catch (e) {
-            setError(e.response?.data?.message || "Помилка зміни паролю. Спробуйте ще раз.");
+            setError(e.response?.data?.message || "Failed to reset password. Try again.");
         } finally {
             setLoading(false);
         }
@@ -37,20 +34,23 @@ const ResetPasswordPage = () => {
 
     if (!token || !email) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500">
-                <div className="text-center">
-                    <p className="mb-4">Невірне посилання для відновлення.</p>
-                    <Link to="/auth" className="text-cherry-500 hover:underline">На головну</Link>
+            <div className="min-h-screen bg-deep flex items-center justify-center font-mono">
+                <div className="text-center p-8 border border-border/30 bg-void rounded-sm shadow-2xl">
+                    <p className="mb-4 text-blood uppercase tracking-widest text-xs font-bold">Invalid or Expired Link</p>
+                    <Link to="/auth" className="text-muted hover:text-bone text-xs underline transition-colors">Return to Safety</Link>
                 </div>
             </div>
         );
     }
 
     return (
-        <AuthLayout title="Новий пароль 🔐" subtitle="Придумайте надійний пароль">
-            <form onSubmit={handleSubmit} className="space-y-5">
+        <AuthLayout 
+            title="New Secret" 
+            subtitle="Forge a new password"
+        >
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <Input 
-                    label="Новий пароль" 
+                    label="New Password" 
                     type="password"
                     placeholder="••••••••"
                     value={password}
@@ -59,17 +59,17 @@ const ResetPasswordPage = () => {
                     error={error}
                 />
 
-                {error && !error.includes('пароль') && (
-                    <div className="text-red-500 text-xs text-center bg-red-500/10 p-2 rounded border border-red-500/20">
+                {error && !error.toLowerCase().includes('password') && (
+                    <div className="text-blood text-[10px] text-center bg-blood/5 p-2 border border-blood/20 font-mono uppercase tracking-wider">
                         {error}
                     </div>
                 )}
 
                 <div className="pt-2">
                     <Button 
-                        text={loading ? "Зберігаємо..." : "Змінити пароль"} 
+                        text={loading ? "Forging..." : "Reset Password"} 
                         disabled={loading}
-                        className="bg-cherry-700 hover:bg-cherry-600 text-white w-full transition-all shadow-lg shadow-cherry-900/20" 
+                        className="bg-blood hover:bg-blood-hover text-white w-full shadow-lg shadow-blood/10 rounded-sm font-gothic tracking-[0.2em] uppercase text-xs py-3 transition-all" 
                     />
                 </div>
             </form>

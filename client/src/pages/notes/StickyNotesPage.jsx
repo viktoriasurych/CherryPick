@@ -2,47 +2,42 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../../api/axios';
 import { 
     PlusIcon, TrashIcon, MagnifyingGlassIcon, 
-    Bars3BottomLeftIcon, ArrowLeftIcon 
+    Bars3BottomLeftIcon, ArrowLeftIcon, PencilSquareIcon
 } from '@heroicons/react/24/outline';
 
-// Якщо тут використовуються компоненти, то шлях буде такий:
-// import NoteCard from '../../components/notes/NoteCard'; (якщо ти його створиш)
+// 👇 Імпорт модалки
+import ConfirmModal from '../../components/shared/ConfirmModal';
 
-// --- КОНСТАНТИ ---
-const COLORS = {
-    yellow: 'bg-[#fff7d1] text-slate-900',
-    pink: 'bg-[#fbbcbc] text-slate-900',
-    blue: 'bg-[#cbf1f5] text-slate-900',
-    green: 'bg-[#ccf2d6] text-slate-900',
-    purple: 'bg-[#e5d4ef] text-slate-900',
-    dark: 'bg-[#333333] text-white border border-slate-700'
+// --- КОНФІГУРАЦІЯ КОЛЬОРІВ ---
+const NOTE_THEMES = {
+    pink:   'bg-[var(--note-pink-bg)] border-[var(--note-pink-border)] text-[var(--note-pink-text)]',
+    yellow: 'bg-[var(--note-yellow-bg)] border-[var(--note-yellow-border)] text-[var(--note-yellow-text)]',
+    blue:   'bg-[var(--note-blue-bg)] border-[var(--note-blue-border)] text-[var(--note-blue-text)]',
+    green:  'bg-[var(--note-green-bg)] border-[var(--note-green-border)] text-[var(--note-green-text)]',
+    purple: 'bg-[var(--note-purple-bg)] border-[var(--note-purple-border)] text-[var(--note-purple-text)]',
+    dark:   'bg-[var(--note-dark-bg)] border-[var(--note-dark-border)] text-[var(--note-dark-text)]'
 };
 
 const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-
-    return new Intl.DateTimeFormat('uk-UA', {
-        month: isToday ? undefined : 'short', 
-        day: isToday ? undefined : 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit'
-    }).format(date);
+    return new Intl.DateTimeFormat('en-GB', { 
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(date).toUpperCase(); 
 };
 
 const StickyNotesPage = () => {
-    // --- STATE ---
     const [notes, setNotes] = useState([]);
     const [selectedId, setSelectedId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [sidebarWidth, setSidebarWidth] = useState(320);
+    const [sidebarWidth, setSidebarWidth] = useState(350);
     const [isResizing, setIsResizing] = useState(false);
     
-    // Редактор
     const [editForm, setEditForm] = useState(null);
-    const [saveStatus, setSaveStatus] = useState('saved'); // 'saved' | 'saving' | 'unsaved' | 'error'
+    const [saveStatus, setSaveStatus] = useState('saved');
+
+    // 👇 СТАН ДЛЯ МОДАЛКИ ВИДАЛЕННЯ
+    const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null });
 
     // --- DATA FETCHING ---
     useEffect(() => {
@@ -54,13 +49,12 @@ const StickyNotesPage = () => {
                     selectNote(res.data[0]);
                 }
             } catch (error) {
-                console.error("Помилка завантаження нотаток:", error);
+                console.error("Error loading notes:", error);
             }
         };
         fetchNotes();
     }, []);
 
-    // --- ACTIONS ---
     const selectNote = (note) => {
         setSelectedId(note.id);
         setEditForm({ ...note });
@@ -72,20 +66,27 @@ const StickyNotesPage = () => {
     };
 
     const createNote = async () => {
-        const newNote = { title: '', content: '', color: 'yellow' };
+        const newNote = { title: '', content: '', color: 'pink' }; 
         try {
             const res = await api.post('/sticky-notes', newNote);
             setNotes([res.data, ...notes]);
             selectNote(res.data);
         } catch (e) {
-            console.error("Помилка створення:", e);
+            console.error("Create error:", e);
         }
     };
 
-    const deleteNote = async (e, id) => {
+    // 👇 1. ЗАПИТ НА ВИДАЛЕННЯ (Відкриває модалку)
+    const requestDelete = (e, id) => {
         if (e) e.stopPropagation();
-        if (!window.confirm("Видалити наліпку?")) return;
-        
+        setDeleteConfirm({ isOpen: true, id });
+    };
+
+    // 👇 2. ПІДТВЕРДЖЕННЯ ВИДАЛЕННЯ (Виконує дію)
+    const confirmDelete = async () => {
+        const id = deleteConfirm.id;
+        if (!id) return;
+
         try {
             await api.delete(`/sticky-notes/${id}`);
             const filtered = notes.filter(n => n.id !== id);
@@ -99,26 +100,28 @@ const StickyNotesPage = () => {
                 }
             }
         } catch (e) {
-            console.error("Помилка видалення:", e);
+            console.error("Delete error:", e);
+        } finally {
+            setDeleteConfirm({ isOpen: false, id: null });
         }
     };
 
     // --- AUTOSAVE LOGIC ---
     useEffect(() => {
         if (!editForm || !selectedId) return;
-
         const originalNote = notes.find(n => n.id === selectedId);
         if (!originalNote) return;
 
-        // Перевірка на зміни
         const hasChanges = 
             editForm.title !== originalNote.title || 
             editForm.content !== originalNote.content || 
             editForm.color !== originalNote.color;
 
-        if (!hasChanges) return;
+        if (!hasChanges) {
+            if (saveStatus !== 'saved') setSaveStatus('saved');
+            return;
+        }
 
-        // Оптимістичне оновлення
         setNotes(prev => prev.map(n => n.id === selectedId ? { ...n, ...editForm, updated_at: new Date() } : n));
         setSaveStatus('unsaved');
 
@@ -128,13 +131,13 @@ const StickyNotesPage = () => {
                 await api.put(`/sticky-notes/${selectedId}`, editForm);
                 setSaveStatus('saved');
             } catch (e) {
-                console.error("Помилка автозбереження:", e);
+                console.error("Autosave error:", e);
                 setSaveStatus('error');
             }
-        }, 1000); // 1 секунда дебаунс
+        }, 1000);
 
         return () => clearTimeout(timer);
-    }, [editForm, selectedId]); // Залежність від всього об'єкта editForm
+    }, [editForm, selectedId]);
 
     // --- RESIZER ---
     const startResizing = useCallback(() => setIsResizing(true), []);
@@ -142,7 +145,7 @@ const StickyNotesPage = () => {
     const resize = useCallback((e) => {
         if (isResizing) {
             const newWidth = e.clientX;
-            if (newWidth > 220 && newWidth < 600) setSidebarWidth(newWidth);
+            if (newWidth > 250 && newWidth < 600) setSidebarWidth(newWidth);
         }
     }, [isResizing]);
 
@@ -170,41 +173,44 @@ const StickyNotesPage = () => {
     const renderSidebar = () => (
         <div 
             className={`
-                bg-slate-950 border-r border-slate-800 flex flex-col shrink-0 transition-all duration-300
+                bg-ash border-r border-border flex flex-col shrink-0 transition-all duration-300
                 ${selectedId ? 'hidden md:flex' : 'flex w-full'} 
-                md:w-auto h-full
+                md:w-auto h-full relative
             `}
             style={{ width: window.innerWidth > 768 ? sidebarWidth : '100%' }}
         >
-            {/* Header */}
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between shrink-0">
-                <h2 className="text-white font-bold font-pixel flex items-center gap-2">
-                    <Bars3BottomLeftIcon className="w-5 h-5 text-cherry-500"/>
-                    Наліпки
+            <div className="p-6 border-b border-border flex items-center justify-between shrink-0 bg-deep/50 backdrop-blur-sm">
+                <h2 className="text-blood font-bold font-gothic tracking-widest text-xl flex items-center gap-3">
+                    <Bars3BottomLeftIcon className="w-6 h-6"/>
+                    ARCHIVES
                 </h2>
-                <button onClick={createNote} className="p-2 bg-cherry-600 hover:bg-cherry-500 text-white rounded-lg transition shadow-lg shadow-cherry-900/20">
-                    <PlusIcon className="w-5 h-5" />
+                <button 
+                    onClick={createNote} 
+                    className="p-2 border border-blood/30 text-blood hover:bg-blood hover:text-white rounded-sm transition-all duration-300 group"
+                    title="New Scroll"
+                >
+                    <PlusIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
                 </button>
             </div>
 
-            {/* Пошук */}
-            <div className="p-4 pt-2 shrink-0">
-                <div className="relative">
-                    <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+            <div className="p-4 shrink-0">
+                <div className="relative group">
+                    <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-blood transition-colors" />
                     <input 
                         type="text" 
-                        placeholder="Пошук..." 
+                        placeholder="Search archives..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg py-2 pl-9 pr-4 text-sm text-white focus:border-cherry-500 outline-none transition placeholder-slate-600"
+                        className="w-full bg-void border border-border rounded-sm py-2 pl-10 pr-4 text-xs font-mono text-bone focus:border-blood outline-none transition-all placeholder-muted/50"
                     />
                 </div>
             </div>
 
-            {/* Список */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin scrollbar-thumb-slate-800">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 {filteredNotes.length === 0 && searchQuery && (
-                    <div className="text-center text-slate-500 text-xs py-10">Нічого не знайдено</div>
+                    <div className="text-center text-muted text-xs font-mono py-10 uppercase tracking-widest">
+                        Void returned nothing...
+                    </div>
                 )}
                 
                 {filteredNotes.map(note => (
@@ -212,30 +218,35 @@ const StickyNotesPage = () => {
                         key={note.id}
                         onClick={() => selectNote(note)}
                         className={`
-                            p-4 rounded-xl cursor-pointer transition relative group border select-none flex flex-col gap-2
-                            ${selectedId === note.id ? 'border-cherry-500 bg-slate-900 shadow-md' : 'border-slate-800 hover:bg-slate-900/60 bg-slate-900/30'}
+                            p-4 rounded-sm cursor-pointer transition-all duration-300 relative group border
+                            flex flex-col gap-2 select-none
+                            ${selectedId === note.id 
+                                ? 'border-blood bg-void shadow-[0_0_15px_rgba(159,18,57,0.1)]' 
+                                : 'border-border hover:border-muted bg-void/30 hover:bg-void'}
                         `}
                     >
                         <div className="flex justify-between items-start">
-                            <h4 className={`font-bold text-sm truncate w-full pr-2 ${note.title ? 'text-white' : 'text-slate-500 italic'}`}>
-                                {note.title || 'Нова нотатка'}
+                            <h4 className={`font-bold font-gothic text-sm truncate w-full pr-2 tracking-wide ${note.title ? 'text-bone' : 'text-muted italic'}`}>
+                                {note.title || 'New Scroll'}
                             </h4>
                             <button 
-                                onClick={(e) => deleteNote(e, note.id)}
-                                className="hidden md:group-hover:block text-slate-600 hover:text-red-500 transition -mt-1 -mr-2 p-1 rounded hover:bg-slate-800"
-                                title="Видалити"
+                                onClick={(e) => requestDelete(e, note.id)} // 👇 Виклик модалки
+                                className="hidden md:group-hover:block text-muted hover:text-blood transition -mt-1 -mr-2 p-1"
+                                title="Burn"
                             >
                                 <TrashIcon className="w-4 h-4" />
                             </button>
                         </div>
-                        <p className="text-xs text-slate-400 line-clamp-2 min-h-[1.5em] font-sans">
+                        
+                        <p className="text-xs text-muted/70 line-clamp-2 min-h-[1.5em] font-mono leading-relaxed">
                             {note.content || '...'}
                         </p>
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-800/50 mt-1">
-                            <span className="text-[10px] text-slate-500 font-mono whitespace-nowrap">
+                        
+                        <div className="flex items-center justify-between pt-3 border-t border-border/30 mt-1">
+                            <span className="text-[9px] text-muted/50 font-mono uppercase tracking-wider">
                                 {formatDate(note.updated_at)}
                             </span>
-                            <div className={`w-3 h-3 rounded-full shadow-sm border border-slate-900/10 shrink-0 ${COLORS[note.color].split(' ')[0]}`}></div>
+                            <div className={`w-2 h-2 rounded-full border border-white/10 ${NOTE_THEMES[note.color].split(' ')[0]}`}></div>
                         </div>
                     </div>
                 ))}
@@ -245,67 +256,85 @@ const StickyNotesPage = () => {
 
     const renderEditor = () => (
         <div className={`
-            flex-1 bg-black flex flex-col h-full relative
+            flex-1 bg-void flex flex-col h-full relative
             ${selectedId ? 'flex fixed inset-0 z-50 md:static md:z-0' : 'hidden md:flex'}
         `}>
             {selectedId && editForm ? (
                 <>
-                    {/* Toolbar */}
-                    <div className="h-14 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-950 shrink-0">
-                        <div className="flex items-center gap-4">
-                            <button onClick={goBackToList} className="md:hidden text-slate-400 hover:text-white">
-                                <ArrowLeftIcon className="w-6 h-6" />
+                    <div className="h-16 border-b border-border flex items-center justify-between px-6 bg-deep/80 backdrop-blur-md shrink-0">
+                        <div className="flex items-center gap-6">
+                            <button onClick={goBackToList} className="md:hidden text-muted hover:text-white transition">
+                                <ArrowLeftIcon className="w-5 h-5" />
                             </button>
-                            <div className="flex gap-2">
-                                {Object.keys(COLORS).map(color => (
+                            
+                            <div className="flex gap-3 bg-void/50 p-1.5 rounded-full border border-border">
+                                {Object.keys(NOTE_THEMES).map(color => (
                                     <button 
                                         key={color}
                                         onClick={() => setEditForm(prev => ({ ...prev, color }))}
-                                        className={`w-5 h-5 rounded-full border-2 transition shadow-sm ${COLORS[color].split(' ')[0]} ${editForm.color === color ? 'border-white scale-110 shadow-md' : 'border-transparent hover:scale-110'}`}
-                                        title={color}
+                                        className={`
+                                            w-4 h-4 rounded-full transition-all duration-300
+                                            ${NOTE_THEMES[color].split(' ')[0]} 
+                                            ${editForm.color === color ? 'scale-125 ring-2 ring-bone ring-offset-2 ring-offset-black' : 'hover:scale-110 opacity-70 hover:opacity-100'}
+                                        `}
+                                        title={color.charAt(0).toUpperCase() + color.slice(1)}
                                     />
                                 ))}
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="hidden sm:block text-[10px] font-mono uppercase tracking-widest text-slate-500">
-                                {saveStatus === 'saving' && <span className="animate-pulse text-yellow-500">Збереження...</span>}
-                                {saveStatus === 'saved' && <span className="text-green-500">Збережено</span>}
-                                {saveStatus === 'unsaved' && <span>Редагування...</span>}
-                                {saveStatus === 'error' && <span className="text-red-500">Помилка!</span>}
+
+                        <div className="flex items-center gap-6">
+                            <div className="hidden sm:block text-[10px] font-mono uppercase tracking-[0.2em]">
+                                {saveStatus === 'saving' && <span className="animate-pulse text-blood">Saving...</span>}
+                                {saveStatus === 'saved' && <span className="text-muted/50">Saved</span>}
+                                {saveStatus === 'unsaved' && <span className="text-bone">Editing...</span>}
+                                {saveStatus === 'error' && <span className="text-red-500 font-bold">Sync Error</span>}
                             </div>
+                            
                             <button 
-                                onClick={() => deleteNote(null, selectedId)}
-                                className="text-slate-500 hover:text-red-500 transition p-2 hover:bg-slate-900 rounded-lg"
-                                title="Видалити"
+                                onClick={(e) => requestDelete(e, selectedId)} // 👇 Виклик модалки
+                                className="text-muted hover:text-blood transition p-2 border border-transparent hover:border-blood/30 rounded-sm"
+                                title="Burn Scroll"
                             >
                                 <TrashIcon className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
 
-                    {/* Поле вводу */}
-                    <div className={`flex-1 p-6 md:p-10 overflow-y-auto transition-colors duration-500 ${COLORS[editForm.color]}`}>
-                        <input 
-                            type="text" 
-                            value={editForm.title}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                            placeholder="Заголовок..."
-                            className="w-full bg-transparent text-2xl md:text-3xl font-bold mb-4 outline-none placeholder-current/50 border-b border-transparent focus:border-current/20 pb-2 transition-colors"
-                        />
-                        <textarea 
-                            value={editForm.content}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
-                            placeholder="Почніть писати тут..."
-                            className="w-full h-[calc(100%-5rem)] bg-transparent resize-none outline-none text-base md:text-lg leading-relaxed placeholder-current/50 font-medium font-sans"
-                        />
+                    <div className={`
+                        flex-1 p-8 md:p-12 overflow-y-auto transition-colors duration-700 ease-in-out border-l border-border
+                        ${NOTE_THEMES[editForm.color]} 
+                    `}>
+                        <div className="max-w-3xl mx-auto h-full flex flex-col">
+                            <input 
+                                type="text" 
+                                value={editForm.title}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                                placeholder="TITLE OF THE SCROLL"
+                                className="
+                                    w-full bg-transparent text-3xl md:text-4xl font-bold font-gothic mb-8 
+                                    outline-none placeholder-current/30 border-b-2 border-transparent 
+                                    focus:border-current/20 pb-2 transition-colors tracking-wide uppercase
+                                "
+                            />
+                            <textarea 
+                                value={editForm.content}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
+                                placeholder="Inscribe your thoughts here..."
+                                className="
+                                    w-full flex-1 bg-transparent resize-none outline-none 
+                                    text-sm md:text-base leading-loose font-mono 
+                                    placeholder-current/30 scrollbar-none
+                                "
+                            />
+                        </div>
                     </div>
                 </>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-700 select-none bg-black">
-                    <Bars3BottomLeftIcon className="w-20 h-20 mb-4 opacity-20" />
-                    <p className="text-lg font-pixel opacity-50 px-4 text-center">
-                        Оберіть наліпку зі списку <br/> або створіть нову
+                <div className="flex-1 flex flex-col items-center justify-center text-muted select-none bg-void/50 border-l border-border">
+                    <PencilSquareIcon className="w-16 h-16 mb-4 opacity-10 animate-pulse" />
+                    <p className="text-xs font-mono uppercase tracking-[0.3em] opacity-40 text-center">
+                        Select a scroll to read <br/> or create a new prophecy
                     </p>
                 </div>
             )}
@@ -313,16 +342,25 @@ const StickyNotesPage = () => {
     );
 
     return (
-        <div className="flex h-[calc(100vh-64px)] bg-black overflow-hidden relative">
+        <div className="flex h-[calc(100vh-64px)] bg-deep overflow-hidden relative">
             {renderSidebar()}
             
-            {/* Тягалка (Resizer) */}
             <div 
-                className="hidden md:block w-1 bg-slate-900 hover:bg-cherry-500 cursor-col-resize transition-colors z-10 hover:w-1.5"
+                className="hidden md:block w-1 bg-border hover:bg-blood cursor-col-resize transition-colors z-20"
                 onMouseDown={startResizing}
             />
 
             {renderEditor()}
+
+            {/* 👇 ВСТАВЛЯЄМО МОДАЛКУ ПІДТВЕРДЖЕННЯ */}
+            <ConfirmModal 
+                isOpen={deleteConfirm.isOpen}
+                onClose={() => setDeleteConfirm({ isOpen: false, id: null })}
+                onConfirm={confirmDelete}
+                title="Burn Scroll"
+                message="This action is irreversible. The scroll will be lost to the void forever."
+                confirmText="Burn It"
+            />
         </div>
     );
 };

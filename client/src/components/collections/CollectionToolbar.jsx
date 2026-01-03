@@ -1,70 +1,80 @@
-import { 
-    MagnifyingGlassIcon, 
-    BarsArrowDownIcon, 
-    BarsArrowUpIcon 
-} from '@heroicons/react/24/outline';
-
-// 👇 Один крок назад до components, потім в ui
-import Tabs from '../ui/Tabs';
-const TABS = [
-    { id: 'ALL', label: 'Усі' },
-    { id: 'MOODBOARD', label: 'Мудборди' },
-    { id: 'SERIES', label: 'Серії' },
-    { id: 'EXHIBITION', label: 'Виставки' }
-];
+import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import SortDropdown from '../ui/SortDropdown';
 
 const CollectionToolbar = ({ 
+    title,              // Заголовок (напр. "My Collections")
+    subTitle,           // Підзаголовок (напр. "Scanning...")
     search, setSearch, 
-    filter, setFilter, 
-    sortConfig, setSortConfig 
+    filterType, setFilterType, 
+    sortConfig, 
+    onSortChange,       // Функція зміни ключа сортування
+    onToggleDir,        // Функція зміни напрямку
+    sortOptions         // Масив опцій
 }) => {
 
-    const toggleSortDir = () => {
-        setSortConfig(prev => ({...prev, dir: prev.dir === 'ASC' ? 'DESC' : 'ASC'}));
-    };
+    const TABS = ['ALL', 'MOODBOARD', 'SERIES', 'EXHIBITION'];
 
     return (
-        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 border-b border-border/50 pb-6 gap-6">
             
-            {/* 1. ВИКОРИСТОВУЄМО НОВИЙ КОМПОНЕНТ TABS */}
-            <div className="w-full md:w-auto">
-                <Tabs 
-                    items={TABS} 
-                    activeId={filter} 
-                    onChange={setFilter} 
-                />
-            </div>
+            {/* --- ЛІВА ЧАСТИНА: ЗАГОЛОВОК + ПОШУК --- */}
+            <div className="flex flex-col gap-4 w-full md:max-w-xl">
+                <div>
+                    <h1 className="text-4xl font-gothic tracking-wide text-blood">{title}</h1>
+                    {subTitle && (
+                        <p className="text-[10px] text-muted mt-2 uppercase tracking-[0.2em] font-bold">
+                            {subTitle}
+                        </p>
+                    )}
+                </div>
 
-            {/* Права частина (Пошук + Сортування) залишається без змін */}
-            <div className="flex items-center gap-3 w-full md:w-auto">
-                <div className="relative group grow md:grow-0">
-                    <MagnifyingGlassIcon className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 group-hover:text-cherry-500 transition" />
+                {/* SEARCH BAR */}
+                <div className="relative group w-full">
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-blood transition-colors" />
                     <input 
-                        type="text" 
-                        placeholder="Пошук..." 
+                        type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full md:w-48 bg-slate-950 border border-slate-800 rounded-lg py-1.5 pl-9 pr-3 text-sm text-slate-200 focus:border-cherry-900 focus:outline-none transition"
+                        placeholder="Search collections..."
+                        className="w-full bg-void border border-border rounded-sm py-2 pl-10 pr-8 text-xs text-bone outline-none focus:border-blood focus:shadow-[0_0_15px_rgba(159,18,57,0.1)] transition-all h-10 placeholder-muted/40"
                     />
+                    {search && (
+                        <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-white transition">
+                            <XMarkIcon className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* --- ПРАВА ЧАСТИНА: ТАБИ + СОРТУВАННЯ --- */}
+            <div className="flex flex-wrap gap-3 items-center w-full md:w-auto shrink-0">
+                
+                {/* TABS */}
+                <div className="flex bg-void border border-border rounded-sm p-1 h-10 items-center overflow-x-auto max-w-full no-scrollbar">
+                    {TABS.map(type => (
+                        <button
+                            key={type}
+                            onClick={() => setFilterType(type)}
+                            className={`
+                                px-4 py-1 text-[10px] font-bold uppercase tracking-wider rounded-sm transition-all h-full whitespace-nowrap
+                                ${filterType === type 
+                                    ? 'bg-blood text-white shadow-[0_0_10px_rgba(159,18,57,0.4)]' // Активний (Червоний)
+                                    : 'text-muted hover:text-bone hover:bg-white/5'}
+                            `}
+                        >
+                            {type === 'ALL' ? 'All' : type}
+                        </button>
+                    ))}
                 </div>
 
-                <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1 shrink-0">
-                    <select 
-                        value={sortConfig.key}
-                        onChange={(e) => setSortConfig(prev => ({ ...prev, key: e.target.value }))}
-                        className="bg-transparent text-slate-400 text-xs sm:text-sm px-2 py-1 outline-none cursor-pointer hover:text-white appearance-none font-medium text-center"
-                    >
-                        <option value="created_at" className="bg-slate-950">📅 Дата</option>
-                        <option value="title" className="bg-slate-950">🔤 Назва</option>
-                        <option value="item_count" className="bg-slate-950">🖼 Кількість</option>
-                    </select>
-                    <button 
-                        onClick={toggleSortDir}
-                        className="px-2 py-1 text-slate-500 hover:text-cherry-500 border-l border-slate-800 transition"
-                    >
-                        {sortConfig.dir === 'ASC' ? <BarsArrowUpIcon className="w-4 h-4" /> : <BarsArrowDownIcon className="w-4 h-4" />}
-                    </button>
-                </div>
+                {/* SORT */}
+                <SortDropdown 
+                    value={sortConfig.key} 
+                    direction={sortConfig.dir} 
+                    onChange={onSortChange} 
+                    onToggleDirection={onToggleDir}
+                    options={sortOptions} 
+                />
             </div>
         </div>
     );
