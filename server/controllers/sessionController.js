@@ -31,13 +31,11 @@ class SessionController {
         }
     }
 
-    // 👇 STOP SESSION (Тут уважно з фото)
     async stop(req, res) {
         try {
             const userId = req.user.id;
             const photo_path = req.file ? 'uploads/' + req.file.filename : null;
 
-            // 👇 1. ТУТ БУЛА ПОМИЛКА: ми не діставали sessionId
             const { manualDuration, content, updateCover, sessionId } = req.body;
 
             const noteData = {
@@ -48,10 +46,9 @@ class SessionController {
             const isUpdateCover = updateCover === 'true'; 
             const durationSeconds = manualDuration ? parseInt(manualDuration) : null;
 
-            // 👇 2. Передаємо sessionId в сервіс
             const result = await sessionService.stopSession(
                 userId, 
-                sessionId, // <--- ДОДАЛИ ТУТ
+                sessionId,
                 noteData, 
                 durationSeconds, 
                 isUpdateCover
@@ -74,7 +71,6 @@ class SessionController {
         }
     }
 
-    // 👇 НОВИЙ МЕТОД
     async discard(req, res) {
         try {
             await sessionService.discardSession(req.user.id);

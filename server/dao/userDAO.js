@@ -2,7 +2,6 @@ const db = require('../config/db');
 
 class UserDAO {
     
-    // 1. Знайти користувача за Email (для логіну)
     findByEmail(email) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM users WHERE email = ?';
@@ -13,12 +12,9 @@ class UserDAO {
         });
     }
 
-    // 2. Створити нового (Реєстрація) - Додали displayName
-    create(nickname, email, passwordHash, displayName) { // 👈 Додай displayName в аргументи
+    create(nickname, email, passwordHash, displayName) {
         return new Promise((resolve, reject) => {
-            // Додали поле display_name в SQL
             const sql = 'INSERT INTO users (nickname, email, password_hash, display_name) VALUES (?, ?, ?, ?)';
-            // Якщо displayName не передали, використовуємо nickname як дефолт
             const nameToSave = displayName || nickname; 
             
             db.run(sql, [nickname, email, passwordHash, nameToSave], function(err) {
@@ -28,13 +24,12 @@ class UserDAO {
         });
     }
 
-    // 3. Знайти за ID (Повний профіль для відображення)
     findById(id) {
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT 
                     id, nickname, email, 
-                    display_name, -- 👈 ДОДАЛИ ТУТ
+                    display_name,
                     avatar_url, bio, location,
                     contact_email, social_telegram, 
                     social_instagram, social_twitter, 
@@ -48,7 +43,6 @@ class UserDAO {
             
             db.get(sql, [id], (err, row) => {
                 if (err) reject(err);
-                // Конвертація булевих значень...
                 if (row) {
                     row.show_global_stats = !!row.show_global_stats;
                     row.show_kpi_stats = !!row.show_kpi_stats;
@@ -59,7 +53,6 @@ class UserDAO {
         });
     }
 
-    // 4. Оновлення текстового профілю (Виправлено помилку showStats)
     updateProfile(id, data) {
         return new Promise((resolve, reject) => {
             const showGlobal = data.show_global_stats ? 1 : 0;
@@ -70,7 +63,7 @@ class UserDAO {
                 UPDATE users 
                 SET 
                     nickname = ?, 
-                    display_name = ?, -- 👈 ДОДАЛИ ТУТ
+                    display_name = ?,
                     bio = ?, location = ?, 
                     contact_email = ?, social_telegram = ?,
                     social_instagram = ?, social_twitter = ?,
@@ -84,7 +77,7 @@ class UserDAO {
             
             const params = [
                 data.nickname, 
-                data.display_name, // 👈 ДОДАЛИ ТУТ
+                data.display_name,
                 data.bio, data.location,
                 data.contact_email, data.social_telegram,
                 data.social_instagram, data.social_twitter,
@@ -97,7 +90,6 @@ class UserDAO {
             db.run(sql, params, function(err) {
                 if (err) return reject(err);
                 
-                // Повертаємо оновленого (тут можна просто викликати findById, щоб не дублювати код)
                 const selectSql = `SELECT * FROM users WHERE id = ?`;
                 db.get(selectSql, [id], (err, row) => {
                     if(err) reject(err);
@@ -121,7 +113,6 @@ class UserDAO {
         });
     }
 
-    // 5. Оновлення тільки Аватара
     updateAvatar(id, avatarUrl) {
         return new Promise((resolve, reject) => {
             const sql = 'UPDATE users SET avatar_url = ? WHERE id = ?';
@@ -132,7 +123,6 @@ class UserDAO {
         });
     }
 
-    // 6. Видалення аватара
     deleteAvatar(id) {
         return new Promise((resolve, reject) => {
             const sql = 'UPDATE users SET avatar_url = NULL WHERE id = ?';
@@ -153,8 +143,6 @@ class UserDAO {
         });
     }
 
-    // 👇 1. НОВІ МЕТОДИ ДЛЯ GOOGLE
-
     findByGoogleId(googleId) {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT * FROM users WHERE google_id = ?';
@@ -164,10 +152,9 @@ class UserDAO {
             });
         });
     }
-    // 👇 ТРЕБА (правильно):
+
     createFromGoogle(nickname, email, passwordHash, googleId, avatarUrl, displayName) {
         return new Promise((resolve, reject) => {
-            // Додали display_name в SQL
             const sql = `INSERT INTO users (nickname, email, password_hash, google_id, avatar_url, display_name) VALUES (?, ?, ?, ?, ?, ?)`;
             
             db.run(sql, [nickname, email, passwordHash, googleId, avatarUrl, displayName], function(err) {
@@ -195,7 +182,6 @@ class UserDAO {
         });
     }
 
-    // 👇 2. НОВІ МЕТОДИ ДЛЯ PASSWORD RESET
     saveResetToken(email, token, expiresAt) {
         return new Promise((resolve, reject) => {
             const sql = `INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)`;

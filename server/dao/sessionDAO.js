@@ -2,7 +2,6 @@ const db = require('../config/db');
 
 class SessionDAO {
 
-    // 1. Знайти активну
     findActive(userId) {
         return new Promise((resolve, reject) => {
             const sql = `
@@ -18,10 +17,8 @@ class SessionDAO {
         });
     }
 
-    // 2. Старт (SQL час)
     start(userId, artworkId) {
         return new Promise((resolve, reject) => {
-            // 👇 Використовуємо datetime('now', 'localtime')
             const sql = `INSERT INTO sessions (user_id, artwork_id, start_time, duration_seconds) VALUES (?, ?, datetime('now', 'localtime'), 0)`;
             db.run(sql, [userId, artworkId], function(err) {
                 if (err) reject(err);
@@ -30,7 +27,6 @@ class SessionDAO {
         });
     }
 
-    // 3. Пауза
     pause(sessionId, accumulatedSeconds) {
         return new Promise((resolve, reject) => {
             const sql = `UPDATE sessions SET start_time = NULL, duration_seconds = ? WHERE id = ?`;
@@ -41,7 +37,6 @@ class SessionDAO {
         });
     }
 
-    // 4. Відновити (SQL час)
     resume(sessionId) {
         return new Promise((resolve, reject) => {
             const sql = `UPDATE sessions SET start_time = datetime('now', 'localtime') WHERE id = ?`;
@@ -52,7 +47,6 @@ class SessionDAO {
         });
     }
 
-    // 5. СТОП (SQL час)
     stop(sessionId, finalDuration) {
         return new Promise((resolve, reject) => {
             const sql = `UPDATE sessions SET start_time = NULL, end_time = datetime('now', 'localtime'), duration_seconds = ? WHERE id = ?`;
@@ -63,10 +57,8 @@ class SessionDAO {
         });
     }
 
-    // 6. Створити нотатку (Фото + Текст)
     createNote(sessionId, content, photoUrl) {
         return new Promise((resolve, reject) => {
-            // 👇 added_at теж буде нормальним, якщо в CREATE TABLE стоїть DEFAULT CURRENT_TIMESTAMP (він зазвичай UTC, але ок)
             const sql = `INSERT INTO notes (session_id, content, photo_url) VALUES (?, ?, ?)`;
             db.run(sql, [sessionId, content, photoUrl], function(err) {
                 if (err) reject(err);
@@ -75,12 +67,11 @@ class SessionDAO {
         });
     }
 
-    // 7. Історія (Аліаси для фронтенду)
     getByArtworkId(artworkId) {
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT 
-                    s.id as session_id,  -- 👇 ПЕРЕЙМЕНУВАЛИ id в session_id (для React keys)
+                    s.id as session_id,
                     s.start_time, 
                     s.end_time, 
                     s.duration_seconds, 
@@ -99,7 +90,7 @@ class SessionDAO {
         });
 
     }
-    // 👇 НОВИЙ МЕТОД: Видалити сесію (для кнопки "Скинути")
+    
     delete(sessionId) {
         return new Promise((resolve, reject) => {
             const sql = `DELETE FROM sessions WHERE id = ?`;

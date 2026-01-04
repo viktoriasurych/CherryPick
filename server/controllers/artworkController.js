@@ -1,19 +1,17 @@
 const artworkService = require('../services/artworkService');
-const { validate } = require('../utils/validation'); // 👇 Імпорт
+const { validate } = require('../utils/validation');
 
 class ArtworkController {
 
     // POST /api/artworks
     async create(req, res) {
         try {
-            // 👇 Перевірка
             const errors = validate.artwork(req.body);
             if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
 
             const userId = req.user.id;
             const image_path = req.file ? 'uploads/' + req.file.filename : null;
 
-            // Парсинг ID (тільки цифри)
             const parseIds = (str) => {
                 if (!str) return [];
                 return String(str).split(',').map(num => Number(num.trim())).filter(n => !isNaN(n) && n > 0);
@@ -47,17 +45,13 @@ class ArtworkController {
    // PUT /api/artworks/:id
    async update(req, res) {
     try {
-        // 👇 Перевірка
         const errors = validate.artwork(req.body);
         if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
 
         const userId = req.user.id;
         const artworkId = req.params.id;
-        
-        // 1. Дивимось, чи завантажили НОВИЙ файл
         const file_path = req.file ? 'uploads/' + req.file.filename : undefined;
-        
-        // 2. Дивимось, чи передали шлях до ВЖЕ ІСНУЮЧОГО файлу (рядок)
+    
         const body_image_path = req.body.image_path; 
 
         const parseIds = (str) => {
@@ -82,12 +76,9 @@ class ArtworkController {
             finished_day: req.body.finished_day || null,
         };
 
-        // ЛОГІКА ЗМІНИ ОБКЛАДИНКИ:
         if (file_path) {
-            // Якщо завантажили файл - він головний
             updateData.image_path = file_path;
         } else if (body_image_path) {
-            // Якщо файлу немає, але є рядок (з галереї) - ставимо його
             updateData.image_path = body_image_path;
         }
 
@@ -98,7 +89,6 @@ class ArtworkController {
     }
 }
 
-    // GET /api/artworks (Фільтри)
    // GET /api/artworks
    async getAll(req, res) {
     try {
@@ -115,7 +105,7 @@ class ArtworkController {
             tag_ids: req.query.tag_ids ? parseNumberArray(req.query.tag_ids) : [],
             yearFrom: req.query.yearFrom || null,
             yearTo: req.query.yearTo || null,
-            search: req.query.search || null // 👈 ДОДАЙ ЦЕЙ РЯДОК
+            search: req.query.search || null
         };
 
         const sort = {
@@ -183,9 +173,6 @@ class ArtworkController {
             if (!image_path) {
                 return res.status(400).json({ message: 'Файл не завантажено' });
             }
-
-            // Тут бажано викликати сервіс, але для скорочення можна напряму (або додай метод в Service)
-            // Припустимо, ми додали метод addGalleryImage в artworkService
             const result = await artworkService.addGalleryImage(artworkId, image_path, description);
             res.json(result);
         } catch (e) {

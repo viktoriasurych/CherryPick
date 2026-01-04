@@ -2,7 +2,6 @@ const db = require('../config/db');
 
 class QuoteDAO {
     
-    // Отримати одну випадкову цитату
     getRandom() {
         return new Promise((resolve, reject) => {
             const sql = 'SELECT content FROM cat_quotes ORDER BY RANDOM() LIMIT 1';

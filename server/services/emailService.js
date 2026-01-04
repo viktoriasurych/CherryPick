@@ -18,21 +18,17 @@ class EmailService {
     }
 
     async sendResetEmail(toEmail, token) {
-        // Посилання на фронтенд
         const resetLink = `http://localhost:5173/reset-password?token=${token}&email=${toEmail}`;
 
-        // 👇 НОВИЙ GOTHIC / DARK ACADEMIA ДИЗАЙН
         const htmlContent = `
             <!DOCTYPE html>
             <html>
             <head>
                 <style>
-                    /* Скидання стилів для поштовиків */
                     body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
                     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
                     img { -ms-interpolation-mode: bicubic; }
                     
-                    /* Основні стилі */
                     body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #050505; }
                 </style>
             </head>
@@ -101,16 +97,16 @@ class EmailService {
 
         try {
             await this.transporter.sendMail({
-                from: `"CherryPick Archives" <${process.env.EMAIL_USER}>`, // Змінив ім'я відправника
+                from: `"CherryPick Archives" <${process.env.EMAIL_USER}>`, 
                 to: toEmail,
-                subject: '🍒 CherryPick | Password Reset Scroll', // Змінив тему
+                subject: '🍒 CherryPick | Password Reset Scroll',
                 html: htmlContent
             });
 
-            console.log(`✅ Email sent to: ${toEmail}`);
+            console.log(`+ Email sent to: ${toEmail}`);
             return true;
         } catch (error) {
-            console.error("❌ Email sending failed:", error);
+            console.error("- Email sending failed:", error);
             return false;
         }
     }

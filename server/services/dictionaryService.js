@@ -1,13 +1,11 @@
 const dictionaryDAO = require('../dao/dictionaryDAO');
 
 class DictionaryService {
-    
-    // Карта: тип з URL -> назва таблиці в БД
     _getTableName(type) {
         const map = {
             'styles': 'art_styles',
             'materials': 'art_materials',
-            'genres': 'art_genres', // <--- Жанри тут
+            'genres': 'art_genres',
             'tags': 'art_tags'
         };
         return map[type];

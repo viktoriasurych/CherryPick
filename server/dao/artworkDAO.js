@@ -39,85 +39,6 @@ class ArtworkDAO {
         });
     }
 
-    // 👇 ОНОВЛЕНИЙ getAll З СОРТУВАННЯМ
-    // getAll(userId, filters = {}, sort = { by: 'created', dir: 'DESC' }) {
-    //     return new Promise((resolve, reject) => {
-    //         let sql = `
-    //             SELECT 
-    //                 a.*,
-    //                 s.name as style_name,
-    //                 g.name as genre_name,
-    //                 (SELECT MAX(start_time) FROM sessions WHERE artwork_id = a.id) as last_session_date
-    //             FROM artworks a
-    //             LEFT JOIN art_styles s ON a.style_id = s.id
-    //             LEFT JOIN art_genres g ON a.genre_id = g.id
-    //             WHERE a.user_id = ?
-    //         `;
-            
-    //         const params = [userId];
-
-    //         // 👇 НОВИЙ БЛОК: ПОШУК (Додаємо перед іншими фільтрами)
-    //     if (filters.search) {
-    //         sql += ` AND a.title LIKE ?`;
-    //         params.push(`%${filters.search}%`); // Шукаємо входження слова в будь-якому місці
-    //     }
-
-    //         // --- ФІЛЬТРИ ---
-    //         if (filters.status && filters.status.length > 0) {
-    //             const placeholders = filters.status.map(() => '?').join(',');
-    //             sql += ` AND a.status IN (${placeholders})`;
-    //             params.push(...filters.status);
-    //         }
-    //         if (filters.genre_ids && filters.genre_ids.length > 0) {
-    //             const placeholders = filters.genre_ids.map(() => '?').join(',');
-    //             sql += ` AND a.genre_id IN (${placeholders})`;
-    //             params.push(...filters.genre_ids);
-    //         }
-    //         if (filters.style_ids && filters.style_ids.length > 0) {
-    //             const placeholders = filters.style_ids.map(() => '?').join(',');
-    //             sql += ` AND a.style_id IN (${placeholders})`;
-    //             params.push(...filters.style_ids);
-    //         }
-    //         if (filters.material_ids && filters.material_ids.length > 0) {
-    //             const placeholders = filters.material_ids.map(() => '?').join(',');
-    //             sql += ` AND a.id IN (SELECT artwork_id FROM artwork_materials_link WHERE material_id IN (${placeholders}))`;
-    //             params.push(...filters.material_ids);
-    //         }
-    //         if (filters.tag_ids && filters.tag_ids.length > 0) {
-    //             const placeholders = filters.tag_ids.map(() => '?').join(',');
-    //             sql += ` AND a.id IN (SELECT artwork_id FROM artwork_tags_link WHERE tag_id IN (${placeholders}))`;
-    //             params.push(...filters.tag_ids);
-    //         }
-    //         if (filters.yearFrom) {
-    //             sql += ` AND a.finished_year >= ?`;
-    //             params.push(filters.yearFrom);
-    //         }
-    //         if (filters.yearTo) {
-    //             sql += ` AND a.finished_year <= ?`;
-    //             params.push(filters.yearTo);
-    //         }
-
-    //         // --- СОРТУВАННЯ ---
-    //         const sortMap = {
-    //             'title': 'a.title',
-    //             'created': 'a.created_date',
-    //             'updated': 'COALESCE(last_session_date, a.created_date)', // Останній актив або створення
-    //             'status': 'a.status'
-    //         };
-
-    //         const sortBy = sortMap[sort.by] || 'a.created_date';
-    //         const sortDir = sort.dir === 'ASC' ? 'ASC' : 'DESC';
-
-    //         sql += ` ORDER BY ${sortBy} ${sortDir}`;
-
-    //         db.all(sql, params, (err, rows) => {
-    //             if (err) reject(err);
-    //             else resolve(rows);
-    //         });
-    //     });
-    // }
-
-    // 👇 ОНОВЛЕНИЙ getAll (ВИПРАВЛЕНО: ДИВИМОСЬ НА created_at СЕСІЇ)
     getAll(userId, filters = {}, sort = { by: 'updated', dir: 'DESC' }) { 
         return new Promise((resolve, reject) => {
             let sql = `
@@ -125,7 +46,6 @@ class ArtworkDAO {
                     a.*,
                     s.name as style_name,
                     g.name as genre_name,
-                    -- 👇 ТУТ ЗМІНА: Беремо дату створення запису сесії (created_at)
                     (SELECT MAX(created_at) FROM sessions WHERE artwork_id = a.id) as last_session_date
                 FROM artworks a
                 LEFT JOIN art_styles s ON a.style_id = s.id
@@ -135,24 +55,50 @@ class ArtworkDAO {
             
             const params = [userId];
 
-            // ... (БЛОК ФІЛЬТРІВ - ЗАЛИШАЄТЬСЯ ТАКИМ САМИМ) ...
-            if (filters.search) { sql += ` AND a.title LIKE ?`; params.push(`%${filters.search}%`); }
-            if (filters.status && filters.status.length > 0) { const placeholders = filters.status.map(() => '?').join(','); sql += ` AND a.status IN (${placeholders})`; params.push(...filters.status); }
-            if (filters.genre_ids && filters.genre_ids.length > 0) { const placeholders = filters.genre_ids.map(() => '?').join(','); sql += ` AND a.genre_id IN (${placeholders})`; params.push(...filters.genre_ids); }
-            if (filters.style_ids && filters.style_ids.length > 0) { const placeholders = filters.style_ids.map(() => '?').join(','); sql += ` AND a.style_id IN (${placeholders})`; params.push(...filters.style_ids); }
-            if (filters.material_ids && filters.material_ids.length > 0) { const placeholders = filters.material_ids.map(() => '?').join(','); sql += ` AND a.id IN (SELECT artwork_id FROM artwork_materials_link WHERE material_id IN (${placeholders}))`; params.push(...filters.material_ids); }
-            if (filters.tag_ids && filters.tag_ids.length > 0) { const placeholders = filters.tag_ids.map(() => '?').join(','); sql += ` AND a.id IN (SELECT artwork_id FROM artwork_tags_link WHERE tag_id IN (${placeholders}))`; params.push(...filters.tag_ids); }
-            if (filters.yearFrom) { sql += ` AND a.finished_year >= ?`; params.push(filters.yearFrom); }
-            if (filters.yearTo) { sql += ` AND a.finished_year <= ?`; params.push(filters.yearTo); }
+            if (filters.search) {
+                sql += ` AND a.title LIKE ?`;
+                params.push(`%${filters.search}%`);
+            }
 
+            if (filters.status && filters.status.length > 0) {
+                const placeholders = filters.status.map(() => '?').join(',');
+                sql += ` AND a.status IN (${placeholders})`;
+                params.push(...filters.status);
+            }
+            if (filters.genre_ids && filters.genre_ids.length > 0) {
+                const placeholders = filters.genre_ids.map(() => '?').join(',');
+                sql += ` AND a.genre_id IN (${placeholders})`;
+                params.push(...filters.genre_ids);
+            }
+            if (filters.style_ids && filters.style_ids.length > 0) {
+                const placeholders = filters.style_ids.map(() => '?').join(',');
+                sql += ` AND a.style_id IN (${placeholders})`;
+                params.push(...filters.style_ids);
+            }
+            if (filters.material_ids && filters.material_ids.length > 0) {
+                const placeholders = filters.material_ids.map(() => '?').join(',');
+                sql += ` AND a.id IN (SELECT artwork_id FROM artwork_materials_link WHERE material_id IN (${placeholders}))`;
+                params.push(...filters.material_ids);
+            }
+            if (filters.tag_ids && filters.tag_ids.length > 0) {
+                const placeholders = filters.tag_ids.map(() => '?').join(',');
+                sql += ` AND a.id IN (SELECT artwork_id FROM artwork_tags_link WHERE tag_id IN (${placeholders}))`;
+                params.push(...filters.tag_ids);
+            }
+            if (filters.yearFrom) {
+                sql += ` AND a.finished_year >= ?`;
+                params.push(filters.yearFrom);
+            }
+            if (filters.yearTo) {
+                sql += ` AND a.finished_year <= ?`;
+                params.push(filters.yearTo);
+            }
 
-            // 👇 ВИПРАВЛЕНЕ СОРТУВАННЯ
             const sortMap = {
                 'title': 'a.title',
                 'created': 'a.created_date',
                 'status': 'a.status',
                 
-                // 👇 ТУТ ТЕЖ ЗМІНА: start_time -> created_at
                 'updated': `COALESCE(
                     (SELECT MAX(created_at) FROM sessions WHERE artwork_id = a.id), 
                     a.created_date
@@ -255,7 +201,6 @@ class ArtworkDAO {
             ], function(err) {
                 if (err) return reject(err);
 
-                // 👇 ЛОГІКА 1: Якщо статус не 'FINISHED', видаляємо з колекцій
                 if (data.status && data.status !== 'FINISHED') {
                     db.run(`DELETE FROM collection_items WHERE artwork_id = ?`, [id], (delErr) => {
                         if (delErr) console.error("Auto-remove form collections error:", delErr);
@@ -266,7 +211,6 @@ class ArtworkDAO {
                     db.run(`UPDATE artworks SET image_path=? WHERE id=?`, [data.image_path, id]);
                 }
 
-                // ... (оновлення матеріалів і тегів без змін) ...
                 if (data.material_ids !== undefined) {
                     db.run(`DELETE FROM artwork_materials_link WHERE artwork_id=?`, [id], () => {
                         const ids = Array.isArray(data.material_ids) ? data.material_ids : String(data.material_ids).split(',').filter(Boolean);
@@ -321,7 +265,6 @@ class ArtworkDAO {
             db.run(sql, params, function(err) {
                 if (err) return reject(err);
 
-                // 👇 ЛОГІКА 2: Автоматичне видалення з колекцій при зміні статусу
                 if (status !== 'FINISHED') {
                     console.log(`Artwork ${id} status changed to ${status}. Removing from collections...`);
                     db.run(`DELETE FROM collection_items WHERE artwork_id = ?`, [id], (delErr) => {

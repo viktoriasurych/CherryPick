@@ -1,7 +1,6 @@
 const db = require('../config/db');
 
 class StatsDAO {
-    // 1. Глобальні перегляди (без змін)
     getGlobalImpact(userId) {
         return new Promise((resolve, reject) => {
             const sql = `
@@ -16,7 +15,6 @@ class StatsDAO {
         });
     }
 
-    // 2. Рік реєстрації (без змін)
     getRegistrationYear(userId) {
         return new Promise((resolve, reject) => {
             const sql = `SELECT CAST(strftime('%Y', created_at) AS INTEGER) as reg_year FROM users WHERE id = ?`;
@@ -27,7 +25,6 @@ class StatsDAO {
         });
     }
 
-    // 3. Рік початку (без змін)
     getStartYear(userId) {
         return new Promise((resolve, reject) => {
             const sql = `SELECT MIN(COALESCE(started_year, CAST(strftime('%Y', created_date) AS INTEGER))) as min_year FROM artworks WHERE user_id = ?`;
@@ -38,13 +35,11 @@ class StatsDAO {
         });
     }
 
-    // 4. Загальні показники (ВИПРАВЛЕНО: s.created_at замість s.start_time)
     getTotals(userId, year = null) {
         return new Promise((resolve, reject) => {
             const params = [userId, userId, userId];
             const artYearFilter = year ? `AND started_year = ${Number(year)}` : "";
             
-            // 👇 ТУТ ЗМІНИЛИ: s.created_at
             const sessYearFilter = year ? `AND strftime('%Y', s.created_at) = '${year}'` : "";
             
             const colYearFilter = year ? `AND strftime('%Y', created_at) = '${year}'` : "";
@@ -63,7 +58,6 @@ class StatsDAO {
         });
     }
 
-    // 5. Розподіл (Діаграми) (без змін, тут все ок)
     getDistributions(userId, year = null) {
         return new Promise((resolve, reject) => {
             const params = [userId];
@@ -94,16 +88,10 @@ class StatsDAO {
         });
     }
 
-    // 6. Часові патерни (ВИПРАВЛЕНО: s.created_at замість s.start_time)
     getTimePatterns(userId, year = null) {
         return new Promise((resolve, reject) => {
             const params = [userId];
-            // 👇 ТУТ ЗМІНИЛИ: s.created_at
             const yearFilter = year ? ` AND strftime('%Y', s.created_at) = '${year}'` : "";
-
-            // Увага: s.created_at показує, коли ти *почала* малювати цю сесію.
-            // s.end_time показує, коли *закінчила*.
-            // Зазвичай для графіків "Коли я малюю?" краще брати created_at (початок).
 
             const queries = {
                 days: `
@@ -140,7 +128,6 @@ class StatsDAO {
         });
     }
 
-    // 7. Heatmap (ВИПРАВЛЕНО: s.created_at)
     getDailyActivity(userId, year) {
         return new Promise((resolve, reject) => {
             const sql = `
@@ -156,7 +143,6 @@ class StatsDAO {
         });
     }
 
-    // 8. Стрік (ВИПРАВЛЕНО: s.created_at)
     getAllActivityDates(userId) {
         return new Promise((resolve, reject) => {
             const sql = `

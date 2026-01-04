@@ -1,21 +1,18 @@
 const jwt = require('jsonwebtoken');
 const collectionService = require('../services/collectionService');
 const viewStatsService = require('../services/viewStatsService');
-const { validate } = require('../utils/validation'); // 👇 Імпорт
+const { validate } = require('../utils/validation');
 
-// 👇 ВАЖЛИВО: Цей ключ має бути ІДЕНТИЧНИМ тому, що в authMiddleware.js
-// Краще перевір, що написано у твоєму middleware і встав сюди те саме.
 const secret = process.env.JWT_SECRET || 'fallback_secret';
+
 class CollectionController {
     
     async create(req, res) {
         try {
-            // 👇 Перевірка
             const errors = validate.collection(req.body);
             if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
 
             const userId = req.user.id;
-            // Додали is_public
             const { title, description, type, is_public } = req.body; 
             
             if (!['MOODBOARD', 'SERIES', 'EXHIBITION'].includes(type)) {
@@ -34,9 +31,6 @@ class CollectionController {
 
     async getPublic(req, res) {
         try {
-            // 👇 ВИПРАВЛЕННЯ:
-            // Якщо прийшов параметр ?userId=5, беремо його.
-            // Якщо ні — беремо поточного юзера (req.user.id)
             const userId = req.query.userId || req.user.id; 
             
             const collections = await collectionService.getPublicCollections(userId);
@@ -112,33 +106,27 @@ class CollectionController {
             const collectionId = req.params.id;
             let userId = null;
 
-            // Спроба дістати юзера (для is_saved і перевірки приватності)
             try {
                 const authHeader = req.headers.authorization;
                 if (authHeader) {
                     const token = authHeader.split(' ')[1];
                     if (token) {
-                        // 👇 ВАЖЛИВО: Використовуємо ту ж бібліотеку і ключ
                         const decoded = jwt.verify(token, secret);
                         userId = decoded.id;
                     }
                 }
             } catch (e) {
-                // Ігноруємо помилки токена (це просто гість)
                 console.log("Гість переглядає колекцію");
             }
 
-            // Шукаємо колекцію
             const collection = await collectionService.getCollectionDetails(collectionId, userId);
             
             if (!collection) {
                 return res.status(404).json({ message: "Колекцію не знайдено (або вона приватна)" });
             }
 
-            // Статистика
             try {
                 const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-                // Не чекаємо (await), хай записується фоном
                 viewStatsService.recordView(collectionId, userId, ip).catch(() => {});
                 
                 const views = await viewStatsService.getViewsCount(collectionId);
@@ -152,11 +140,9 @@ class CollectionController {
             res.status(500).json({ message: e.message });
         }
     }
-    // 👇 ОСЬ ТУТ БУЛА ПОМИЛКА:
-    // Ми змінили collectionDAO.update -> collectionService.updateCollection
+
     async update(req, res) {
         try {
-            // 👇 Перевірка
             const errors = validate.collection(req.body);
             if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
 
@@ -168,8 +154,6 @@ class CollectionController {
         }
     }
 
-    // 👇 І ТУТ ТЕЖ:
-    // Ми змінили collectionDAO.updateItem -> collectionService.updateCollectionItem
     async updateItem(req, res) {
         try {
             await collectionService.updateCollectionItem(req.params.itemId, req.body);
@@ -179,8 +163,6 @@ class CollectionController {
             res.status(500).json({message: e.message}); 
         }
     }
-
-    // ...
 
     // PUT /api/collections/:id/batch
     async updateBatch(req, res) {
@@ -210,7 +192,6 @@ class CollectionController {
 
     async reorder(req, res) {
         try {
-            // req.body.items = [{id: 1}, {id: 5}, ...]
             await collectionService.reorderCollections(req.body.items);
             res.json({ message: "Порядок збережено" });
         } catch(e) { res.status(500).json({message: e.message}); }

@@ -54,23 +54,16 @@ class SessionService {
     async stopSession(userId, sessionId, noteData, manualDuration, addToGallery) { 
         const session = await this.getCurrentSession(userId);
         if (!session) throw new Error("Немає активної сесії");
-
-        // 👇 ВАЖЛИВА ПЕРЕВІРКА: 
-        // Переконуємось, що ми зупиняємо саме ту сесію, яку бачить клієнт.
-        // Це захищає від багів, коли клієнт думає про одну сесію, а сервер про іншу.
         if (sessionId && parseInt(sessionId) !== session.id) {
             throw new Error("Помилка синхронізації: ID сесії не співпадає.");
         }
 
-        // 1. Час
         const finalDuration = manualDuration !== null && manualDuration !== undefined
             ? manualDuration 
             : session.current_total_seconds;
         
-        // 2. Стоп в БД
         await sessionDAO.stop(session.id, finalDuration);
 
-        // 3. Нотатка (історія)
         const noteContent = noteData?.content || '';
         const photoPath = noteData?.photo_path || null;
 
@@ -78,7 +71,6 @@ class SessionService {
             await sessionDAO.createNote(session.id, noteContent, photoPath);
         }
 
-        // 4. Галерея
         if (photoPath && session.artwork_id && addToGallery) {
             const exists = await artworkDAO.checkGalleryImageExists(session.artwork_id, photoPath);
             if (!exists) {
@@ -93,7 +85,6 @@ class SessionService {
         return await sessionDAO.getByArtworkId(artworkId); 
     }
 
-    // 👇 НОВИЙ МЕТОД
     async discardSession(userId) {
         const session = await sessionDAO.findActive(userId);
         if (session) {

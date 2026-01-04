@@ -1,5 +1,5 @@
 const dictionaryService = require('../services/dictionaryService');
-const { validate } = require('../utils/validation'); // 👇 1. Імпорт
+const { validate } = require('../utils/validation');
 
 class DictionaryController {
     
@@ -19,7 +19,6 @@ class DictionaryController {
     // POST /api/dict/:type
     async create(req, res) {
         try {
-            // 👇 2. ВАЛІДАЦІЯ
             const errors = validate.dictionary(req.body);
             if (errors.length > 0) return res.status(400).json({ message: errors.join('. ') });
 
@@ -39,7 +38,6 @@ class DictionaryController {
         }
     }
 
-    // DELETE /api/dict/:type/:id
     async delete(req, res) {
         try {
             const userId = req.user.id;
@@ -48,7 +46,7 @@ class DictionaryController {
             await dictionaryService.delete(type, id, userId);
             res.json({ message: "Deleted" });
         } catch (e) {
-            res.status(400).json({ message: e.message }); // 400, бо це помилка логіки (не можна видаляти чуже)
+            res.status(400).json({ message: e.message });
         }
     }
 }

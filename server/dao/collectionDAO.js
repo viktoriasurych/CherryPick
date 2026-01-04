@@ -2,10 +2,8 @@ const db = require('../config/db');
 
 class CollectionDAO {
 
-    // 1. Створити
     create(userId, data) {
         return new Promise((resolve, reject) => {
-            // Конвертуємо в 1 або 0
             const isPublic = data.is_public ? 1 : 0;
 
             const sql = `INSERT INTO collections (user_id, title, description, type, is_public) VALUES (?, ?, ?, ?, ?)`;
@@ -22,12 +20,10 @@ class CollectionDAO {
         });
     }
 
-    // 2. Оновити (окремий метод)
     update(id, userId, data) {
         return new Promise((resolve, reject) => {
             const isPublic = data.is_public ? 1 : 0;
             
-            // 👇 ДОДАЛИ is_public = ?
             const sql = `UPDATE collections SET title = ?, description = ?, is_public = ? WHERE id = ? AND user_id = ?`;
             db.run(sql, [data.title, data.description, isPublic, id, userId], function(err) {
                 if(err) return reject(err);
@@ -36,27 +32,21 @@ class CollectionDAO {
         });
     }
 
-    // 3. Batch Update (Збереження всього з редактора)
     async updateBatch(collectionId, userId, metaData, itemsData) {
         return new Promise((resolve, reject) => {
             db.serialize(() => {
                 db.run('BEGIN TRANSACTION');
 
-                // 👇 ТУТ БУЛА ПОМИЛКА. ДОДАЄМО is_public
                 const isPublic = metaData.is_public ? 1 : 0;
                 
                 const sqlMeta = `UPDATE collections SET title = ?, description = ?, is_public = ? WHERE id = ? AND user_id = ?`;
                 
-                // Передаємо isPublic у масив параметрів
                 db.run(sqlMeta, [metaData.title, metaData.description, isPublic, collectionId, userId], function(err) {
                     if (err) {
                         console.error("Помилка оновлення метаданих:", err);
-                        // Продовжуємо, але транзакція може бути пошкоджена.
-                        // В ідеалі тут треба rollback, але в serialize це складно.
                     }
                 });
 
-                // 2. Оновлюємо елементи (залишається без змін)
                 const sqlItem = `UPDATE collection_items SET sort_order = ?, layout_type = ?, context_description = ? WHERE id = ?`;
                 const stmt = db.prepare(sqlItem);
 
@@ -74,7 +64,6 @@ class CollectionDAO {
         });
     }
 
-    // Отримати ТІЛЬКИ публічні колекції (для профілю)
     getPublic(userId) {
         return new Promise((resolve, reject) => {
             const sql = `
@@ -121,7 +110,7 @@ class CollectionDAO {
                 LEFT JOIN collection_items ci ON c.id = ci.collection_id 
                 WHERE c.user_id = ? 
                 GROUP BY c.id 
-                ORDER BY c.sort_order ASC, c.created_at DESC -- 👈 ОСЬ ТУТ КЛЮЧОВА ЗМІНА
+                ORDER BY c.sort_order ASC, c.created_at DESC
             `;
             
             db.all(sql, [userId], (err, rows) => {
@@ -131,16 +120,12 @@ class CollectionDAO {
         });
     }
 
-   // 👇 ОНОВЛЕНИЙ МЕТОД getById (Виправлено для гостей)
    getById(id, currentUserId = null) {
     return new Promise((resolve, reject) => {
-        // Формуємо частину запиту про is_saved динамічно
-        // Якщо currentUserId є — додаємо підзапит і параметр
-        // Якщо немає — просто повертаємо 0 (false)
         
         const isSavedQuery = currentUserId 
             ? `, (SELECT 1 FROM saved_collections WHERE user_id = ? AND collection_id = c.id) as is_saved`
-            : `, 0 as is_saved`; // Для гостя завжди false
+            : `, 0 as is_saved`;
 
         const sql = `
             SELECT 
@@ -155,17 +140,13 @@ class CollectionDAO {
             WHERE c.id = ?
         `;
         
-        // Якщо є currentUserId, параметри: [userId, collectionId]
-        // Якщо немає, параметри: [collectionId]
-        // Порядок важливий! userId йде першим, бо він вставляється в ${isSavedQuery} перед WHERE c.id = ?
         const params = currentUserId ? [currentUserId, id] : [id];
 
         db.get(sql, params, (err, row) => {
             if (err) return reject(err);
             if (row) {
-                // Конвертуємо 1/0 в true/false
                 row.is_saved = !!row.is_saved;
-                row.is_public = !!row.is_public; // Також корисно
+                row.is_public = !!row.is_public;
             }
             resolve(row);
         });
@@ -173,7 +154,6 @@ class CollectionDAO {
 
 }
 
-    // Видалити
     delete(id, userId) {
         return new Promise((resolve, reject) => {
             const sql = `DELETE FROM collections WHERE id = ? AND user_id = ?`;
@@ -184,7 +164,6 @@ class CollectionDAO {
         });
     }
 
-    // Додати елемент
     addItem(collectionId, artworkId) {
         return new Promise((resolve, reject) => {
             const sql = `INSERT OR IGNORE INTO collection_items (collection_id, artwork_id) VALUES (?, ?)`;
@@ -195,7 +174,6 @@ class CollectionDAO {
         });
     }
 
-    // Видалити елемент
     removeItem(collectionId, artworkId) {
         return new Promise((resolve, reject) => {
             const sql = `DELETE FROM collection_items WHERE collection_id = ? AND artwork_id = ?`;
@@ -206,7 +184,6 @@ class CollectionDAO {
         });
     }
 
-    // Отримати список ID колекцій для картини
     getCollectionsByArtwork(artworkId, userId) {
         return new Promise((resolve, reject) => {
             const sql = `
@@ -222,16 +199,14 @@ class CollectionDAO {
         });
     }
 
-    // Отримати елементи колекції
-   // Отримати елементи колекції (ВИПРАВЛЕНО: Додано Join стилів і жанрів)
    getCollectionItems(collectionId) {
     return new Promise((resolve, reject) => {
         const sql = `
             SELECT 
                 ci.id as link_id,
                 a.*, 
-                s.name as style_name,  -- 👈 Додано
-                g.name as genre_name,  -- 👈 Додано
+                s.name as style_name,
+                g.name as genre_name,  
                 
                 -- Матеріали теж треба, якщо ми їх виводимо!
                 (SELECT GROUP_CONCAT(am.name, ', ') 
@@ -244,8 +219,8 @@ class CollectionDAO {
                 ci.context_description
             FROM collection_items ci
             JOIN artworks a ON ci.artwork_id = a.id
-            LEFT JOIN art_styles s ON a.style_id = s.id -- 👈 Додано
-            LEFT JOIN art_genres g ON a.genre_id = g.id -- 👈 Додано
+            LEFT JOIN art_styles s ON a.style_id = s.id 
+            LEFT JOIN art_genres g ON a.genre_id = g.id
             WHERE ci.collection_id = ?
             ORDER BY ci.sort_order ASC, ci.created_at DESC
         `;
@@ -256,7 +231,6 @@ class CollectionDAO {
     });
 }
 
-    // Оновити елемент
     updateItem(itemId, data) {
         return new Promise((resolve, reject) => {
             const fields = [];
@@ -287,7 +261,6 @@ class CollectionDAO {
         });
     }
 
-    // Оновити обкладинку
     updateCover(id, userId, imagePath) {
         return new Promise((resolve, reject) => {
             const sql = `UPDATE collections SET cover_image = ? WHERE id = ? AND user_id = ?`;
@@ -316,7 +289,7 @@ class CollectionDAO {
                 LEFT JOIN collection_items ci ON c.id = ci.collection_id 
                 WHERE c.user_id = ? AND c.is_public = 1 
                 GROUP BY c.id 
-                ORDER BY c.sort_order ASC, c.created_at DESC -- 👈 І ТУТ ТЕЖ
+                ORDER BY c.sort_order ASC, c.created_at DESC
             `;
             
             db.all(sql, [userId], (err, rows) => {
@@ -326,7 +299,6 @@ class CollectionDAO {
         });
     }
 
-    // 👇 3. РЕАЛІЗУЄМО ЗБЕРЕЖЕННЯ ПОРЯДКУ
     updateCollectionsOrder(items) {
         return new Promise((resolve, reject) => {
             db.serialize(() => {
@@ -335,9 +307,7 @@ class CollectionDAO {
                 const sql = 'UPDATE collections SET sort_order = ? WHERE id = ?';
                 const stmt = db.prepare(sql);
 
-                // items - це масив [{id: 1}, {id: 5}, ...], який приходить у новому порядку
                 items.forEach((item, index) => {
-                    // index стає новим sort_order (0, 1, 2...)
                     stmt.run(index, item.id);
                 });
 
@@ -366,9 +336,9 @@ class CollectionDAO {
                     (SELECT COUNT(*) FROM collection_items WHERE collection_id = c.id) as item_count
                 FROM collections c
                 JOIN users u ON c.user_id = u.id
-                WHERE c.is_public = 1              -- 👈 ОСЬ ТУТ: Тільки публічні!
-                  AND c.title LIKE ?               -- Пошук за назвою
-                LIMIT 5                            -- Обмеження, щоб не перевантажувати список
+                WHERE c.is_public = 1
+                  AND c.title LIKE ?
+                LIMIT 5
             `;
             db.all(sql, [`%${query}%`], (err, rows) => {
                 if (err) return reject(err);
@@ -387,7 +357,6 @@ class CollectionDAO {
         });
     }
 
-    // Прибрати зі збережених
     unsave(userId, collectionId) {
         return new Promise((resolve, reject) => {
             const sql = `DELETE FROM saved_collections WHERE user_id = ? AND collection_id = ?`;
@@ -398,13 +367,10 @@ class CollectionDAO {
         });
     }
 
-    // Отримати список збережених (Для сторінки "Збережене")
-    // Отримати список збережених (Для сторінки "Збережене")
     getSaved(userId) {
         return new Promise((resolve, reject) => {
             const sql = `
                 SELECT 
-                    -- 👇 Беремо ID з таблиці збережених, бо c.id може бути NULL (якщо видалено)
                     sc.collection_id as id, 
                     sc.saved_at,
                     
@@ -428,7 +394,6 @@ class CollectionDAO {
                         LIMIT 1
                     ) as latest_image
                 FROM saved_collections sc
-                -- 👇 LEFT JOIN важливий! Він поверне рядок, навіть якщо колекції вже немає
                 LEFT JOIN collections c ON sc.collection_id = c.id
                 LEFT JOIN users u ON c.user_id = u.id
                 LEFT JOIN collection_items ci ON c.id = ci.collection_id
@@ -439,11 +404,10 @@ class CollectionDAO {
             db.all(sql, [userId], (err, rows) => {
                 if (err) return reject(err);
                 
-                // Конвертуємо is_public (SQLite повертає 1/0 або NULL)
                 const processed = rows.map(r => ({
                     ...r,
-                    is_public: r.is_public === 1, // true, false або false (якщо null)
-                    is_deleted: !r.title // Якщо немає назви - значить запису в collections немає
+                    is_public: r.is_public === 1,
+                    is_deleted: !r.title
                 }));
                 
                 resolve(processed);
