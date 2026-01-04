@@ -15,7 +15,7 @@ const FilterAccordion = ({ title, children, count = 0, isOpenDefault = false }) 
                         {title}
                     </span>
                     {count > 0 && (
-                        <span className="bg-blood text-white text-[9px] px-1.5 py-0.5 rounded-sm font-bold min-w-[20px] text-center">
+                        <span className="bg-blood text-white text-[9px] px-1.5 py-0.5 rounded-sm font-bold min-w-5 text-center">
                             {count}
                         </span>
                     )}
@@ -24,13 +24,11 @@ const FilterAccordion = ({ title, children, count = 0, isOpenDefault = false }) 
                     className={`w-4 h-4 text-muted transition-transform duration-300 group-hover:text-blood ${isOpen ? 'rotate-180' : ''}`} 
                 />
             </button>
-
-            {/* 👇 ВИПРАВЛЕНО ТУТ */}
             <div 
                 className={`
                     transition-all duration-300 ease-in-out
                     ${isOpen 
-                        ? 'max-h-[1000px] opacity-100 mt-4 overflow-visible' // 👈 overflow-visible дозволяє списку випадати
+                        ? 'max-h-250 opacity-100 mt-4 overflow-visible'
                         : 'max-h-0 opacity-0 overflow-hidden'} // 👈 overflow-hidden ховає контент при закритті
                 `}
             >

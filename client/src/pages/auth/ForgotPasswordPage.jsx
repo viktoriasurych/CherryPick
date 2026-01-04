@@ -5,27 +5,36 @@ import api from '../../api/axios';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import AuthLayout from '../../components/layouts/AuthLayout';
+import PageTitle from '../../components/shared/PageTitle'; 
+import RULES from '../../config/validationRules.json'; 
 
 const ForgotPasswordPage = () => {
     const [email, setEmail] = useState('');
-    const [status, setStatus] = useState({ type: '', message: '' }); 
+    
+    const [error, setError] = useState(''); 
+    const [successMsg, setSuccessMsg] = useState(''); 
+    
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setStatus({ type: '', message: '' });
+        setError('');
+        setSuccessMsg('');
 
         try {
+            const emailRegex = new RegExp(RULES.USER.EMAIL.REGEX);
+            if (!emailRegex.test(email)) {
+                throw new Error("Invalid email format");
+            }
+
             await api.post('/auth/forgot-password', { email });
-            // 👇 ТУТ БУЛО: res.data.message
-            // 👇 СТАЛО: Пишемо свій текст англійською, ігноруючи сервер
-            setStatus({ type: 'success', message: "SCROLL DISPATCHED (IF EMAIL EXISTS)" });
-        } catch (e) {
-            setStatus({ 
-                type: 'error', 
-                message: "User not found or connection failed." 
-            });
+            
+            setSuccessMsg("SCROLL DISPATCHED (IF EMAIL EXISTS)");
+            
+        } catch (err) {
+            const msg = err.response?.data?.message || err.message || "Connection failed";
+            setError(msg === "Invalid email format" ? msg : "User not found or connection failed");
         } finally {
             setLoading(false);
         }
@@ -45,27 +54,26 @@ const ForgotPasswordPage = () => {
             subtitle="Summon Reset Link"
             footer={footerContent}
         >
-            {status.message && (
-                <div className={`
-                    mb-6 p-4 rounded-sm text-[10px] text-center border font-mono uppercase tracking-widest shadow-lg
-                    ${status.type === 'success' 
-                        // 👇 УСПІХ: Темно-червоний фон, світлий текст (замість зеленого)
-                        ? 'bg-blood/20 text-bone border-blood shadow-blood/10' 
-                        // 👇 ПОМИЛКА: Майже чорний фон, яскраво-червоний текст
-                        : 'bg-void text-blood border-blood/50'}
-                `}>
-                    {status.message}
+            <PageTitle title="Recovery" />
+
+            {successMsg && (
+                <div className="mb-6 p-4 rounded-sm text-[10px] text-center border font-mono uppercase tracking-widest shadow-lg transition-all duration-300 bg-blood/20 text-bone border-blood shadow-blood/10">
+                    {successMsg}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                 <Input 
                     label="Email Address" 
                     type="email"
                     placeholder="art@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (error) setError('');
+                    }}
                     required
+                    error={error}
                 />
 
                 <div className="pt-2">

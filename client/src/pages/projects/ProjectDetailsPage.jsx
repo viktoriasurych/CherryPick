@@ -8,20 +8,20 @@ import {
 import artworkService from '../../services/artworkService';
 import sessionService from '../../services/sessionService';
 import collectionService from '../../services/collectionService';
-
 import AddToCollectionModal from '../../components/collections/AddToCollectionModal';
 import Tabs from '../../components/ui/Tabs';
 import AtmosphereImage from '../../components/ui/AtmosphereImage';
-import BackButton from '../../components/ui/BackButton';
 import LoadMoreTrigger from '../../components/ui/LoadMoreTrigger';
 import ArtworkInfoPanel from '../../components/projects/ArtworkInfoPanel';
 import SessionHistoryList from '../../components/session/SessionHistoryList';
 import ConfirmModal from '../../components/shared/ConfirmModal';
 import { ART_STATUSES } from '../../config/constants';
+import Loader from '../../components/ui/Loader'; 
+import PageTitle from '../../components/shared/PageTitle'; 
+import BackButton from '../../components/ui/BackButton';
 
 const ITEMS_PER_LOAD = 5; 
 
-// 👇 Внутрішній компонент для статусу (щоб не було синього кольору)
 const StatusDropdown = ({ value, onChange, options }) => {
     const [isOpen, setIsOpen] = useState(false);
     const wrapperRef = useRef(null);
@@ -41,14 +41,14 @@ const StatusDropdown = ({ value, onChange, options }) => {
             <div className="text-[9px] font-bold text-muted uppercase tracking-widest mb-1">Status</div>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-between gap-2 w-[160px] bg-void border border-border px-3 py-2 rounded-sm text-xs font-bold text-bone uppercase tracking-wider hover:border-blood transition-colors"
+                className="flex items-center justify-between gap-2 w-40 bg-void border border-border px-3 py-2 rounded-sm text-xs font-bold text-bone uppercase tracking-wider hover:border-blood transition-colors"
             >
                 <span className="truncate">{currentLabel}</span>
                 <ChevronDownIcon className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-1 w-[160px] bg-ash border border-border rounded-sm shadow-xl z-50 overflow-hidden">
+                <div className="absolute top-full right-0 mt-1 w-40 bg-ash border border-border rounded-sm shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                     {Object.entries(options).map(([key, label]) => (
                         <div 
                             key={key}
@@ -66,6 +66,7 @@ const StatusDropdown = ({ value, onChange, options }) => {
         </div>
     );
 };
+
 
 const ProjectDetailsPage = () => {
     const { id } = useParams();
@@ -189,7 +190,8 @@ const ProjectDetailsPage = () => {
         return h > 0 ? `${h}h ${m}m` : `${m}m`;
     };
 
-    if (loading) return <div className="text-center text-muted mt-20 font-mono text-xs uppercase tracking-widest animate-pulse">Summoning data...</div>;
+    if (loading) return <Loader />;
+    
     if (!artwork) return null;
 
     const allImages = [];
@@ -215,31 +217,30 @@ const ProjectDetailsPage = () => {
     const isActiveStatus = ['PLANNED', 'SKETCH', 'IN_PROGRESS'].includes(artwork.status);
 
     return (
-        // 👇 ЗМЕНШИВ ШИРИНУ: max-w-6xl (було 7xl)
         <div className="p-4 md:p-8 relative min-h-screen max-w-6xl mx-auto font-mono">
-            
+
+            <PageTitle title={artwork.title} />
+
             <div className="mb-8">
-                <BackButton label="Archive" fallbackPath="/projects" />
+                <BackButton label="Back" fallbackPath="/projects" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 
-                {/* === ЛІВА КОЛОНКА (Фото) === */}
+                {/* головні фото*/}
                 <div className="lg:col-span-7 space-y-6">
-                    {/* Головне фото - Чітке, без блюру, рамка */}
-                    <div className="relative aspect-[4/3] rounded-sm overflow-hidden bg-ash border border-border shadow-2xl">
+                    <div className="relative aspect-4/3 rounded-sm overflow-hidden bg-ash border border-border shadow-2xl">
                         <AtmosphereImage 
                             src={artworkService.getImageUrl(currentSrc)} 
                             alt="Selected Artwork" 
-                            className="w-full h-full object-contain" // object-contain щоб бачити всю картину
+                            className="w-full h-full object-contain"
                         />
                     </div>
 
-                    {/* Стрічка мініатюр */}
                     <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                         <div 
                             onClick={() => fileInputRef.current.click()}
-                            className="min-w-[70px] h-[90px] bg-void border border-dashed border-border hover:border-blood rounded-sm flex flex-col items-center justify-center text-muted hover:text-blood transition cursor-pointer group shrink-0"
+                            className="min-w-17.5 h-22.5 bg-void border border-dashed border-border hover:border-blood rounded-sm flex flex-col items-center justify-center text-muted hover:text-blood transition cursor-pointer group shrink-0"
                         >
                             <span className="text-xl group-hover:scale-110 transition">+</span>
                             <input type="file" ref={fileInputRef} onChange={handleGalleryUpload} className="hidden" />
@@ -251,10 +252,10 @@ const ProjectDetailsPage = () => {
                                 <div 
                                     key={img.id} 
                                     onClick={() => setSelectedImage(img.src)} 
-                                    className="min-w-[70px] w-[70px] flex flex-col gap-1 cursor-pointer group shrink-0"
+                                    className="min-w-17.5 w-17.5 flex flex-col gap-1 cursor-pointer group shrink-0"
                                 >
                                     <div className={`
-                                        h-[70px] w-full rounded-sm overflow-hidden border transition-all relative bg-black
+                                        h-17.5 w-full rounded-sm overflow-hidden border transition-all relative bg-black
                                         ${isSelected ? 'border-blood ring-1 ring-blood' : 'border-transparent opacity-60 hover:opacity-100'}
                                     `}>
                                         <img src={artworkService.getImageUrl(img.src)} alt={img.type} className="w-full h-full object-cover" />
@@ -268,16 +269,13 @@ const ProjectDetailsPage = () => {
                     </div>
                 </div>
 
-                {/* === ПРАВА КОЛОНКА (Інфо) === */}
-                <div className="lg:col-span-5 flex flex-col h-full min-w-0"> {/* min-w-0 важливо для truncate */}
+                {/* інфа */}
+                <div className="lg:col-span-5 flex flex-col h-full min-w-0">
                     
-                    {/* Хедер: Назва + Статус */}
                     <div className="mb-8 pb-6 border-b border-border/50">
-                        
-                        {/* Верхній рядок: Назва + Edit */}
                         <div className="flex justify-between items-start gap-4 mb-6">
-                            <div className="flex-1 min-w-0"> {/* Обгортка для переносу слів */}
-                                <h1 className="text-2xl md:text-3xl font-bold text-bone font-gothic tracking-wide break-words leading-tight">
+                            <div className="flex-1 min-w-0">
+                                <h1 className="text-2xl md:text-3xl font-bold text-bone font-gothic tracking-wide wrap-break-word leading-tight">
                                     {artwork.title}
                                 </h1>
                             </div>
@@ -290,9 +288,7 @@ const ProjectDetailsPage = () => {
                             </Link>
                         </div>
 
-                        {/* Нижній рядок: Статус + Час */}
                         <div className="flex items-end justify-between gap-4 flex-wrap">
-                            {/* Кастомний селект (без синього) */}
                             <StatusDropdown 
                                 value={artwork.status} 
                                 onChange={onStatusSelectChange} 
@@ -308,7 +304,6 @@ const ProjectDetailsPage = () => {
                         </div>
                     </div>
 
-                    {/* Кнопка СЕСІЇ */}
                     {isActiveStatus ? (
                         <Link 
                             to={`/projects/${id}/session`} 
@@ -323,8 +318,7 @@ const ProjectDetailsPage = () => {
                         >
                             <div className="relative px-6 py-4 flex items-center justify-between">
                                 <div className="flex flex-col items-start">
-                                    {/* 👇 Змінив текст на більш канонічний */}
-                                    <span className="text-lg font-bold font-mono tracking-[0.1em] uppercase">Enter Session</span>
+                                    <span className="text-lg font-bold font-mono tracking-widest uppercase">Enter Session</span>
                                 </div>
                                 <PlayIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
                             </div>
@@ -343,21 +337,18 @@ const ProjectDetailsPage = () => {
                         </div>
                     )}
                     
-                    {/* Таби */}
                     <div className="mb-6">
                         <Tabs items={PROJECT_TABS} activeId={activeTab} onChange={setActiveTab} />
                     </div>
 
-                    {/* Контент табів */}
-                    <div className="flex-1 animate-in fade-in slide-in-from-right-4 duration-300 min-h-[200px]">
-                        
+                    <div className="flex-1 animate-in fade-in slide-in-from-right-4 duration-300 min-h-50">
                         {activeTab === 'INFO' && (
                             <ArtworkInfoPanel artwork={artwork} showEditButton={false} />
                         )}
 
                         {activeTab === 'HISTORY' && (
                             <div className="h-full flex flex-col">
-                                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[500px]">
+                                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-125">
                                     <SessionHistoryList history={visibleHistory} onImageClick={handleHistoryImageClick} />
                                     <LoadMoreTrigger hasMore={hasMoreHistory} onLoadMore={handleLoadMoreHistory} totalLoaded={visibleHistory.length} totalItems={fullHistory.length} />
                                 </div>

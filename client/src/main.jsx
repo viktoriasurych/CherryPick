@@ -5,13 +5,11 @@ import './index.css'
 import { BrowserRouter } from 'react-router-dom' 
 import { AuthProvider } from './hooks/useAuth.jsx'
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { HelmetProvider } from 'react-helmet-async'; // 👇 1. Імпорт
+import { HelmetProvider } from 'react-helmet-async';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      
-      {/* 👇 2. Обгортка */}
       <HelmetProvider>
         <BrowserRouter>
           <AuthProvider>
@@ -19,7 +17,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           </AuthProvider>
         </BrowserRouter>
       </HelmetProvider>
-
     </GoogleOAuthProvider>
   </React.StrictMode>,
 )

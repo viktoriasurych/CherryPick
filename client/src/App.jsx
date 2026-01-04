@@ -26,14 +26,13 @@ import SessionPage from './pages/session/SessionPage';
 import ProtectedRoute from './components/shared/ProtectedRoute'; 
 import Layout from './components/layouts/Layout';
 
+import NotFoundPage from './pages/NotFoundPage';
+
 function App() {
   const { user } = useAuth();
 
   return (
     <Routes>
-
-      {/* --- ПУБЛІЧНІ РОУТИ --- */}
-
       <Route 
         path="/" 
         element={user ? <Navigate to="/projects" replace /> : <HomePage />} 
@@ -53,8 +52,6 @@ function App() {
         path="/reset-password" 
         element={user ? <Navigate to="/projects" replace /> : <ResetPasswordPage />} 
       />
-
-      {/* Публічний профіль (доступний без входу, але в Layout) */}
       <Route 
         path="/user/:id"
         element={
@@ -64,7 +61,6 @@ function App() {
         } 
       />
 
-      {/* Публічна колекція */}
       <Route 
         path="/collections/:id"
         element={
@@ -74,11 +70,6 @@ function App() {
         } 
       />
 
-
-      {/* --- ПРИВАТНІ РОУТИ --- */}
-
-      {/* 👇 1. ГЛОБАЛЬНИЙ СЕАНС (З меню зліва) */}
-      {/* Без <Layout>, бо там свій повноекранний дизайн */}
       <Route 
         path="/session"
         element={
@@ -89,8 +80,6 @@ function App() {
         } 
       />
 
-      {/* 👇 2. СЕАНС КОНКРЕТНОЇ КАРТИНИ (Старт з проєкту) */}
-      {/* Теж веде на SessionPage, але передає ID в URL */}
       <Route 
         path="/projects/:id/session" 
         element={
@@ -99,8 +88,6 @@ function App() {
             </ProtectedRoute>
         } 
       />
-
-      {/* --- Інші сторінки в Layout --- */}
 
       <Route 
         path="/notes"
@@ -135,7 +122,6 @@ function App() {
         } 
       />
 
-      {/* Проєкти */}
       <Route 
         path="/projects" 
         element={
@@ -180,7 +166,6 @@ function App() {
         } 
       />
 
-      {/* Колекції */}
       <Route 
         path="/saved"
         element={
@@ -224,6 +209,8 @@ function App() {
             </ProtectedRoute>
         } 
       />
+
+<Route path="*" element={<NotFoundPage />} />
       
     </Routes>
   );

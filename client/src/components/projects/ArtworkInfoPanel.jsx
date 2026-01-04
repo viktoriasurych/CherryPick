@@ -3,18 +3,9 @@ import {
     TagIcon, SwatchIcon, PaintBrushIcon, 
     IdentificationIcon
 } from '@heroicons/react/24/outline';
+import { formatFuzzyDate } from '../../utils/formatters';
 
 const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
-    const navigate = useNavigate();
-
-    if (!artwork) return null;
-
-    const goToFilter = (filterKey, id) => {
-        if (!id) return;
-        navigate('/projects', { 
-            state: { applyFilter: { [filterKey]: [id.toString()] } } 
-        });
-    };
 
     const parseList = (idsStr, namesStr) => {
         if (!idsStr || !namesStr) return [];
@@ -27,16 +18,6 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
         }));
     };
 
-    const renderFuzzyDate = (y, m, d) => {
-        if (!y) return '—';
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        let str = `${y}`;
-        if (m) str = `${months[m-1]} ${str}`;
-        if (d) str = `${d}, ${str}`;
-        return str;
-    };
-
-    // 👇 Універсальний "Чіп"
     const MetaChip = ({ label, onClick }) => (
         <span 
             onClick={onClick}
@@ -59,39 +40,33 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
     return (
         <div className="space-y-6 h-full flex flex-col font-mono">
             
-            {/* Опис */}
-            <div className="bg-ash/30 p-6 rounded-sm border border-border/50 shadow-inner min-h-[100px]">
-                <p className="text-bone whitespace-pre-wrap leading-relaxed text-sm break-words opacity-90">
+            <div className="bg-ash/30 p-6 rounded-sm border border-border/50 shadow-inner min-h-25">
+                <p className="text-bone whitespace-pre-wrap leading-relaxed text-sm wrap-break-word opacity-90">
                     {artwork.description || <span className="italic text-muted/30">Silence... No lore recorded.</span>}
                 </p>
             </div>
             
-            {/* 👇 ДАТИ: ВИПРАВЛЕНО НА ДВА РЯДКИ (flex-col) */}
             <div className="grid grid-cols-2 gap-4">
                 
-                {/* Genesis */}
                 <div className="bg-void p-3 rounded-sm border border-border flex flex-col justify-center gap-1">
                     <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Genesis</span>
                     <span className="text-xs font-bold text-bone truncate">
-                        {renderFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day)}
+                        {formatFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day) || '—'}
                     </span>
                 </div>
 
-                {/* Conclusion */}
                 <div className="bg-void p-3 rounded-sm border border-border flex flex-col justify-center gap-1">
                     <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Conclusion</span>
                     <span className={`text-xs font-bold truncate ${artwork.finished_year ? 'text-blood' : 'text-bone'}`}>
-                        {renderFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day)}
+                        {formatFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day) || '—'}
                     </span>
                 </div>
             </div>
 
-            {/* БЛОКИ АТРИБУТІВ */}
+            {/* атрибути */}
             <div className="space-y-4">
-                
-                {/* 1. GENRE & STYLE */}
                 <div className="grid grid-cols-2 gap-4">
-                    {/* Genre */}
+                    {/* жанр */}
                     <div className="bg-ash/20 p-4 rounded-sm border border-border flex flex-col gap-3">
                         <div className="flex items-center gap-2">
                             <IdentificationIcon className="w-4 h-4 text-muted" />
@@ -104,7 +79,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                         </div>
                     </div>
 
-                    {/* Style */}
+                    {/* стиль */}
                     <div className="bg-ash/20 p-4 rounded-sm border border-border flex flex-col gap-3">
                         <div className="flex items-center gap-2">
                             <PaintBrushIcon className="w-4 h-4 text-muted" />
@@ -118,7 +93,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                     </div>
                 </div>
 
-                {/* 2. MATERIALS */}
+                {/* матеріал */}
                 <div className="bg-ash/20 p-4 rounded-sm border border-border flex flex-col gap-3">
                     <div className="flex items-center gap-2">
                         <SwatchIcon className="w-4 h-4 text-muted" />
@@ -137,7 +112,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                     </div>
                 </div>
 
-                {/* 3. TAGS */}
+                {/* теги */}
                 <div className="bg-ash/20 p-4 rounded-sm border border-border flex flex-col gap-3">
                     <div className="flex items-center gap-2">
                         <TagIcon className="w-4 h-4 text-muted" />
@@ -157,7 +132,6 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                 </div>
             </div>
 
-            {/* Кнопка редагування */}
             {showEditButton && (
                 <div className="pt-4 mt-auto">
                     <Link 

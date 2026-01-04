@@ -1,14 +1,13 @@
 import React from 'react';
 
 const Thumbnail = ({ src, alt, size = "md", rounded = "rounded-lg", className = "" }) => {
-  // Розміри
   const sizeClasses = {
     xs: "w-6 h-6",
     sm: "w-10 h-10",
     md: "w-16 h-16",
     lg: "w-24 h-24",
     xl: "w-32 h-32",
-    full: "w-full aspect-square" // Квадрат на всю ширину
+    full: "w-full aspect-square"
   };
 
   return (
@@ -21,7 +20,6 @@ const Thumbnail = ({ src, alt, size = "md", rounded = "rounded-lg", className = 
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center text-slate-700 bg-slate-950">
-            {/* Тут можна іконку-заглушку */}
             ?
         </div>
       )}

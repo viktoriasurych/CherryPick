@@ -5,23 +5,13 @@ import Input from '../ui/Input';
 import DictSelect from '../ui/DictSelect';
 import MultiDictSelect from '../ui/MultiDictSelect';
 import FuzzyDateInput from '../ui/FuzzyDateInput';
+import Select from '../ui/Select'; 
 import EditorLayout from '../layouts/EditorLayout';
-import ConfirmModal from '../shared/ConfirmModal'; // 👈 Імпорт модалки
+import ConfirmModal from '../shared/ConfirmModal'; 
 import artworkService from '../../services/artworkService';
 import { ART_STATUSES } from '../../config/constants';
 
-const getToday = () => {
-    const now = new Date();
-    return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
-};
-
-const isFutureDate = (d) => {
-    if (!d || !d.year) return false;
-    const now = new Date();
-    const checkDate = new Date(d.year, (d.month || 1) - 1, d.day || 1);
-    now.setHours(0, 0, 0, 0);
-    return checkDate > now;
-};
+import { getToday, isFutureDate } from '../../utils/formatters';
 
 const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, gallery = [] }) => {
     const fileInputRef = useRef(null);
@@ -41,9 +31,12 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
     const [pendingFile, setPendingFile] = useState(null); 
     const [hasChanges, setHasChanges] = useState(false);
     const [errors, setErrors] = useState({});
-
-    // Стейт для модалок
     const [modalConfig, setModalConfig] = useState({ isOpen: false, type: null, data: null });
+
+    const statusOptions = Object.entries(ART_STATUSES).map(([value, label]) => ({
+        value,
+        label
+    }));
 
     useEffect(() => {
         if (initialData) {
@@ -104,9 +97,6 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
         onSubmit({ ...formData, image: pendingFile }, deletedGalleryIds);
     };
 
-    // --- ЛОГІКА МОДАЛОК ---
-    
-    // 1. Відкрити модалку видалення ФОТО
     const openDeletePhotoModal = (imgId) => {
         setModalConfig({
             isOpen: true,
@@ -118,7 +108,6 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
         });
     };
 
-    // 2. Відкрити модалку видалення ПРОЄКТУ
     const openDeleteProjectModal = () => {
         setModalConfig({
             isOpen: true,
@@ -129,7 +118,6 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
         });
     };
 
-    // 3. Підтвердження дії
     const handleConfirmModal = () => {
         if (modalConfig.type === 'DELETE_PHOTO') {
             setDeletedGalleryIds(prev => [...prev, modalConfig.data]);
@@ -159,26 +147,31 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
             onSave={handleSubmit}
             actions={onDelete && (
                 <button 
-                    onClick={openDeleteProjectModal} // 👈 Відкриваємо модалку
+                    onClick={openDeleteProjectModal}
                     className="text-blood/40 hover:text-blood text-[10px] uppercase tracking-[0.3em] font-bold transition-all font-mono"
                 >
                     Destroy this Creation
                 </button>
             )}
         >
-            {/* ... ЛІВА КОЛОНКА (без змін) ... */}
-            <div className="space-y-6 lg:col-span-1 font-mono">
+             <div className="space-y-6 lg:col-span-1 font-mono">
                 <div className="bg-ash border border-border p-6 rounded-sm space-y-5 shadow-xl">
                     <h3 className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-2 border-b border-border pb-2">Codex Details</h3>
                     <Input label="Project Title" value={formData.title} onChange={(e) => handleChange('title', e.target.value)} error={errors.title} placeholder="Untitled..."/>
+                    
                     {!isCreateMode && (
                         <div>
                             <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">Status</label>
-                            <select value={formData.status} onChange={(e) => handleChange('status', e.target.value)} className="w-full bg-void border border-border rounded-sm p-2.5 text-bone text-sm outline-none focus:border-blood transition-colors appearance-none cursor-pointer">
-                                {Object.entries(ART_STATUSES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                            </select>
+
+                            <Select 
+                                value={formData.status}
+                                onChange={(val) => handleChange('status', val)}
+                                options={statusOptions}
+                                className="w-full"
+                            />
                         </div>
                     )}
+
                     <FuzzyDateInput label="Genesis Date" value={formData.started} onChange={(val) => handleChange('started', val)} error={errors.started}/>
                     {(formData.status === 'FINISHED' || formData.status === 'DROPPED') && <FuzzyDateInput label="Conclusion Date" value={formData.finished} onChange={(val) => handleChange('finished', val)} error={errors.finished}/>}
                     <div>
@@ -197,7 +190,6 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
                 </div>
             </div>
 
-            {/* ПРАВА КОЛОНКА (без змін, тільки кнопка видалення фото) */}
             <div className="lg:col-span-2 space-y-6 font-mono">
                 <div className="bg-ash border border-border p-6 rounded-sm shadow-xl">
                     <header className="flex justify-between items-center mb-6 border-b border-border pb-2">
@@ -228,7 +220,7 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
                              <h3 className="text-[10px] text-blood font-bold uppercase tracking-[0.2em]">Visual History</h3>
                              <span className="text-muted/40 text-[10px]">({visibleGallery.length})</span>
                         </header>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-100 overflow-y-auto pr-2 custom-scrollbar">
                             {visibleGallery.length === 0 ? (
                                 <p className="text-muted/30 text-[10px] text-center py-10 uppercase tracking-widest">The archives are empty</p>
                             ) : (
@@ -249,7 +241,7 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
                                                 {!isSelected && !img.isVirtual && (
                                                     <button 
                                                         type="button" 
-                                                        onClick={() => openDeletePhotoModal(img.id)} // 👈 ВІДКРИВАЄМО МОДАЛКУ ФОТО
+                                                        onClick={() => openDeletePhotoModal(img.id)}
                                                         className="px-2 bg-void text-muted hover:text-blood border border-border hover:border-blood transition-colors rounded-sm"
                                                     >
                                                         <TrashIcon className="w-4 h-4"/>
@@ -265,7 +257,6 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
                 )}
             </div>
 
-            {/* 👇 МОДАЛКА (ЄДИНА ДЛЯ ВСІХ ДІЙ) */}
             <ConfirmModal 
                 isOpen={modalConfig.isOpen}
                 onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}

@@ -5,6 +5,8 @@ import api from '../../api/axios';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import AuthLayout from '../../components/layouts/AuthLayout';
+import PageTitle from '../../components/shared/PageTitle';
+import RULES from '../../config/validationRules.json';
 
 const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();
@@ -15,18 +17,34 @@ const ResetPasswordPage = () => {
 
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    
+    const [error, setError] = useState(''); 
+    const [generalError, setGeneralError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setGeneralError('');
 
         try {
+            const passRegex = new RegExp(RULES.USER.PASSWORD.REGEX);
+            if (!passRegex.test(password)) {
+                throw new Error(RULES.USER.PASSWORD.ERROR_MSG || "Password is too weak");
+            }
+
             await api.post('/auth/reset-password', { email, token, newPassword: password });
+            
             navigate('/auth'); 
-        } catch (e) {
-            setError(e.response?.data?.message || "Failed to reset password. Try again.");
+
+        } catch (err) {
+            const msg = err.response?.data?.message || err.message || "Failed to reset password.";
+            
+            if (msg.toLowerCase().includes('password') || msg.includes('weak') || msg.includes('8 chars')) {
+                setError(msg);
+            } else {
+                setGeneralError(msg);
+            }
         } finally {
             setLoading(false);
         }
@@ -34,10 +52,23 @@ const ResetPasswordPage = () => {
 
     if (!token || !email) {
         return (
-            <div className="min-h-screen bg-deep flex items-center justify-center font-mono">
-                <div className="text-center p-8 border border-border/30 bg-void rounded-sm shadow-2xl">
-                    <p className="mb-4 text-blood uppercase tracking-widest text-xs font-bold">Invalid or Expired Link</p>
-                    <Link to="/auth" className="text-muted hover:text-bone text-xs underline transition-colors">Return to Safety</Link>
+            <div className="min-h-screen bg-void text-bone flex flex-col items-center justify-center font-mono selection:bg-blood selection:text-white p-4">
+                 <PageTitle title="Error" />
+                <div className="max-w-md w-full text-center p-8 border border-blood/30 bg-ash/10 rounded-sm shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                    <h2 className="text-xl font-gothic text-blood mb-4 tracking-widest uppercase">Link Invalid</h2>
+                    <p className="mb-8 text-muted text-xs leading-relaxed">
+                        This ritual scroll has crumbled to dust.<br/>
+                        The link is either expired or incomplete.
+                    </p>
+                    <Link 
+                        to="/auth" 
+                        className="
+                            inline-block border border-muted/50 text-muted px-6 py-2 text-[10px] uppercase tracking-[0.2em] 
+                            hover:border-blood hover:text-blood transition-all duration-300
+                        "
+                    >
+                        Return to Safety
+                    </Link>
                 </div>
             </div>
         );
@@ -48,22 +79,28 @@ const ResetPasswordPage = () => {
             title="New Secret" 
             subtitle="Forge a new password"
         >
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <PageTitle title="Reset Password" />
+
+            {generalError && (
+                <div className="mb-6 p-3 bg-void border border-blood text-blood text-[10px] text-center font-mono uppercase tracking-wider shadow-lg">
+                    {generalError}
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                 <Input 
                     label="New Password" 
                     type="password"
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error) setError('');
+                        if (generalError) setGeneralError('');
+                    }}
                     required
-                    error={error}
+                    error={error} 
                 />
-
-                {error && !error.toLowerCase().includes('password') && (
-                    <div className="text-blood text-[10px] text-center bg-blood/5 p-2 border border-blood/20 font-mono uppercase tracking-wider">
-                        {error}
-                    </div>
-                )}
 
                 <div className="pt-2">
                     <Button 

@@ -6,11 +6,8 @@ import {
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
+import { formatHeatmapTooltip, formatDuration } from '../../utils/formatters';
 
-// 👇 Перевір, чи правильний шлях до твого форматера
-import { formatHeatmapTooltip } from '../../utils/formatters';
-
-// 👇 Масив назв змінних CSS для Pie Chart
 const CHART_COLOR_VARS = [
     '--color-chart-1',
     '--color-chart-2',
@@ -20,9 +17,7 @@ const CHART_COLOR_VARS = [
     '--color-chart-6',
 ];
 
-// ============================================================================
-// 1. КРУГОВА ДІАГРАМА (PIE CHART)
-// ============================================================================
+// кругові діаграми
 export const MyPieChart = ({ data, nameKey = "name" }) => {
     const validData = data ? data.filter(item => item.name !== 'Не вказано' && item.count > 0) : [];
 
@@ -65,14 +60,14 @@ export const MyPieChart = ({ data, nameKey = "name" }) => {
                 </PieChart>
             </ResponsiveContainer>
             
-            <div className="flex flex-wrap justify-center gap-2 mt-2 overflow-y-auto max-h-[60px] custom-scrollbar px-2">
+            <div className="flex flex-wrap justify-center gap-2 mt-2 overflow-y-auto max-h-15 custom-scrollbar px-2">
                 {validData.map((entry, index) => (
                     <div key={index} className="flex items-center gap-1.5 text-[9px] text-muted font-bold uppercase tracking-wide font-mono">
                         <span 
-                            className="w-2 h-2 rounded-full flex-shrink-0" 
+                            className="w-2 h-2 rounded-full shrink-0" 
                             style={{backgroundColor: `var(${CHART_COLOR_VARS[index % CHART_COLOR_VARS.length]})`}}
                         ></span>
-                        <span className="truncate max-w-[80px]">{entry[nameKey]}</span> 
+                        <span className="truncate max-w-20">{entry[nameKey]}</span> 
                         <span className="text-bone">({entry.count})</span>
                     </div>
                 ))}
@@ -81,9 +76,7 @@ export const MyPieChart = ({ data, nameKey = "name" }) => {
     );
 };
 
-// ============================================================================
-// 2. СТОВПЧАСТА ДІАГРАМА (BAR CHART)
-// ============================================================================
+//стовпчасті
 export const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20, type = "time", unit = "" }) => {
     if (!data || data.length === 0) {
         return <div className="text-muted italic text-xs font-mono opacity-50 flex items-center justify-center h-full">No Data</div>;
@@ -110,8 +103,8 @@ export const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20,
                     tickLine={false} 
                     tickFormatter={(val) => {
                         if (type === 'time') {
-                            const hours = val / 3600;
-                            return hours === 0 ? "0" : hours.toFixed(1); 
+                            const hours = Math.round(val / 3600);
+                            return hours === 0 ? "0" : `${hours}h`; 
                         }
                         return val;
                     }}
@@ -130,11 +123,7 @@ export const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20,
                     itemStyle={{color: 'var(--color-bone)'}}
                     formatter={(value, name) => {
                         if (type === "number") return [`${value} ${unit}`, 'Count'];
-                        const seconds = value; 
-                        if (seconds === 0) return ['0 min', 'Time'];
-                        if (seconds < 60) return [`${Math.round(seconds)} s`, 'Time'];
-                        else if (seconds < 3600) return [`${Math.round(seconds / 60)} min`, 'Time'];
-                        else return [`${(seconds / 3600).toFixed(1)} h`, 'Time'];
+                        return [formatDuration(value), 'Time'];
                     }}
                 />
                 
@@ -149,77 +138,73 @@ export const MyBarChart = ({ data, xKey="name", yKey="value", color, barSize=20,
     );
 };
 
-// ============================================================================
-// 3. КАЛЕНДАР (HEATMAP)
-// ============================================================================
+//календар
 export const MyCalendarHeatmap = ({ year, values, variant = "calendar" }) => {
-    // variant = "calendar" -> показує сітку Jan 1 - Dec 31 (маленькі квадратики, багато порожніх, якщо рік новий)
-    // variant = "rolling"  -> показує останні 365 днів (GitHub style, заповнений хвіст)
-
     const today = new Date();
     const currentYear = today.getFullYear();
-    const isCurrentYear = year === currentYear;
+    const selectedYear = Number(year); 
+    const isCurrentYear = selectedYear === currentYear;
 
     let startDate, endDate;
 
     if (variant === "rolling" && isCurrentYear) {
-        // Режим для ПРОФІЛЮ (щоб було красиво)
         endDate = today;
         startDate = new Date();
         startDate.setDate(today.getDate() - 365);
     } else {
-        // Режим для СТАТИСТИКИ (або минулі роки)
-        // Суворий календарний рік. Це гарантує правильний розмір клітинок.
-        startDate = new Date(`${year}-01-01`);
-        endDate = new Date(`${year}-12-31`);
+        startDate = new Date(`${selectedYear}-01-01`);
+        if (isCurrentYear) {
+            endDate = today; 
+        } else {
+            endDate = new Date(`${selectedYear}-12-31`);
+        }
     }
 
-    // 1. Знаходимо максимум для відносної шкали
     const maxValue = useMemo(() => {
         if (!values || values.length === 0) return 0;
         return Math.max(...values.map(v => v.count));
     }, [values]);
 
-    // 2. Функція кольору (Relative Scale)
     const getScaleClass = (value) => {
         if (!value || value.count === 0) return 'color-empty';
         if (maxValue === 0) return 'color-scale-1';
 
         const ratio = value.count / maxValue;
 
-        if (ratio <= 0.2) return 'color-scale-1'; // Low
-        if (ratio <= 0.4) return 'color-scale-2'; // Med-Low
-        if (ratio <= 0.6) return 'color-scale-3'; // Med
-        if (ratio <= 0.8) return 'color-scale-4'; // High
-        return 'color-scale-5';                   // Record
+        if (ratio <= 0.2) return 'color-scale-1';
+        if (ratio <= 0.4) return 'color-scale-2';
+        if (ratio <= 0.6) return 'color-scale-3';
+        if (ratio <= 0.8) return 'color-scale-4';
+        return 'color-scale-5';
     };
 
     return (
-        <div className="relative group min-w-[800px] w-full flex flex-col">
+        <div className="relative group w-full flex flex-col items-start">
             
-            <CalendarHeatmap
-                startDate={startDate}
-                endDate={endDate}
-                values={values}
-                classForValue={getScaleClass}
-                tooltipDataAttrs={value => ({
-                    'data-tooltip-content': formatHeatmapTooltip(value),
-                    'data-tooltip-id': 'heatmap-tooltip'
-                })}
-                showWeekdayLabels
-                gutterSize={2}
-            />
+            <div className={`w-full ${isCurrentYear ? 'max-w-fit' : ''}`}>
+                <CalendarHeatmap
+                    startDate={startDate}
+                    endDate={endDate}
+                    values={values}
+                    classForValue={getScaleClass}
+                    tooltipDataAttrs={value => ({
+                        'data-tooltip-content': formatHeatmapTooltip(value),
+                        'data-tooltip-id': 'heatmap-tooltip'
+                    })}
+                    showWeekdayLabels
+                    gutterSize={2}
+                />
+            </div>
             
-            {/* Легенда */}
-            <div className="flex items-center justify-end gap-2 text-[10px] text-muted font-mono select-none -mt-6 mr-2">
+            <div className="w-full flex items-center justify-end gap-2 text-[10px] text-muted font-mono select-none -mt-6 mr-2">
                 <span>Less</span>
                 <div className="flex gap-1">
-                    <div className="w-2.5 h-2.5 rounded-[2px] bg-[var(--color-scale-0)]" title="No contributions"></div>
-                    <div className="w-2.5 h-2.5 rounded-[2px] bg-[var(--color-scale-1)]" title="Low"></div>
-                    <div className="w-2.5 h-2.5 rounded-[2px] bg-[var(--color-scale-2)]" title="Medium-Low"></div>
-                    <div className="w-2.5 h-2.5 rounded-[2px] bg-[var(--color-scale-3)]" title="Medium"></div>
-                    <div className="w-2.5 h-2.5 rounded-[2px] bg-[var(--color-scale-4)]" title="High"></div>
-                    <div className="w-2.5 h-2.5 rounded-[2px] bg-[var(--color-scale-5)]" title="Record"></div>
+                    <div className="w-2.5 h-2.5 rounded-xs bg-(--color-scale-0)"></div>
+                    <div className="w-2.5 h-2.5 rounded-xs bg-scale-1"></div>
+                    <div className="w-2.5 h-2.5 rounded-xs bg-(--color-scale-2)"></div>
+                    <div className="w-2.5 h-2.5 rounded-xs bg-(--color-scale-3)"></div>
+                    <div className="w-2.5 h-2.5 rounded-xs bg-(--color-scale-4)"></div>
+                    <div className="w-2.5 h-2.5 rounded-xs bg-(--color-scale-5)"></div>
                 </div>
                 <span>More</span>
             </div>

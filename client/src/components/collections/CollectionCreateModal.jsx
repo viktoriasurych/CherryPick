@@ -54,18 +54,15 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
     };
 
     return (
-        // 👇 1. Додано onClick={onClose} на фон (Backdrop)
         <div 
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
             onClick={onClose}
         >
-            {/* 👇 2. Додано e.stopPropagation(), щоб клік всередині не закривав модалку */}
             <div 
                 className="bg-void border border-border rounded-sm w-full max-w-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col max-h-[90vh] cursor-default"
                 onClick={(e) => e.stopPropagation()}
             >
                 
-                {/* Header */}
                 <div className="p-6 border-b border-border flex justify-between items-center shrink-0">
                     <h2 className="text-2xl font-gothic tracking-wide text-blood">
                         {step === 1 ? 'New Archive' : `New ${TYPES.find(t => t.id === selectedType)?.title}`}
@@ -75,10 +72,8 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
                     </button>
                 </div>
 
-                {/* Content */}
                 <div className="p-6 overflow-y-auto custom-scrollbar">
                     
-                    {/* КРОК 1: Вибір типу */}
                     {step === 1 && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {TYPES.map((type) => (
@@ -106,11 +101,9 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
                         </div>
                     )}
 
-                    {/* КРОК 2: Деталі */}
                     {step === 2 && (
                         <form onSubmit={handleCreate} className="space-y-6">
                             
-                            {/* Назва */}
                             <div>
                                 <label className="block text-xs font-bold text-muted uppercase tracking-widest mb-2 font-mono">
                                     Title
@@ -124,7 +117,6 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
                                 />
                             </div>
                             
-                            {/* Опис */}
                             <div>
                                 <label className="block text-xs font-bold text-muted uppercase tracking-widest mb-2 font-mono">
                                     Description (Optional)
@@ -137,7 +129,6 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
                                 />
                             </div>
 
-                            {/* Чекбокс Публічності */}
                             <div className="flex items-center gap-3 p-3 bg-ash/50 border border-border rounded-sm">
                                 <input 
                                     type="checkbox" 
@@ -152,7 +143,6 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
                                 </label>
                             </div>
 
-                            {/* Кнопки */}
                             <div className="flex gap-4 pt-4 border-t border-border/50">
                                 <button 
                                     type="button" 

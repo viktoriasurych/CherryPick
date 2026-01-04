@@ -1,7 +1,4 @@
 import api from '../api/axios';
-
-// 👇 1. ІМПОРТУЄМО ЗАГЛУШКУ
-// (Шлях відносно папки services: виходимо в src (..), заходимо в assets)
 import defaultImage from '../assets/default-art.png'; 
 
 const artworkService = {
@@ -10,7 +7,6 @@ const artworkService = {
         
         Object.keys(filters).forEach(key => {
             const value = filters[key];
-            // Додаємо перевірку для search окремо або дозволяємо йому пройти як звичайне поле
             if (Array.isArray(value) && value.length > 0) {
                 params.append(key, value.join(',')); 
             } else if (value && !Array.isArray(value)) {
@@ -18,8 +14,6 @@ const artworkService = {
             }
         });
     
-        // Якщо search прийшов окремо в об'єкті filters, він вже доданий вище.
-        // Переконайся, що sortBy та sortDir додаються коректно
         params.append('sortBy', sort.by);
         params.append('sortDir', sort.dir);
     
@@ -54,14 +48,12 @@ const artworkService = {
     _sendData: async (url, method, data) => {
         const formData = new FormData();
         
-        // --- ЗВИЧАЙНІ ПОЛЯ ---
         formData.append('title', data.title);
         formData.append('description', data.description || '');
         if (data.status) formData.append('status', data.status);
         if (data.style_id) formData.append('style_id', data.style_id);
         if (data.genre_id) formData.append('genre_id', data.genre_id);
 
-        // --- ДАТИ ---
         if (data.started) {
             formData.append('started_year', data.started.year || '');
             formData.append('started_month', data.started.month || '');
@@ -73,7 +65,6 @@ const artworkService = {
             formData.append('finished_day', data.finished.day || '');
         }
 
-        // --- МАСИВИ ---
         if (data.material_ids && Array.isArray(data.material_ids) && data.material_ids.length > 0) {
             formData.append('material_ids', data.material_ids.join(','));
         }
@@ -81,7 +72,6 @@ const artworkService = {
             formData.append('tag_ids', data.tag_ids.join(','));
         }
 
-        // --- ЛОГІКА КАРТИНКИ ---
         if (data.image && data.image instanceof File) {
             formData.append('image', data.image); 
         } 
@@ -118,15 +108,9 @@ const artworkService = {
         return response.data;
     },
 
-    // 👇 2. ОНОВЛЕНА ФУНКЦІЯ ОТРИМАННЯ URL
     getImageUrl: (path) => {
-        // Якщо шляху немає (null, undefined, або пустий рядок) -> повертаємо імпортовану заглушку
         if (!path) return defaultImage; 
-        
-        // Якщо це вже повне посилання (наприклад, гугл аватарка)
         if (path.startsWith('http')) return path;
-        
-        // Якщо це локальний файл на сервері
         const baseUrl = 'http://localhost:3000'; 
         return `${baseUrl}/${path.replace(/\\/g, '/')}`;
     }

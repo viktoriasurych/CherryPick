@@ -1,19 +1,22 @@
-// client/src/components/layouts/Footer.jsx
+import { Link } from 'react-router-dom';
+
 const Footer = () => {
     return (
-        <footer className="w-full border-t border-border bg-deep py-6 mt-auto">
-            <div className="max-w-[1300px] mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+        <footer className="w-full border-t border-border/40 py-8 mt-auto">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-[10px] text-muted font-mono uppercase tracking-widest select-none">
                 
-                <div>
-                    <h4 className="font-gothic text-md text-blood tracking-widest uppercase">
-                        CherryPick
-                    </h4>
-                </div>
+                <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">   
+                    <span className="font-gothic text-blood font-bold text-xs">CherryPick</span>
+                </Link>
 
-                {/* 👇 Спрощений текст */}
-                <div className="text-[10px] text-muted font-mono uppercase tracking-wider">
-                    © 2025 | Created by <span className="text-bone">SVV</span>
-                </div>
+                <span className="text-border">|</span>
+                <span>© 2025–2026</span>
+                <span className="text-border">|</span>
+
+                <span>
+                    Created by <span className="text-bone font-bold hover:text-blood transition-colors cursor-default">SVV (Syrych Viktoria) </span>
+                </span>
+                
             </div>
         </footer>
     );

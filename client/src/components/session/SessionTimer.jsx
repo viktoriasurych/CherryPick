@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import sessionService from '../../services/sessionService';
 import quoteService from '../../services/quoteService';
 
@@ -14,26 +14,22 @@ import ConfirmModal from '../shared/ConfirmModal';
 import PageTitle from '../shared/PageTitle'; 
 
 const SessionTimer = ({ artworkId, artworkTitle, initialSession, onSessionSaved }) => {
-    // --- STATE ---
+
     const [status, setStatus] = useState(initialSession ? (initialSession.is_running ? 'RUNNING' : 'PAUSED') : 'IDLE');
     const [seconds, setSeconds] = useState(initialSession ? initialSession.current_total_seconds : 0);
     const [sessionId, setSessionId] = useState(initialSession?.id || null);
     const [startTime, setStartTime] = useState(initialSession ? initialSession.created_at : null);
-    
-    // Form State
     const [endTimeInput, setEndTimeInput] = useState('');
     const [isTimeEdited, setIsTimeEdited] = useState(false);
     const [noteForm, setNoteForm] = useState({ content: '', image: null });
     const [addToGallery, setAddToGallery] = useState(false); 
     const [previewUrl, setPreviewUrl] = useState(null);
     
-    // Oracle & Modal State
     const [oracleQuote, setOracleQuote] = useState('');
     const [showDiscardModal, setShowDiscardModal] = useState(false);
 
     const intervalRef = useRef(null);
 
-    // --- TIMER TICK ---
     useEffect(() => {
         if (status === 'RUNNING') {
             intervalRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
@@ -47,32 +43,24 @@ const SessionTimer = ({ artworkId, artworkTitle, initialSession, onSessionSaved 
         return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
     }, [previewUrl]);
 
-    // --- 🔥 STRICT TITLE LOGIC (NO "RITUAL") ---
-    const dynamicTitle = (() => {
+    const dynamicTitle = useMemo(() => {
         const timeStr = formatDigitalTime(seconds);
-        // 👇 ЗМІНА: замість 'Ritual' тепер нейтральне 'Session'
         const titleSuffix = artworkTitle || 'Session';
 
         switch (status) {
             case 'RUNNING':
                 return `${timeStr} | ${titleSuffix}`;
-            
             case 'PAUSED':
                 return `[Paused] ${timeStr} | ${titleSuffix}`;
-            
             case 'SAVING':
                 return `Saving... | ${titleSuffix}`;
-            
             case 'SHOWING_QUOTE':
-                // 👇 ЗМІНА: 'Session Complete'
                 return `Session Complete | ${titleSuffix}`;
-            
             default:
                 return titleSuffix;
         }
-    })();
+    }, [status, seconds, artworkTitle]);
 
-    // --- HANDLERS ---
     const handleStart = async () => {
         try {
             const data = await sessionService.start(artworkId);
@@ -92,7 +80,7 @@ const SessionTimer = ({ artworkId, artworkTitle, initialSession, onSessionSaved 
             setStatus(data.is_running ? 'RUNNING' : 'PAUSED');
         } catch (e) { 
             console.error(e);
-            setStatus(status); 
+            setStatus(status);
         }
     };
 
@@ -109,14 +97,13 @@ const SessionTimer = ({ artworkId, artworkTitle, initialSession, onSessionSaved 
     };
 
     const handleSave = async (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
+        
         try {
-            let finalDuration = seconds;
-            if (isTimeEdited) {
-                const s = new Date(startTime);
-                const e = new Date(endTimeInput);
-                finalDuration = Math.max(0, Math.floor((e - s) / 1000));
-            }
+            let finalDuration = (e && typeof e.manualDuration === 'number') 
+                ? e.manualDuration 
+                : seconds;
+
             await sessionService.stop({
                 sessionId,
                 manualDuration: finalDuration,
@@ -124,15 +111,20 @@ const SessionTimer = ({ artworkId, artworkTitle, initialSession, onSessionSaved 
                 image: noteForm.image,
                 addToGallery
             });
+
             const quoteData = await quoteService.getRandomQuote();
             setOracleQuote(quoteData.content);
+            
             setStatus('SHOWING_QUOTE');
+            
             setSeconds(0);
             setNoteForm({ content: '', image: null });
             setPreviewUrl(null);
             setAddToGallery(false);
+
             if (onSessionSaved) onSessionSaved();
-        } catch (e) { console.error(e); }
+
+        } catch (err) { console.error(err); }
     };
 
     const handleDiscardRequest = () => setShowDiscardModal(true);
@@ -160,7 +152,6 @@ const SessionTimer = ({ artworkId, artworkTitle, initialSession, onSessionSaved 
         }
     };
 
-    // --- RENDER ---
     let content;
     switch (status) {
         case 'IDLE':
@@ -191,7 +182,7 @@ const SessionTimer = ({ artworkId, artworkTitle, initialSession, onSessionSaved 
     }
 
     return (
-        <div className="w-full max-w-md mx-auto min-h-[300px] flex flex-col justify-center relative transition-all duration-500">
+        <div className="w-full max-w-md mx-auto min-h-75 flex flex-col justify-center relative transition-all duration-500">
             
             <PageTitle title={dynamicTitle} />
 

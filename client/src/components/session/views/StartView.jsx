@@ -15,9 +15,7 @@ const StartView = ({ onStart }) => {
                     transition-all duration-500 ease-out
                     cursor-pointer
                 "
-                // 👇 style={{ transform: 'rotate(45deg)' }} // Можна розвернути ромбом, якщо хочеш
             >
-                {/* Внутрішній квадрат для декору */}
                 <div className="absolute inset-2 border border-white/5 opacity-50 group-hover:opacity-100 transition-opacity"></div>
                 
                 <div className="flex flex-col items-center gap-2 relative z-10">

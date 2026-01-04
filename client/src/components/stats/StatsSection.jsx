@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { 
     FireIcon, ClockIcon, Square3Stack3DIcon, Squares2X2Icon,
-    EyeIcon, EyeSlashIcon, GlobeAltIcon, BookmarkIcon, LockClosedIcon, ChevronDownIcon
+    EyeIcon, EyeSlashIcon, GlobeAltIcon, BookmarkIcon, LockClosedIcon
 } from '@heroicons/react/24/solid';
 
 import statsService from '../../services/statsService';
 import userService from '../../services/userService'; 
 import { MyCalendarHeatmap } from '../stats/StatsCharts';
 
-// --- ЛОКАЛЬНІ КОМПОНЕНТИ СТИЛЮ ---
-// (Залишаються без змін, як було раніше)
+import Select from '../ui/Select'; 
+import { formatDuration } from '../../utils/formatters';
 
 const StatCard = ({ icon: Icon, label, value }) => (
     <div className="bg-ash border border-border/50 p-4 rounded-sm shadow-md transition-all group flex items-center gap-4 hover:border-blood/50">
@@ -37,90 +37,33 @@ const SectionHeader = ({ title, action }) => (
     </div>
 );
 
-const CustomYearSelect = ({ value, options, onChange }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const containerRef = useRef(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (containerRef.current && !containerRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    return (
-        <div className="relative" ref={containerRef}>
-            <div 
-                onClick={() => setIsOpen(!isOpen)}
-                className={`
-                    flex items-center gap-2 px-3 py-1.5 rounded-sm cursor-pointer border transition-all select-none
-                    bg-ash text-[10px] text-bone font-mono font-bold
-                    ${isOpen ? 'border-blood shadow-[0_0_5px_rgba(159,18,57,0.3)]' : 'border-border hover:border-muted'}
-                `}
-            >
-                <span>{value}</span>
-                <ChevronDownIcon className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </div>
-            {isOpen && (
-                <div className="absolute right-0 top-full mt-1 w-24 bg-ash border border-border rounded-sm shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                    {options.map((opt) => (
-                        <div
-                            key={opt}
-                            onClick={() => { onChange(opt); setIsOpen(false); }}
-                            className={`
-                                px-3 py-2 text-[10px] font-mono cursor-pointer transition-colors
-                                ${opt === value ? 'bg-blood text-white font-bold' : 'text-muted hover:text-bone hover:bg-void'}
-                            `}
-                        >
-                            {opt}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
-// --- ОСНОВНИЙ КОМПОНЕНТ ---
-
 const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [year, setYear] = useState(new Date().getFullYear());
 
-    // 👇 ГОЛОВНА ЗМІНА ТУТ
     useEffect(() => {
         const loadStats = async () => {
             try {
                 setLoading(true);
                 const currentYear = new Date().getFullYear();
                 
-                // 1. Вантажимо вибраний рік (наприклад, 2026)
                 const mainStats = await statsService.getStats(year, userId, true); 
                 
-                // Починаємо з даних цього року
                 let finalHeatmap = mainStats.heatmap || [];
 
-                // 2. ЯКЩО ЦЕ ПОТОЧНИЙ РІК (2026) -> ПІДВАНТАЖУЄМО 2025
                 if (year === currentYear) {
                     try {
-                        console.log(`⏳ Підвантажую архів за ${year - 1}...`);
                         const prevYearStats = await statsService.getStats(year - 1, userId, true);
-                        
                         if (prevYearStats && prevYearStats.heatmap && prevYearStats.heatmap.length > 0) {
-                            // 🔥 ОБ'ЄДНУЄМО ДВА МАСИВИ 🔥
                             finalHeatmap = [...prevYearStats.heatmap, ...finalHeatmap];
-                            console.log(`✅ Успішно об'єднано: ${prevYearStats.heatmap.length} записів з минулого року.`);
                         }
                     } catch (prevErr) {
-                        console.warn("Не вдалося завантажити минулий рік:", prevErr);
+                        console.warn("Could not load previous year stats:", prevErr);
                     }
                 }
 
-                // 3. Зберігаємо об'єднані дані
+                // 3. Зберігаємо
                 setData({ 
                     ...mainStats, 
                     heatmap: finalHeatmap 
@@ -179,6 +122,7 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
                 ) : <HiddenBlock label="Impact Data" />}
             </div>
 
+            {/* активність */}
             <div className="relative group">
                 <SectionHeader title="Total Activity" action={<VisibilityToggle blockKey="show_kpi_stats" />} />
                 {(isOwner || privacySettings.show_kpi_stats) ? (
@@ -191,24 +135,28 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
                 ) : <HiddenBlock label="Activity Stats" />}
             </div>
 
+            {/* HEATMAP */}
             <div className="relative group">
                 <div className="flex items-center justify-between mb-4 border-l-2 border-blood pl-3">
                     <div className="flex items-center gap-4">
                         <h3 className="text-sm font-bold text-bone font-gothic tracking-widest uppercase">
                             Consistency
                         </h3>
-                        <CustomYearSelect 
-                            value={year} 
-                            options={availableYears} 
-                            onChange={(val) => setYear(Number(val))} 
-                        />
+                        <div className="w-24">
+                            <Select 
+                                value={year}
+                                options={availableYears.map(y => ({ value: y, label: String(y) }))}
+                                onChange={(val) => setYear(Number(val))}
+                                className="text-[10px]"
+                            />
+                        </div>
                     </div>
                     <VisibilityToggle blockKey="show_heatmap_stats" />
                 </div>
 
                 {(isOwner || privacySettings.show_heatmap_stats) ? (
                     <div className="bg-ash border border-border/50 p-6 rounded-sm shadow-md overflow-x-auto">
-                        <div className="min-w-[600px] w-full">
+                        <div className="min-w-150 w-full">
                             <MyCalendarHeatmap year={year} values={heatmap} />
                         </div>
                     </div>

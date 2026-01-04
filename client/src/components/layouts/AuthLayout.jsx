@@ -5,9 +5,8 @@ const AuthLayout = ({ title, subtitle, children, footer }) => {
     return (
         <div className="min-h-screen bg-deep font-mono flex items-center justify-center p-4 relative overflow-hidden">
             
-            <div className="w-full max-w-[350px] bg-void/95 border border-border/50 rounded-sm shadow-2xl relative z-10 backdrop-blur-md flex flex-col">
+            <div className="w-full max-w-87.5 bg-void/95 border border-border/50 rounded-sm shadow-2xl relative z-10 backdrop-blur-md flex flex-col">
                 
-                {/* 1. ВЕРХ (Заголовок) */}
                 <div className="p-6 pb-2 text-center">
                     <h1 className="font-gothic text-xl text-blood mb-1 tracking-[0.2em] uppercase">
                         {title}
@@ -19,13 +18,11 @@ const AuthLayout = ({ title, subtitle, children, footer }) => {
                     )}
                 </div>
 
-                {/* 2. КОНТЕНТ (Форма) */}
-                <div className="px-6 py-2 flex-grow">
+                <div className="px-6 py-2 grow">
                     {children}
                 </div>
 
-                {/* 3. 🐈‍⬛ КОТЯЧА ДОРОГА */}
-                {/* 👇 ЗМІНИ ТУТ: h-14 (вище), h-32 (більший кіт), -bottom-4 (нижче лапи) */}
+                {/* котик */}
                 <div className="h-14 border-t border-border/30 relative overflow-hidden w-full mt-4 bg-void/50">
                     <img 
                         src={catWalk} 
@@ -34,7 +31,6 @@ const AuthLayout = ({ title, subtitle, children, footer }) => {
                     />
                 </div>
 
-                {/* 4. ФУТЕР */}
                 {footer && (
                     <div className="py-3 bg-deep/30 border-t border-border/30 text-center">
                         {footer}

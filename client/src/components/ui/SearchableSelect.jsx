@@ -6,7 +6,6 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
     const [searchTerm, setSearchTerm] = useState('');
     const wrapperRef = useRef(null);
 
-    // 1. Синхронізація значення з текстом
     useEffect(() => {
         const selected = options.find(o => o.value == value);
         if (selected) {
@@ -16,7 +15,6 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
         }
     }, [value, options, isOpen]);
 
-    // 2. Клік зовні
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -85,7 +83,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, onCreate }) =
                                     onClick={() => handleSelect(opt)}
                                     className={`
                                         px-4 py-3 text-xs cursor-pointer transition-colors border-b border-border/10 last:border-none
-                                        whitespace-normal break-words leading-relaxed
+                                        whitespace-normal wrap-break-word leading-relaxed
                                         ${opt.value === value 
                                             ? 'text-blood font-bold bg-blood/5' 
                                             : 'text-muted hover:text-bone hover:bg-void'}

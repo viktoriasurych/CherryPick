@@ -7,11 +7,7 @@ const Pagination = ({
     onPageChange 
 }) => {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-    // Якщо сторінка всього одна (або 0), пагінацію не показуємо
     if (totalPages <= 1) return null;
-
-    // Генеруємо масив номерів сторінок [1, 2, 3...]
     const pages = [];
     for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -19,7 +15,6 @@ const Pagination = ({
 
     return (
         <div className="flex justify-center items-center gap-2 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Кнопка НАЗАД */}
             <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -27,8 +22,6 @@ const Pagination = ({
             >
                 <ChevronLeftIcon className="w-4 h-4" />
             </button>
-
-            {/* Номери сторінок */}
             <div className="flex gap-1">
                 {pages.map(number => (
                     <button
@@ -46,7 +39,6 @@ const Pagination = ({
                 ))}
             </div>
 
-            {/* Кнопка ВПЕРЕД */}
             <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}

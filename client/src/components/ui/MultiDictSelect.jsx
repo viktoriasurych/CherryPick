@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
 import dictionaryService from '../../services/dictionaryService';
+import ConfirmModal from '../shared/ConfirmModal';
 
 const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
     const [items, setItems] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, itemId: null });
     
     const wrapperRef = useRef(null);
     const inputRef = useRef(null);
@@ -30,7 +33,7 @@ const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
             console.error(error);
         }
     };
-
+    
     const handleContainerClick = () => {
         if (inputRef.current) {
             inputRef.current.focus();
@@ -49,7 +52,7 @@ const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
     const handleRemove = (idToRemove) => {
         onChange(selectedIds.filter(id => id !== idToRemove));
     };
-
+    
     const handleCreate = async () => {
         const trimmedInput = inputValue.trim();
         if (!trimmedInput || isSubmitting) return;
@@ -74,15 +77,23 @@ const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
         }
     };
 
-    const handleDeleteFromDict = async (e, id) => {
+    const requestDelete = (e, id) => {
         e.stopPropagation();
-        if (!window.confirm("Permanently delete this from the dictionary? This affects all projects.")) return;
+        setDeleteModal({ isOpen: true, itemId: id });
+    };
+
+    const confirmDelete = async () => {
+        const id = deleteModal.itemId;
+        if (!id) return;
+        
         try {
             await dictionaryService.delete(type, id);
             setItems(items.filter(item => item.id !== id));
             if (selectedIds.includes(id)) handleRemove(id);
         } catch (error) {
             alert("Failed to delete");
+        } finally {
+            setDeleteModal({ isOpen: false, itemId: null });
         }
     };
 
@@ -105,10 +116,9 @@ const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
             
             <div 
                 onClick={handleContainerClick}
-                className="bg-void border border-border rounded-sm p-2 flex flex-wrap gap-2 focus-within:border-blood focus-within:shadow-[0_0_10px_rgba(159,18,57,0.2)] transition-all relative min-h-[46px] cursor-text"
+                className="bg-void border border-border rounded-sm p-2 flex flex-wrap gap-2 focus-within:border-blood focus-within:shadow-[0_0_10px_rgba(159,18,57,0.2)] transition-all relative min-h-11.5 cursor-text"
             >
-                {/* Selected Items (Gothic Pills) */}
-                {selectedItemsObjects.map(item => (
+                 {selectedItemsObjects.map(item => (
                     <span 
                         key={item.id} 
                         className="inline-flex items-center gap-1.5 bg-blood/10 text-blood border border-blood/30 px-3 py-1 rounded-sm text-xs font-bold uppercase tracking-wider animate-in fade-in zoom-in-95 duration-200 hover:bg-blood/20 transition-colors"
@@ -123,9 +133,7 @@ const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
                         </button>
                     </span>
                 ))}
-
-                {/* Input */}
-                <input 
+                 <input 
                     ref={inputRef}
                     type="text"
                     value={inputValue}
@@ -145,11 +153,10 @@ const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
                         }
                     }}
                     placeholder={selectedIds.length === 0 ? "Select or type..." : ""}
-                    className="bg-transparent outline-none text-bone text-xs min-w-[120px] flex-1 h-7 placeholder-muted/50 font-mono"
+                    className="bg-transparent outline-none text-bone text-xs min-w-30 flex-1 h-7 placeholder-muted/50 font-mono"
                     disabled={isSubmitting}
                 />
 
-                {/* Dropdown */}
                 {showDropdown && (inputValue || filteredItems.length > 0) && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-ash border border-border rounded-sm shadow-2xl shadow-black max-h-60 overflow-y-auto z-50 custom-scrollbar animate-in fade-in zoom-in-95 duration-200">
                         {filteredItems.map(item => (
@@ -162,8 +169,8 @@ const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
                                 
                                 {item.user_id && (
                                     <button 
-                                        onClick={(e) => handleDeleteFromDict(e, item.id)}
-                                        className="p-1 text-muted hover:text-blood transition-colors opacity-0 group-hover:opacity-100"
+                                        onClick={(e) => requestDelete(e, item.id)}
+                                        className="p-1.5 text-muted/50 hover:text-blood transition-colors"
                                         title="Delete from dictionary"
                                     >
                                         <TrashIcon className="w-3.5 h-3.5" />
@@ -172,7 +179,6 @@ const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
                             </div>
                         ))}
 
-                        {/* Create Option */}
                         {inputValue && !exactMatchExists && (
                             <div 
                                 onClick={handleCreate}
@@ -193,6 +199,14 @@ const MultiDictSelect = ({ type, selectedIds = [], onChange, label }) => {
                     </div>
                 )}
             </div>
+            <ConfirmModal 
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, itemId: null })}
+                onConfirm={confirmDelete}
+                title="Delete Item?"
+                message="Permanently delete this from the dictionary? This affects all projects."
+                confirmText="Delete"
+            />
         </div>
     );
 };

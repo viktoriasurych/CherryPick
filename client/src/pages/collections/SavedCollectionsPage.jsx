@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
-import { ArrowPathIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 
 import collectionService from '../../services/collectionService';
 import CollectionCard from '../../components/collections/CollectionCard';
 import CollectionToolbar from '../../components/collections/CollectionToolbar';
 import Pagination from '../../components/ui/Pagination';
 import EmptyState from '../../components/ui/EmptyState';
-import ConfirmModal from '../../components/shared/ConfirmModal'; // 👇 Імпортуємо
+import ConfirmModal from '../../components/shared/ConfirmModal';
 import useCollectionFilters from '../../hooks/useCollectionFilters';
+import Loader from '../../components/ui/Loader'; 
+import PageTitle from '../../components/shared/PageTitle'; 
 
 const SavedCollectionsPage = () => {
     const [collections, setCollections] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // 👇 Стан для модалки
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
 
     const { 
@@ -40,12 +41,10 @@ const SavedCollectionsPage = () => {
         fetchSaved();
     }, []);
 
-    // 1. Відкрити модалку
     const requestUnsave = (id) => {
         setConfirmModal({ isOpen: true, id });
     };
 
-    // 2. Підтвердити дію
     const handleUnsaveConfirm = async () => {
         const id = confirmModal.id;
         if (!id) return;
@@ -77,7 +76,9 @@ const SavedCollectionsPage = () => {
 
     return (
         <div className="relative min-h-screen pb-20 font-mono text-bone">
-            <div className="max-w-[1920px] mx-auto p-4 md:p-8">
+            <PageTitle title="Saved Archives" />
+
+            <div className="max-w-480 mx-auto p-4 md:p-8">
                 
                 <CollectionToolbar 
                     title="Saved Archives"
@@ -93,10 +94,7 @@ const SavedCollectionsPage = () => {
                 />
 
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-32 text-muted gap-4">
-                        <ArrowPathIcon className="w-8 h-8 animate-spin text-blood" />
-                        <span className="animate-pulse text-xs uppercase tracking-[0.3em]">Loading Saved Archives...</span>
-                    </div>
+                    <Loader text="Loading Saved Archives..." />
                 ) : (
                     <>
                         {processedItems.length === 0 && collections.length > 0 && (
@@ -126,7 +124,7 @@ const SavedCollectionsPage = () => {
                                         <CollectionCard 
                                             key={col.id} 
                                             collection={col} 
-                                            onUnsave={requestUnsave} // 👇 Передаємо функцію відкриття модалки
+                                            onUnsave={requestUnsave}
                                         />
                                     ))}
                                 </div>
@@ -148,7 +146,6 @@ const SavedCollectionsPage = () => {
                 )}
             </div>
 
-            {/* 👇 МОДАЛКА ПІДТВЕРДЖЕННЯ */}
             <ConfirmModal 
                 isOpen={confirmModal.isOpen}
                 onClose={() => setConfirmModal({ isOpen: false, id: null })}

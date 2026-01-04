@@ -1,98 +1,78 @@
-/* client/src/index.css */
 @import "tailwindcss";
-
-/* 1. Імпорт шрифтів */
-/* Cinzel - замість нечитабельної готики. Це стиль "Dark Academia" / Римська класика */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@100..800&display=swap');
 
 @theme {
-  /* --- ТИПОГРАФІЯ --- */
-  /* Cinzel - для заголовків. Читається ідеально, виглядає дорого і готично */
+  
   --font-gothic: "Cinzel", "Playfair Display", serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  /* --- КОЛЬОРИ --- */
   --color-eyes: #ff0000;
-  /* Фони */
-  /* Deep - для Хедера і Футера (найтемніший, майже чорний) */
   --color-deep: #050505; 
-  
-  /* Void - для основного фону (пом'якшений, "мокрий асфальт") */
-  --color-void: #121212;       
-  
-  /* Ash - для карток (ще трохи світліший, щоб виділялися) */
+  --color-void: #121212; 
   --color-ash: #1a1a1a;        
-  
-  /* Charcoal - для ховеру */
   --color-charcoal: #262626;   
   
-  /* Текст */
-  --color-bone: #e5e5e5;       /* Основний текст */
-  --color-muted: #a3a3a3;      /* Другорядний текст */
+  --color-bone: #e5e5e5;
+  --color-muted: #a3a3a3;
 
-  /* Акценти (Кров) */
-  --color-blood: #9f1239;      /* Основна кров */
-  --color-blood-hover: #e11d48; /* Яскрава кров */
+  --color-blood: #9f1239;
+  --color-blood-hover: #e11d48;
   
-  /* Декор */
-  --color-border: #333333;     /* Рамки трохи помітніші */
+  --color-border: #333333;
 
-  --color-chart-1: #9f1239; /* blood */
-  --color-chart-2: #be123c; /* lighter blood */
-  --color-chart-3: #e11d48; /* bright blood */
-  --color-chart-4: #f43f5e; /* rose */
-  --color-chart-5: #fb7185; /* light rose */
-  --color-chart-6: #881337; /* dark blood */
+  --color-chart-1: #9f1239; 
+  --color-chart-2: #be123c; 
+  --color-chart-3: #e11d48;
+  --color-chart-4: #f43f5e;
+  --color-chart-5: #fb7185;
+  --color-chart-6: #881337;
 
-  /* Виносимо сюди ті самі HEX, що були в JS */
-  --color-scale-0: #262626; /* Empty/Charcoal */
-  --color-scale-1: #4c0519; /* Low (Very Dark Blood) */
-  --color-scale-2: #881337; /* Med-Low */
-  --color-scale-3: #be123c; /* Med */
-  --color-scale-4: #e11d48; /* High */
-  --color-scale-5: #fb7185; /* Very High (Light Rose) */
+  --color-scale-0: #262626;
+  --color-scale-1: #4c0519; 
+  --color-scale-2: #881337; 
+  --color-scale-3: #be123c; 
+  --color-scale-4: #e11d48; 
+  --color-scale-5: #fb7185;
 
-/* --- GOTHIC NOTE COLORS --- */
-  /* Yellow -> Old Gold (Темне золото) */
   --note-yellow-bg: #422006; 
   --note-yellow-border: #a16207;
   --note-yellow-text: #fde047;
 
-  /* Pink -> Dried Blood / Rose (Темна троянда) */
   --note-pink-bg: #4c0519;
   --note-pink-border: #be123c;
   --note-pink-text: #fda4af;
 
-  /* Blue -> Deep Abyss (Глибинний синій) */
   --note-blue-bg: #0f172a;
   --note-blue-border: #1d4ed8;
   --note-blue-text: #93c5fd;
 
-  /* Green -> Swamp / Moss (Болотний) */
   --note-green-bg: #14532d;
   --note-green-border: #15803d;
   --note-green-text: #86efac;
 
-  /* Purple -> Mystic Void (Містичний) */
   --note-purple-bg: #3b0764;
   --note-purple-border: #7e22ce;
   --note-purple-text: #d8b4fe;
 
-  /* Dark -> Pure Void (Монохром) */
   --note-dark-bg: #0a0a0a;
   --note-dark-border: #404040;
   --note-dark-text: #a3a3a3;
 }
 
-/* 2. Глобальні стилі */
 body {
-  background-color: var(--color-void); /* М'якший фон */
+  background-color: var(--color-void);
   color: var(--color-bone);
   font-family: var(--font-mono); 
   -webkit-font-smoothing: antialiased;
 }
 
-/* 3. Скролбар (робимо його менш помітним) */
+@layer base {
+  ::selection {
+    @apply bg-blood text-white;
+  }
+}
+
+/* скрол */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -108,21 +88,15 @@ body {
   background-color: var(--color-blood);
 }
 
-/* Календар */
-/* Календар */
-
-/* Календар */
-/* 👇 ФІКС ДЛЯ ВЕЛЕТЕНСЬКОГО КАЛЕНДАРЯ */
+/* календар */
 .react-calendar-heatmap {
   width: 100% !important;
-  height: auto !important; /* Ключовий момент: висота авто */
-  max-height: 160px !important; /* Обмежуємо максимальну висоту, щоб не розпирало */
-  display: block; /* Забираємо дивну поведінку інлайн-блоків */
+  height: auto !important;
+  max-height: 160px !important;
+  display: block;
 }
 .react-calendar-heatmap text { font-size: 10px; fill: var(--color-muted); font-family: var(--font-mono); }
 
-
-/* Градація активності (від темного до яскравого) */
 .react-calendar-heatmap .color-empty   { fill: var(--color-scale-0); rx: 2px; }
 .react-calendar-heatmap .color-scale-1 { fill: var(--color-scale-1); }
 .react-calendar-heatmap .color-scale-2 { fill: var(--color-scale-2); }
@@ -134,95 +108,66 @@ body {
 .react-calendar-heatmap rect:hover { stroke: var(--color-bone); stroke-width: 1px; cursor: pointer; }
 
 
-/* Анімація Спрайта (Walking Cat) */
+/* анімація киці */
 @keyframes cat-walk {
   from { background-position: 0 0; }
   to { background-position: 100% 0; }
 }
 
 .cat-sprite {
-  /* Тобі треба підібрати ці розміри під твою картинку! */
-  /* Припустимо, один котик це 32x32 пікселі */
   width: 32px; 
   height: 32px;
   
-  background-image: url('./assets/cat-sprite.png'); /* Перевір шлях! */
-  background-size: cover; /* Або auto, залежить від картинки */
+  background-image: url('./assets/cat-sprite.png');
+  background-size: cover;
   background-repeat: no-repeat;
   
-  /* Магія пікселів */
   image-rendering: pixelated; 
   
-  /* Анімація: 15 кроків (бо 15 кадрів), 1 секунда, нескінченно */
   animation: cat-walk 1s steps(15) infinite; 
 }
-/* Анімація кота (15 кадрів) */
+
 @keyframes spriteRun {
   100% { transform: translateX(-100%); }
 }
 
 .animate-sprite-run {
-  /* Ширина картинки = 15 кадрів * 100% ширини контейнера */
   width: 1500%; 
   max-width: none;
-  /* steps(15) - ключовий момент, робить рух "ривками" по кадрах */
   animation: spriteRun 5s steps(15) infinite; 
 }
 
-/* Анімація руху зліва направо */
-/* ... твій попередній код ... */
-
-/* 👇 PRO-FIX: Плавний прохід крізь весь контейнер */
 @keyframes catRun {
   0% {
     left: 0;
-    /* Зсуваємо кота вліво на 100% його власної ширини. 
-       Він стартує ідеально за лівою межею. */
     transform: translateX(-100%); 
   }
   100% {
     left: 100%;
-    /* Доходимо до правого краю контейнера. 
-       Тут transform вже не потрібен, бо left: 100% виштовхує його за межі. */
     transform: translateX(0%); 
   }
 }
 
 .cat-anim {
   position: absolute;
-  width: auto; /* Зберігаємо пропорції */
-  
-  /* Оптимізація продуктивності (GPU acceleration) */
+  width: auto;
   will-change: left, transform;
-  
-  /* 12s - час проходу. linear - рівномірна швидкість без прискорень */
   animation: catRun 12s linear infinite;
 }
 
-/* ... твій попередній код ... */
-
-/* 👇 ФІКС ДЛЯ АВТОЗАПОВНЕННЯ (Щоб поля не ставали білими) */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus, 
 input:-webkit-autofill:active {
-    /* Накладаємо темну тінь поверх білого фону браузера */
     -webkit-box-shadow: 0 0 0 30px var(--color-void) inset !important;
-    
-    /* Робимо текст світлим (кістковим) */
     -webkit-text-fill-color: var(--color-bone) !important;
-    
-    /* Змінюємо колір курсору */
     caret-color: var(--color-bone) !important;
-    
-    /* Додатковий фікс для рамок */
     border-color: var(--color-border) !important;
     transition: background-color 5000s ease-in-out 0s;
 }
 
-/* Прибираємо синю підсвітку Chrome при кліку */
 input:focus {
     outline: none !important;
     box-shadow: none !important;
-    border-color: var(--color-blood) !important; /* Червона рамка при фокусі */
+    border-color: var(--color-blood) !important
 }

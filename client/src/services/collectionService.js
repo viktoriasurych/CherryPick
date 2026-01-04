@@ -11,7 +11,6 @@ const collectionService = {
         return response.data;
     },
 
-    // 👇 is_public передається всередині data
     create: async (data) => {
         const response = await api.post('/collections', data);
         return response.data;
@@ -47,7 +46,6 @@ const collectionService = {
         return response.data; 
     },
 
-    // 👇 ВАЖЛИВО: meta містить { title, description, is_public }
     saveAll: async (id, meta, items) => {
         const response = await api.put(`/collections/${id}/batch`, { meta, items });
         return response.data;
@@ -67,26 +65,21 @@ const collectionService = {
         return response.data;
     },
 
-    // 👇 Додаємо метод для публічних (знадобиться для профілю)
     getPublicCollections: async (userId) => {
-        // Якщо бекенд чекає userId в параметрах запиту
         const response = await api.get('/collections/public', { params: { userId } }); 
         return response.data;
     },
 
-    // Зберегти в закладки
     saveCollection: async (id) => {
         const response = await api.post(`/collections/${id}/save`);
         return response.data;
     },
 
-    // Видалити з закладок
     unsaveCollection: async (id) => {
         const response = await api.delete(`/collections/${id}/save`);
         return response.data;
     },
 
-    // Отримати список збережених (для профілю)
     getSavedCollections: async () => {
         const response = await api.get('/collections/saved');
         return response.data;

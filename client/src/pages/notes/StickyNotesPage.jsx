@@ -5,10 +5,13 @@ import {
     Bars3BottomLeftIcon, ArrowLeftIcon, PencilSquareIcon
 } from '@heroicons/react/24/outline';
 
-// 👇 Імпорт модалки
 import ConfirmModal from '../../components/shared/ConfirmModal';
+import PageTitle from '../../components/shared/PageTitle';
+import Loader from '../../components/ui/Loader';
 
-// --- КОНФІГУРАЦІЯ КОЛЬОРІВ ---
+import { formatStickyDate } from '../../utils/formatters';
+import RULES from '../../config/validationRules.json';
+
 const NOTE_THEMES = {
     pink:   'bg-[var(--note-pink-bg)] border-[var(--note-pink-border)] text-[var(--note-pink-text)]',
     yellow: 'bg-[var(--note-yellow-bg)] border-[var(--note-yellow-border)] text-[var(--note-yellow-text)]',
@@ -18,38 +21,31 @@ const NOTE_THEMES = {
     dark:   'bg-[var(--note-dark-bg)] border-[var(--note-dark-border)] text-[var(--note-dark-text)]'
 };
 
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-GB', { 
-        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false
-    }).format(date).toUpperCase(); 
-};
-
 const StickyNotesPage = () => {
     const [notes, setNotes] = useState([]);
     const [selectedId, setSelectedId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [sidebarWidth, setSidebarWidth] = useState(350);
     const [isResizing, setIsResizing] = useState(false);
-    
+    const [isLoading, setIsLoading] = useState(true);
     const [editForm, setEditForm] = useState(null);
     const [saveStatus, setSaveStatus] = useState('saved');
-
-    // 👇 СТАН ДЛЯ МОДАЛКИ ВИДАЛЕННЯ
     const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null });
 
-    // --- DATA FETCHING ---
     useEffect(() => {
         const fetchNotes = async () => {
             try {
+                setIsLoading(true);
                 const res = await api.get('/sticky-notes');
                 setNotes(res.data);
+                
                 if (window.innerWidth > 768 && res.data.length > 0) {
                     selectNote(res.data[0]);
                 }
             } catch (error) {
                 console.error("Error loading notes:", error);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchNotes();
@@ -76,13 +72,11 @@ const StickyNotesPage = () => {
         }
     };
 
-    // 👇 1. ЗАПИТ НА ВИДАЛЕННЯ (Відкриває модалку)
     const requestDelete = (e, id) => {
         if (e) e.stopPropagation();
         setDeleteConfirm({ isOpen: true, id });
     };
 
-    // 👇 2. ПІДТВЕРДЖЕННЯ ВИДАЛЕННЯ (Виконує дію)
     const confirmDelete = async () => {
         const id = deleteConfirm.id;
         if (!id) return;
@@ -106,7 +100,6 @@ const StickyNotesPage = () => {
         }
     };
 
-    // --- AUTOSAVE LOGIC ---
     useEffect(() => {
         if (!editForm || !selectedId) return;
         const originalNote = notes.find(n => n.id === selectedId);
@@ -139,7 +132,6 @@ const StickyNotesPage = () => {
         return () => clearTimeout(timer);
     }, [editForm, selectedId]);
 
-    // --- RESIZER ---
     const startResizing = useCallback(() => setIsResizing(true), []);
     const stopResizing = useCallback(() => setIsResizing(false), []);
     const resize = useCallback((e) => {
@@ -160,7 +152,6 @@ const StickyNotesPage = () => {
         };
     }, [isResizing, resize, stopResizing]);
 
-    // --- FILTERING ---
     const filteredNotes = useMemo(() => {
         const q = searchQuery.toLowerCase();
         return notes.filter(n => 
@@ -169,7 +160,10 @@ const StickyNotesPage = () => {
         );
     }, [notes, searchQuery]);
 
-    // --- RENDER HELPERS ---
+    if (isLoading) {
+        return <Loader />;
+    }
+
     const renderSidebar = () => (
         <div 
             className={`
@@ -230,7 +224,7 @@ const StickyNotesPage = () => {
                                 {note.title || 'New Scroll'}
                             </h4>
                             <button 
-                                onClick={(e) => requestDelete(e, note.id)} // 👇 Виклик модалки
+                                onClick={(e) => requestDelete(e, note.id)} 
                                 className="hidden md:group-hover:block text-muted hover:text-blood transition -mt-1 -mr-2 p-1"
                                 title="Burn"
                             >
@@ -244,7 +238,7 @@ const StickyNotesPage = () => {
                         
                         <div className="flex items-center justify-between pt-3 border-t border-border/30 mt-1">
                             <span className="text-[9px] text-muted/50 font-mono uppercase tracking-wider">
-                                {formatDate(note.updated_at)}
+                                {formatStickyDate(note.updated_at)}
                             </span>
                             <div className={`w-2 h-2 rounded-full border border-white/10 ${NOTE_THEMES[note.color].split(' ')[0]}`}></div>
                         </div>
@@ -292,7 +286,7 @@ const StickyNotesPage = () => {
                             </div>
                             
                             <button 
-                                onClick={(e) => requestDelete(e, selectedId)} // 👇 Виклик модалки
+                                onClick={(e) => requestDelete(e, selectedId)} 
                                 className="text-muted hover:text-blood transition p-2 border border-transparent hover:border-blood/30 rounded-sm"
                                 title="Burn Scroll"
                             >
@@ -302,31 +296,43 @@ const StickyNotesPage = () => {
                     </div>
 
                     <div className={`
-                        flex-1 p-8 md:p-12 overflow-y-auto transition-colors duration-700 ease-in-out border-l border-border
+                        flex-1 p-6 md:p-12 overflow-y-auto transition-colors duration-700 ease-in-out border-l border-border custom-scrollbar
                         ${NOTE_THEMES[editForm.color]} 
                     `}>
-                        <div className="max-w-3xl mx-auto h-full flex flex-col">
+                        <div className="max-w-3xl mx-auto h-full flex flex-col relative">
+                            {/* назва */}
                             <input 
                                 type="text" 
                                 value={editForm.title}
                                 onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
                                 placeholder="TITLE OF THE SCROLL"
+                                maxLength={RULES.STICKY_NOTE.TITLE.MAX}
                                 className="
                                     w-full bg-transparent text-3xl md:text-4xl font-bold font-gothic mb-8 
                                     outline-none placeholder-current/30 border-b-2 border-transparent 
                                     focus:border-current/20 pb-2 transition-colors tracking-wide uppercase
+                                    pr-4
                                 "
                             />
+                            
+                            {/* сам текст */}
                             <textarea 
                                 value={editForm.content}
                                 onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
                                 placeholder="Inscribe your thoughts here..."
+                                maxLength={RULES.STICKY_NOTE.CONTENT.MAX}
                                 className="
                                     w-full flex-1 bg-transparent resize-none outline-none 
                                     text-sm md:text-base leading-loose font-mono 
-                                    placeholder-current/30 scrollbar-none
+                                    placeholder-current/30 scrollbar-none 
+                                    pb-12 pr-6
                                 "
                             />
+
+                            {/* Ллічильник символів */}
+                            <div className="absolute bottom-2 right-6 text-[10px] font-mono opacity-40 select-none bg-inherit px-2 rounded-sm">
+                                {editForm.content.length} / {RULES.STICKY_NOTE.CONTENT.MAX} chars
+                            </div>
                         </div>
                     </div>
                 </>
@@ -343,6 +349,9 @@ const StickyNotesPage = () => {
 
     return (
         <div className="flex h-[calc(100vh-64px)] bg-deep overflow-hidden relative">
+            
+            <PageTitle title="Sticky notes" />
+            
             {renderSidebar()}
             
             <div 
@@ -352,7 +361,6 @@ const StickyNotesPage = () => {
 
             {renderEditor()}
 
-            {/* 👇 ВСТАВЛЯЄМО МОДАЛКУ ПІДТВЕРДЖЕННЯ */}
             <ConfirmModal 
                 isOpen={deleteConfirm.isOpen}
                 onClose={() => setDeleteConfirm({ isOpen: false, id: null })}

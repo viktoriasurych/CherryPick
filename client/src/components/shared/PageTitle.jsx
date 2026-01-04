@@ -1,9 +1,15 @@
+import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 const PageTitle = ({ title }) => {
+    const fullTitle = title || 'CherryPick';
+    useEffect(() => {
+        document.title = fullTitle;
+    }, [fullTitle]);
+
     return (
         <Helmet>
-            <title>{title} | Art Archive</title>
+            <title>{fullTitle}</title>
         </Helmet>
     );
 };

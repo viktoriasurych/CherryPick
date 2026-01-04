@@ -18,14 +18,11 @@ const sessionService = {
 
     stop: async (data) => {
         const formData = new FormData();
-        
-        // 👇 ДОДАЙ ЦЕЙ РЯДОК! Без нього сервер не знає, що зупиняти.
         formData.append('sessionId', data.sessionId); 
 
         if (data.manualDuration) formData.append('manualDuration', data.manualDuration);
         formData.append('content', data.content || '');
-        
-        // Логіка з галочкою правильна (перетворення boolean на рядок для FormData)
+
         const shouldAdd = data.addToGallery || data.updateCover; 
         formData.append('updateCover', shouldAdd ? 'true' : 'false');
         
@@ -44,12 +41,10 @@ const sessionService = {
         return response.data;
     },
 
-    // 👇 НОВИЙ МЕТОД
     discard: async () => {
         const response = await api.post('/sessions/discard');
         return response.data;
     },
-    // ...
 };
 
 export default sessionService;

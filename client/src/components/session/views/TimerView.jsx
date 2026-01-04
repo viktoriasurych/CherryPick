@@ -3,10 +3,9 @@ import { formatDigitalTime } from '../../../utils/formatters';
 
 const TimerView = ({ status, seconds, onTogglePause, onStop }) => {
     return (
-        // 👇 ВИКОРИСТАВ ТВІЙ СНІПЕТ: bg-ash/90, border-border, shadow-black
         <div className="flex flex-col items-center justify-center space-y-8 py-10 px-8 bg-ash/90 backdrop-blur-md border border-border rounded-sm shadow-2xl shadow-black w-full max-w-md">
             
-            {/* Статус */}
+            {/* статус */}
             <div className="flex items-center gap-2 px-4 py-1 rounded-full border border-white/5 bg-black/20">
                 <div className={`w-2 h-2 rounded-full ${status === 'RUNNING' ? 'bg-blood animate-pulse' : 'bg-red-900/50'}`}></div>
                 <span className="text-[10px] font-bold text-muted uppercase tracking-[0.2em]">
@@ -14,7 +13,7 @@ const TimerView = ({ status, seconds, onTogglePause, onStop }) => {
                 </span>
             </div>
 
-            {/* Час */}
+            {/* час */}
             <div className={`
                 font-mono font-bold tracking-tighter tabular-nums transition-colors
                 text-5xl sm:text-6xl md:text-7xl drop-shadow-lg
@@ -23,7 +22,7 @@ const TimerView = ({ status, seconds, onTogglePause, onStop }) => {
                 {formatDigitalTime(seconds)}
             </div>
 
-            {/* Кнопки */}
+            {/* кнопки */}
             <div className="flex items-center gap-6">
                 <button 
                     onClick={onStop}

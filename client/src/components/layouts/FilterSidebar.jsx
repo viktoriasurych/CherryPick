@@ -43,18 +43,16 @@ const FilterSidebar = ({ isOpen, onClose, filters, setFilters, onApply, onReset 
 
     return (
         <>
-            {/* Backdrop (Mobile Only) */}
             <div 
                 className={`
-                    fixed inset-0 bg-black/90 backdrop-blur-sm z-[40] transition-opacity duration-300 md:hidden
+                    fixed inset-0 bg-black/90 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden
                     ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}
                 `}
                 onClick={onClose}
             />
 
-            {/* SIDEBAR */}
             <aside className={`
-                fixed top-0 right-0 h-full w-80 bg-deep z-[50] flex flex-col font-mono
+                fixed top-0 right-0 h-full w-80 bg-deep z-50 flex flex-col font-mono
                 transition-transform duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : 'translate-x-full'}
                 md:absolute md:right-0 md:h-full
@@ -66,7 +64,6 @@ const FilterSidebar = ({ isOpen, onClose, filters, setFilters, onApply, onReset 
                 md:rounded-l-lg overflow-hidden
             `}>
                 
-                {/* HEADER */}
                 <div className="p-5 border-b border-border bg-void shrink-0 space-y-4">
                     <div className="flex justify-between items-center">
                         <h2 className="font-gothic text-xl text-bone tracking-widest flex items-center gap-3">
@@ -96,16 +93,15 @@ const FilterSidebar = ({ isOpen, onClose, filters, setFilters, onApply, onReset 
                     </div>
                 </div>
 
-                {/* SCROLLABLE CONTENT */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-2 custom-scrollbar bg-ash/10">
                     
-                    {/* STATUS */}
+                    {/* статус картини */}
                     <FilterAccordion title="Status" count={filters.status.length} isOpenDefault={true}>
                         <div className="space-y-1 pt-2">
                             {Object.entries(ART_STATUSES).map(([key, label]) => (
                                 <label key={key} className="flex items-center gap-3 cursor-pointer group p-1.5 hover:bg-void rounded-sm transition-colors">
                                     <div className={`
-                                        w-3.5 h-3.5 border flex items-center justify-center rounded-[2px] transition-colors shrink-0
+                                        w-3.5 h-3.5 border flex items-center justify-center rounded-xs transition-colors shrink-0
                                         ${filters.status.includes(key) ? 'bg-blood border-blood' : 'bg-transparent border-muted group-hover:border-bone'}
                                     `}>
                                         {filters.status.includes(key) && <span className="text-white text-[8px] font-bold">✓</span>}
@@ -119,7 +115,7 @@ const FilterSidebar = ({ isOpen, onClose, filters, setFilters, onApply, onReset 
                         </div>
                     </FilterAccordion>
 
-                    {/* YEAR */}
+                    {/* рік */}
                     <FilterAccordion title="Year Range">
                         <div className="flex items-center gap-3 pt-2 pb-2">
                             <input 
@@ -140,7 +136,7 @@ const FilterSidebar = ({ isOpen, onClose, filters, setFilters, onApply, onReset 
                         </div>
                     </FilterAccordion>
 
-                    {/* LISTS */}
+                    {/* списки довідники */}
                     <FilterAccordion title="Genres" count={filters.genre_ids.length}>
                         <FilterMultiSelect 
                             options={dicts.genres} 

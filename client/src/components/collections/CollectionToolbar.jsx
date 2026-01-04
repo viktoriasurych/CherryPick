@@ -2,14 +2,14 @@ import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import SortDropdown from '../ui/SortDropdown';
 
 const CollectionToolbar = ({ 
-    title,              // Заголовок (напр. "My Collections")
-    subTitle,           // Підзаголовок (напр. "Scanning...")
+    title,              
+    subTitle,           
     search, setSearch, 
     filterType, setFilterType, 
     sortConfig, 
-    onSortChange,       // Функція зміни ключа сортування
-    onToggleDir,        // Функція зміни напрямку
-    sortOptions         // Масив опцій
+    onSortChange,       
+    onToggleDir,        
+    sortOptions         
 }) => {
 
     const TABS = ['ALL', 'MOODBOARD', 'SERIES', 'EXHIBITION'];
@@ -17,10 +17,9 @@ const CollectionToolbar = ({
     return (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 border-b border-border/50 pb-6 gap-6">
             
-            {/* --- ЛІВА ЧАСТИНА: ЗАГОЛОВОК + ПОШУК --- */}
             <div className="flex flex-col gap-4 w-full md:max-w-xl">
                 <div>
-                    <h1 className="text-4xl font-gothic tracking-wide text-blood">{title}</h1>
+                    <h1 className="text-4xl font-bold font-gothic tracking-wide text-blood">{title}</h1>
                     {subTitle && (
                         <p className="text-[10px] text-muted mt-2 uppercase tracking-[0.2em] font-bold">
                             {subTitle}
@@ -28,7 +27,7 @@ const CollectionToolbar = ({
                     )}
                 </div>
 
-                {/* SEARCH BAR */}
+                {/* пошук */}
                 <div className="relative group w-full">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-blood transition-colors" />
                     <input 
@@ -46,19 +45,20 @@ const CollectionToolbar = ({
                 </div>
             </div>
 
-            {/* --- ПРАВА ЧАСТИНА: ТАБИ + СОРТУВАННЯ --- */}
+            {/* таби і сортування */}
             <div className="flex flex-wrap gap-3 items-center w-full md:w-auto shrink-0">
-                
-                {/* TABS */}
+
                 <div className="flex bg-void border border-border rounded-sm p-1 h-10 items-center overflow-x-auto max-w-full no-scrollbar">
                     {TABS.map(type => (
                         <button
                             key={type}
                             onClick={() => setFilterType(type)}
                             className={`
-                                px-4 py-1 text-[10px] font-bold uppercase tracking-wider rounded-sm transition-all h-full whitespace-nowrap
+                                px-4 py-1 font-bold uppercase tracking-wider rounded-sm transition-all h-full whitespace-nowrap
+                                {/* 👇 2. Змінив text-[10px] на text-xs, щоб було як у SortDropdown */}
+                                text-xs 
                                 ${filterType === type 
-                                    ? 'bg-blood text-white shadow-[0_0_10px_rgba(159,18,57,0.4)]' // Активний (Червоний)
+                                    ? 'bg-blood text-white shadow-[0_0_10px_rgba(159,18,57,0.4)]' 
                                     : 'text-muted hover:text-bone hover:bg-white/5'}
                             `}
                         >
@@ -66,8 +66,6 @@ const CollectionToolbar = ({
                         </button>
                     ))}
                 </div>
-
-                {/* SORT */}
                 <SortDropdown 
                     value={sortConfig.key} 
                     direction={sortConfig.dir} 

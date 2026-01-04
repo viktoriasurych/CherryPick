@@ -1,4 +1,3 @@
-// Input.jsx
 const Input = ({ label, type = "text", name, placeholder, value, onChange, error }) => {
   return (
     <div className="mb-4 font-mono text-left">

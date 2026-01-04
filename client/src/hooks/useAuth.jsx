@@ -7,59 +7,60 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    // Початковий стан: ми не знаємо, чи є юзер, тому loading = true
     const [loading, setLoading] = useState(true);
-
-    // 1. ПЕРЕВІРКА ПРИ ЗАПУСКУ (Один раз при старті)
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('token');
-            const savedUser = localStorage.getItem('user');
-
-            if (token && savedUser) {
-                console.log("🔄 Відновлення сесії...");
-                // Встановлюємо токен для Axios
-                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                // Відновлюємо юзера зі сховища
-                setUser(JSON.parse(savedUser));
+            
+            if (token) {
+                try {
+                    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    const { data } = await api.get('/users/me');
+                    
+                    setUser(data);
+                    localStorage.setItem('user', JSON.stringify(data)); 
+                    
+                } catch (error) {
+                    console.error("Помилка перевірки сесії:", error);
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    setUser(null);
+                }
             }
-            // Завантаження завершено (успішно чи ні)
             setLoading(false);
         };
 
         checkAuth();
     }, []);
 
-    // 2. ВХІД (Login & Auto-login after Register)
     const login = (token, userData) => {
-        console.log("✅ Вхід виконано:", userData.nickname);
-        
+        console.log("+ Вхід виконано:", userData.nickname);
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
-        
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
         setUser(userData);
     };
 
-    // 3. ВИХІД
     const logout = () => {
-        console.log("👋 Вихід");
-        
+        console.log("- Вихід");
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        
         delete api.defaults.headers.common['Authorization'];
-        
         setUser(null);
+    };
+    const updateUser = (newData) => {
+        setUser(prev => {
+            const updated = { ...prev, ...newData };
+            localStorage.setItem('user', JSON.stringify(updated));
+            return updated;
+        });
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuth: !!user, login, logout, loading }}>
-            {/* Поки перевіряємо токен, показуємо заглушку, щоб не кидало на логін */}
+        <AuthContext.Provider value={{ user, isAuth: !!user, login, logout, updateUser, loading }}>
             {loading ? (
-                <div className="min-h-screen bg-slate-950 flex items-center justify-center text-cherry-500 font-bold">
-                    Завантаження...
+                <div className="min-h-screen bg-black flex items-center justify-center text-rose-700 font-bold font-mono tracking-widest uppercase animate-pulse">
+                    Summoning User...
                 </div>
             ) : (
                 children

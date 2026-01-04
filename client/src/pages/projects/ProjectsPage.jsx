@@ -12,11 +12,11 @@ import FilterSidebar from '../../components/layouts/FilterSidebar';
 import ProjectCard from '../../components/projects/ProjectCard';
 import SortDropdown from '../../components/ui/SortDropdown';
 import EmptyState from '../../components/ui/EmptyState';
-// 👇 1. Імпортуємо наш новий Лоадер
+
 import Loader from '../../components/ui/Loader'; 
+import PageTitle from '../../components/shared/PageTitle'; 
 
 const ProjectsPage = () => {
-    // --- СТЕЙТ ---
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -33,7 +33,6 @@ const ProjectsPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // --- ФУНКЦІЯ ЗАВАНТАЖЕННЯ ---
     const loadProjects = async (currentFilters = filters, query = searchQuery) => {
         try {
             setLoading(true);
@@ -46,7 +45,6 @@ const ProjectsPage = () => {
         }
     };
 
-    // --- ЕФЕКТИ ---
     useEffect(() => {
         if (location.state?.applyFilter) {
             const newFilters = { ...emptyFilters, ...location.state.applyFilter };
@@ -75,8 +73,6 @@ const ProjectsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters, sortConfig]);
 
-
-    // --- ХЕНДЛЕРИ ---
     const handleSortChange = (val) => setSortConfig(p => ({ ...p, by: val }));
     const toggleSortDir = () => setSortConfig(p => ({ ...p, dir: p.dir === 'ASC' ? 'DESC' : 'ASC' }));
 
@@ -107,18 +103,18 @@ const ProjectsPage = () => {
 
     return (
         <div className="relative min-h-screen flex overflow-x-hidden pb-20 font-mono">
+            <PageTitle title="Archive" />
             
             <div className={`flex-1 p-4 md:p-8 transition-all duration-300 ease-in-out ${isFilterOpen ? 'mr-0 md:mr-80' : ''}`}>
-                <div className="max-w-[1920px] mx-auto">
+                <div className="max-w-480 mx-auto">
                     
-                    {/* --- HEADER (Зберігся повністю) --- */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 border-b border-border/50 pb-6 gap-6">
                         
                         <div className="flex flex-col gap-4 w-full md:max-w-xl">
                             <div>
-                                <h1 className="text-4xl font-gothic text-bone tracking-wide">Archives</h1>
+                                <h1 className="text-4xl font-bold text-blood font-gothic tracking-wide">Archives</h1>
                                 <p className="text-[10px] text-muted mt-2 uppercase tracking-[0.2em] font-bold">
-                                    {loading ? 'Scanning...' : `${projects.length} Artifacts Found`}
+                                    {loading ? 'Scanning...' : `${projects.length} Projects Found`}
                                 </p>
                             </div>
 
@@ -155,7 +151,7 @@ const ProjectsPage = () => {
                                 <AdjustmentsHorizontalIcon className="w-4 h-4" />
                                 <span className="hidden sm:inline">Filter</span>
                                 {activeFiltersCount > 0 && (
-                                    <span className="bg-blood text-white text-[9px] px-1.5 py-0.5 rounded-sm font-bold ml-1 min-w-[18px] text-center">
+                                    <span className="bg-blood text-white text-[9px] px-1.5 py-0.5 rounded-sm font-bold ml-1 min-w-4.5 text-center">
                                         {activeFiltersCount}
                                     </span>
                                 )}
@@ -163,61 +159,60 @@ const ProjectsPage = () => {
                         </div>
                     </div>
 
-                    {/* --- CONTENT --- */}
+                    {/* контент */}
                     {loading ? (
-                        // 👇 2. ТУТ ТЕПЕР НАШ ЛОАДЕР З КОТИКОМ
-                        <Loader text="Summoning Archives..." />
+                        <Loader text="Summoning archives..." />
                     ) : (
                         <>
-                            {/* СЦЕНАРІЙ 1: ПУСТО ЧЕРЕЗ ФІЛЬТРИ */}
+                            {/* сцена 1: пусто через фільтри */}
                             {projects.length === 0 && hasActiveFilters && (
                                 <EmptyState 
                                     title="Silence..."
-                                    message="No artifacts match your query. Try adjusting your filters."
+                                    message="No projects match your query. Try adjusting your filters."
                                     actionLabel="Clear Search & Filters"
                                     onAction={handleResetFilters}
                                     icon={XMarkIcon}
                                 />
                             )}
 
-                            {/* СЦЕНАРІЙ 2: БАЗА ПУСТА */}
+                            {/* сцена 2: нема картин взагалі */}
                             {projects.length === 0 && !hasActiveFilters && (
                                 <EmptyState 
                                     title="The Archive is Empty"
-                                    message="Start your journey by creating the first artifact."
-                                    actionLabel="Create First Artifact"
+                                    message="Start your journey by creating the first project."
+                                    actionLabel="Create First Project"
                                     actionLink="/projects/new"
                                     icon={PlusIcon}
                                 />
                             )}
 
-                            {/* СЦЕНАРІЙ 3: ГРІД ПРОЄКТІВ */}
+                            {/* сцена 3: проєкти */}
                             {projects.length > 0 && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500 items-stretch">
                                     
-                                    {/* 1. КАРТКА "CREATE NEW" */}
+                                    {/* + */}
                                     <Link 
                                         to="/projects/new" 
                                         className="
                                             group relative w-full
-                                            h-14 flex flex-row
-                                            sm:h-auto sm:aspect-[3/4] sm:flex-col
+                                            h-auto py-3 flex flex-row
+                                            sm:h-auto sm:aspect-3/4 sm:flex-col sm:py-0
                                             items-center justify-center gap-4 sm:gap-6
                                             bg-void/50 border border-dashed border-border 
                                             hover:border-blood hover:bg-void
                                             rounded-sm transition-all duration-500 cursor-pointer
-                                            min-h-[200px]
+                                            sm:min-h-50
                                         "
                                     >
-                                        <PlusIcon className="w-5 h-5 sm:w-12 sm:h-12 text-muted/30 stroke-[1] group-hover:text-blood group-hover:scale-110 transition-all duration-500" />
+                                        <PlusIcon className="w-5 h-5 sm:w-12 sm:h-12 text-muted/30 stroke-1 group-hover:text-blood group-hover:scale-110 transition-all duration-500" />
                                         <span className="text-[10px] font-gothic text-muted group-hover:text-bone uppercase tracking-[0.2em] transition-colors">
-                                            New Artifact
+                                            New Project
                                         </span>
                                     </Link>
 
-                                    {/* 2. СПИСОК */}
-                                    {projects.map(art => (
-                                        <ProjectCard key={art.id} project={art} />
+                                    {/* спсиок */}
+                                    {projects.map(project => (
+                                        <ProjectCard key={project.id} project={project} />
                                     ))}
                                 </div>
                             )}

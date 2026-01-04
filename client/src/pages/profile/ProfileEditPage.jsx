@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import userService from '../../services/userService';
 
-// Layout & UI
 import EditorLayout from '../../components/layouts/EditorLayout';
 import Input from '../../components/ui/Input';
 import ConfirmModal from '../../components/shared/ConfirmModal';
+import PageTitle from '../../components/shared/PageTitle'; 
+import Loader from '../../components/ui/Loader'; 
 
 import { PhotoIcon, CloudArrowUpIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
@@ -18,7 +19,6 @@ const ProfileEditPage = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
-    // --- STATE ---
     const [formData, setFormData] = useState({
         nickname: '', 
         display_name: '', 
@@ -40,7 +40,6 @@ const ProfileEditPage = () => {
 
     const [errorModal, setErrorModal] = useState({ isOpen: false, message: '' });
 
-    // --- LOAD DATA ---
     useEffect(() => {
         const loadFreshData = async () => {
             try {
@@ -77,8 +76,6 @@ const ProfileEditPage = () => {
     useEffect(() => {
         return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
     }, [previewUrl]);
-
-    // --- HANDLERS ---
 
     const handleChange = (field, value) => {
         if (field === 'nickname') value = value.replace(/\s/g, '');
@@ -139,14 +136,18 @@ const ProfileEditPage = () => {
         }
     };
 
-    const displayAvatar = previewUrl || (user?.avatar_url && !isAvatarDeleted ? `http://localhost:3000${user.avatar_url}` : defaultAvatar);
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    
+    const displayAvatar = previewUrl || (user?.avatar_url && !isAvatarDeleted ? `${apiUrl}${user.avatar_url}` : defaultAvatar);
 
     if (isLoading) {
-        return <div className="text-center py-40 text-muted animate-pulse font-mono uppercase tracking-widest">Deciphering User Data...</div>;
+        return <Loader />;
     }
 
     return (
         <>
+            <PageTitle title="Edit profile" />
+
             <EditorLayout
                 title="Edit Codex"
                 backLink="/profile"
@@ -154,10 +155,10 @@ const ProfileEditPage = () => {
                 hasChanges={hasChanges}
                 onSave={handleSave}
             >
-                {/* --- ЛІВА КОЛОНКА --- */}
+                {/* фото + приват публіч  */}
                 <div className="lg:col-span-1 space-y-6">
                     
-                    {/* АВАТАР (Сірий блок bg-ash) */}
+                    {/* аватарка */}
                     <div className="bg-ash border border-border p-6 rounded-sm flex flex-col items-center text-center shadow-lg">
                         <h3 className="text-xs font-bold text-bone/60 font-gothic tracking-widest uppercase mb-6 w-full text-left border-b border-border/50 pb-2">
                             Visual ID
@@ -185,7 +186,7 @@ const ProfileEditPage = () => {
                         </div>
                     </div>
 
-                    {/* ПРИВАТНІСТЬ (Сірий блок bg-ash) */}
+                    {/* прив + публ */}
                     <div className="bg-ash border border-border p-6 rounded-sm shadow-lg">
                         <h3 className="text-xs font-bold text-bone/60 font-gothic tracking-widest uppercase mb-4 border-b border-border/50 pb-2">
                             Privacy Settings
@@ -198,10 +199,9 @@ const ProfileEditPage = () => {
                     </div>
                 </div>
 
-                {/* --- ПРАВА КОЛОНКА --- */}
+                {/* про мене */}
                 <div className="lg:col-span-2 space-y-6">
                     
-                    {/* IDENTITY (Сірий блок bg-ash) */}
                     <div className="bg-ash border border-border p-6 rounded-sm shadow-lg space-y-6">
                         <h3 className="text-xs font-bold text-bone/60 font-gothic tracking-widest uppercase mb-2 border-b border-border/50 pb-2">
                             Identity
@@ -229,10 +229,8 @@ const ProfileEditPage = () => {
                         </div>
                     </div>
 
-                    {/* CONTACTS & NETWORK (Сірий блок bg-ash) */}
                     <div className="bg-ash border border-border p-6 rounded-sm shadow-lg space-y-8">
                         
-                        {/* Contacts */}
                         <div>
                             <h3 className="text-xs font-bold text-bone/60 font-gothic tracking-widest uppercase mb-4 border-b border-border/50 pb-2">
                                 Contact Channel
@@ -243,7 +241,6 @@ const ProfileEditPage = () => {
                             </div>
                         </div>
 
-                        {/* Socials */}
                         <div>
                             <h3 className="text-xs font-bold text-bone/60 font-gothic tracking-widest uppercase mb-4 border-b border-border/50 pb-2">
                                 Network Grid
@@ -262,7 +259,6 @@ const ProfileEditPage = () => {
                 </div>
             </EditorLayout>
 
-            {/* Модалка помилок */}
             <ConfirmModal 
                 isOpen={errorModal.isOpen}
                 onClose={() => setErrorModal({ isOpen: false, message: '' })}
@@ -275,7 +271,6 @@ const ProfileEditPage = () => {
     );
 };
 
-// Компонент перемикача (Адаптований під bg-ash)
 const PrivacyToggle = ({ label, checked, onChange }) => (
     <div 
         onClick={onChange}

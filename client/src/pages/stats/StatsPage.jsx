@@ -1,14 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { 
     ClockIcon, Square3Stack3DIcon, Squares2X2Icon, 
-    FireIcon, PaintBrushIcon, GlobeAltIcon, CalendarDaysIcon, ChevronDownIcon
+    FireIcon, PaintBrushIcon, GlobeAltIcon, CalendarDaysIcon 
 } from '@heroicons/react/24/solid';
 
 import statsService from '../../services/statsService';
 import Tabs from '../../components/ui/Tabs'; 
 import { MyPieChart, MyBarChart, MyCalendarHeatmap } from '../../components/stats/StatsCharts';
+import Loader from '../../components/ui/Loader';
+import PageTitle from '../../components/shared/PageTitle';
+import Select from '../../components/ui/Select';
 
-// --- СТИЛІЗОВАНІ КОМПОНЕНТИ ---
 
 const SectionTitle = ({ children }) => (
     <h3 className="text-xl font-bold text-bone font-gothic tracking-wider uppercase mb-6 pl-4 border-l-2 border-blood">
@@ -33,64 +35,11 @@ const ChartContainer = ({ title, children }) => (
         <h4 className="text-xs font-bold text-muted uppercase tracking-widest mb-6 text-center border-b border-border/30 pb-2 font-mono">
             {title}
         </h4>
-        <div className="flex-1 w-full min-h-[300px] flex items-center justify-center">
+        <div className="flex-1 w-full min-h-75 flex items-center justify-center">
             {children}
         </div>
     </div>
 );
-
-// 👇 КАСТОМНИЙ СЕЛЕКТ (Щоб було красиво і без синього)
-const CustomYearSelect = ({ value, options, onChange }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const containerRef = useRef(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (containerRef.current && !containerRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const selectedLabel = options.find(o => o.value === value)?.label || value;
-
-    return (
-        <div className="relative" ref={containerRef}>
-            <div 
-                onClick={() => setIsOpen(!isOpen)}
-                className={`
-                    flex items-center gap-2 px-4 py-2 rounded-sm cursor-pointer border transition-all select-none min-w-[100px] justify-between
-                    bg-ash text-xs text-bone font-mono font-bold
-                    ${isOpen ? 'border-blood shadow-[0_0_5px_rgba(159,18,57,0.3)]' : 'border-border hover:border-muted'}
-                `}
-            >
-                <span>{selectedLabel}</span>
-                <ChevronDownIcon className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </div>
-
-            {isOpen && (
-                <div className="absolute right-0 top-full mt-1 w-full bg-ash border border-border rounded-sm shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                    {options.map((opt) => (
-                        <div
-                            key={opt.value}
-                            onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                            className={`
-                                px-4 py-2 text-xs font-mono cursor-pointer transition-colors
-                                ${opt.value === value ? 'bg-blood text-white font-bold' : 'text-muted hover:text-bone hover:bg-void'}
-                            `}
-                        >
-                            {opt.label}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
-// --- ГОЛОВНА СТОРІНКА ---
 
 const StatsPage = () => {
     const [data, setData] = useState(null);
@@ -108,8 +57,6 @@ const StatsPage = () => {
         const load = async () => {
             try {
                 setLoading(true);
-                // 👇 ПРОСТО ВАНТАЖИМО РІК ЯК Є (Без склеювання з минулим)
-                // "Чистий аркуш" для статистики
                 const stats = await statsService.getStats(selectedYear);
                 setData(stats);
             } catch (error) {
@@ -121,18 +68,21 @@ const StatsPage = () => {
         load();
     }, [selectedYear]);
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center text-muted animate-pulse font-mono uppercase tracking-widest">Calculating Data...</div>;
+    if (loading) return <Loader />;
     if (!data) return <div className="min-h-screen flex items-center justify-center text-blood font-mono uppercase tracking-widest">Error loading statistics</div>;
 
     const { availableYears, global, yearly } = data;
     const yearOptions = availableYears?.map(y => ({ value: y, label: y.toString() })) || [];
+    const tabTitle = activeTab === 'GLOBAL' ? 'Statistics' : `Stats ${selectedYear}`;
 
     return (
         <div className="min-h-screen pb-20 font-mono text-bone bg-void">
-            <div className="max-w-[1920px] mx-auto p-4 md:p-8">
+            <PageTitle title={tabTitle} />
+
+            <div className="max-w-480 mx-auto p-4 md:p-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 border-b border-border/50 pb-6 gap-6">
                     <div>
-                        <h1 className="text-4xl font-bold text-bone font-gothic tracking-wide mb-2">Statistics</h1>
+                        <h1 className="text-4xl font-bold text-blood font-gothic tracking-wide mb-2">Statistics</h1>
                         <p className="text-[10px] text-muted uppercase tracking-[0.3em] font-bold">Analytica & Insights</p>
                     </div>
                     <div className="w-full md:w-auto"><Tabs items={STATS_TABS} activeId={activeTab} onChange={setActiveTab} /></div>
@@ -179,7 +129,7 @@ const StatsPage = () => {
                         <div className="flex justify-between items-center bg-ash border border-border/50 p-4 rounded-sm shadow-md">
                             <h2 className="text-lg font-bold text-bone font-gothic tracking-wide uppercase">Year Overview</h2>
                             <div className="w-40">
-                                <CustomYearSelect 
+                                <Select 
                                     options={yearOptions} 
                                     value={selectedYear} 
                                     onChange={setSelectedYear} 
@@ -204,8 +154,7 @@ const StatsPage = () => {
                                 <div className="bg-ash border border-border/50 p-6 rounded-sm shadow-lg shadow-black/50 overflow-x-auto">
                                     <h4 className="text-xs font-bold text-muted uppercase tracking-widest mb-6 text-center font-mono">Daily Activity Map</h4>
                                     
-                                    {/* w-full гарантує, що графік займе всю ширину */}
-                                    <div className="min-w-[800px] w-full">
+                                    <div className="min-w-200 w-full">
                                         <MyCalendarHeatmap year={selectedYear} values={yearly.heatmap} />
                                     </div>
                                 </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import artworkService from '../../services/artworkService';
 import ProjectForm from '../../components/projects/ProjectForm';
 import ConfirmModal from '../../components/shared/ConfirmModal';
+import PageTitle from '../../components/shared/PageTitle';
 
 const ProjectCreatePage = () => {
     const navigate = useNavigate();
@@ -26,8 +27,10 @@ const ProjectCreatePage = () => {
 
     return (
         <>
+            <PageTitle title="New masterpiece" />
+
             <ProjectForm 
-                title="New Masterpiece ✨" 
+                title="Create Project" 
                 onSubmit={handleCreate} 
                 isLoading={loading} 
             />

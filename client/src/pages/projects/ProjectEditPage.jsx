@@ -2,22 +2,27 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import artworkService from '../../services/artworkService';
 import ProjectForm from '../../components/projects/ProjectForm';
-import ConfirmModal from '../../components/shared/ConfirmModal'; // Для помилок
+import ConfirmModal from '../../components/shared/ConfirmModal'; 
+import Loader from '../../components/ui/Loader';
+import PageTitle from '../../components/shared/PageTitle';
 
 const ProjectEditPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     
-    const [loading, setLoading] = useState(true);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    
     const [initialData, setInitialData] = useState(null);
     const [gallery, setGallery] = useState([]);
     
-    // Стейт для помилок
     const [errorModal, setErrorModal] = useState({ isOpen: false, message: '' });
 
     const loadData = async () => {
         try {
+            setIsLoadingData(true);
             const data = await artworkService.getById(id);
+            
             setInitialData({
                 ...data,
                 started: { 
@@ -38,7 +43,7 @@ const ProjectEditPage = () => {
             console.error("Load error:", error);
             navigate('/projects'); 
         } finally {
-            setLoading(false);
+            setIsLoadingData(false);
         }
     };
 
@@ -46,7 +51,7 @@ const ProjectEditPage = () => {
 
     const handleUpdate = async (formData, deletedGalleryIds) => {
         try {
-            setLoading(true);
+            setIsSaving(true);
             await artworkService.update(id, formData);
             
             if (deletedGalleryIds && deletedGalleryIds.length > 0) {
@@ -62,41 +67,42 @@ const ProjectEditPage = () => {
                 message: error.response?.data?.message || error.message 
             });
         } finally {
-            setLoading(false);
+            setIsSaving(false);
         }
     };
 
-    // Функція, яку викликає ProjectForm після підтвердження в своїй модалці
     const handleDelete = async () => {
         try {
-            setLoading(true);
+            setIsSaving(true);
             await artworkService.delete(id);
             navigate('/projects');
         } catch (error) {
-            setLoading(false);
+            setIsSaving(false);
             setErrorModal({ 
                 isOpen: true, 
                 message: "Failed to delete project: " + error.message 
             });
         }
     };
-
-    if (loading && !initialData) {
-        return <div className="text-center p-20 text-muted animate-pulse font-mono uppercase tracking-widest">Summoning Data...</div>;
+    if (isLoadingData) {
+        return <Loader />;
     }
+
+    if (!initialData) return null;
 
     return (
         <>
+            <PageTitle title={`Edit | ${initialData.title}`} />
+
             <ProjectForm 
-                title={`Editing: ${initialData?.title}`} 
+                title={`Editing: ${initialData.title}`} 
                 initialData={initialData} 
                 gallery={gallery}
                 onSubmit={handleUpdate} 
-                isLoading={loading}
+                isLoading={isSaving}
                 onDelete={handleDelete}
             />
 
-            {/* Модалка для помилок */}
             <ConfirmModal 
                 isOpen={errorModal.isOpen}
                 onClose={() => setErrorModal({ isOpen: false, message: '' })}

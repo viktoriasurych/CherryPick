@@ -5,9 +5,11 @@ import collectionService from '../../services/collectionService';
 import CollectionCard from '../../components/collections/CollectionCard';
 import CollectionToolbar from '../../components/collections/CollectionToolbar';
 import Pagination from '../../components/ui/Pagination';
-import EmptyState from '../../components/ui/EmptyState'; // 👇 Імпортуємо наш компонент
+import EmptyState from '../../components/ui/EmptyState';
 import useCollectionFilters from '../../hooks/useCollectionFilters';
 import { useCreateCollection } from '../../hooks/useCreateCollection';
+import Loader from '../../components/ui/Loader';
+import PageTitle from '../../components/shared/PageTitle';
 
 const CollectionsPage = () => {
     const [collections, setCollections] = useState([]);
@@ -50,7 +52,9 @@ const CollectionsPage = () => {
 
     return (
         <div className="relative min-h-screen pb-20 font-mono text-bone">
-            <div className="max-w-[1920px] mx-auto p-4 md:p-8">
+            <PageTitle title="Grimoires" />
+
+            <div className="max-w-480 mx-auto p-4 md:p-8">
                 
                 <CollectionToolbar 
                     title="My Collections"
@@ -65,15 +69,11 @@ const CollectionsPage = () => {
                     sortOptions={sortOptions}
                 />
 
-                {/* --- CONTENT --- */}
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-32 text-muted gap-4">
-                        <ArrowPathIcon className="w-8 h-8 animate-spin text-blood" />
-                        <span className="animate-pulse text-xs uppercase tracking-[0.3em]">Loading Archives...</span>
-                    </div>
+                    <Loader text="Summoning Grimoires..." />
                 ) : (
                     <>
-                        {/* 1. Нічого не знайдено пошуком (EmptyState) */}
+                        {/* сцена 1: нічого за пошуком */}
                         {processedItems.length === 0 && collections.length > 0 && (
                             <EmptyState 
                                 title="Silence..."
@@ -84,27 +84,38 @@ const CollectionsPage = () => {
                             />
                         )}
 
-                        {/* 2. Порожній архів (EmptyState) */}
+                        {/* сцена 2: порожня бд */}
                         {collections.length === 0 && (
                             <EmptyState 
                                 title="No Collections Yet"
                                 message="Organize your art into series or moodboards."
                                 actionLabel="Create First Collection"
-                                onAction={openModal} // Тут викликаємо модалку, а не перехід
+                                onAction={openModal} 
                                 icon={PlusIcon}
                             />
                         )}
 
-                        {/* 3. ГРІД */}
+                        {/* сцена 3: колекції */}
                         {(processedItems.length > 0 || (currentPage === 1 && !search && filterType === 'ALL' && collections.length > 0)) && (
                             <>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500 items-stretch">
                                     
-                                    {/* Картка "Create New" (тільки на першій сторінці без фільтрів) */}
                                     {currentPage === 1 && !search && filterType === 'ALL' && (
-                                        <div onClick={openModal} className="group relative w-full cursor-pointer rounded-sm border border-dashed border-border bg-void/50 transition-all duration-500 hover:border-blood hover:bg-void flex flex-row items-center justify-center gap-3 h-auto py-3 min-h-0 sm:flex-col sm:h-auto sm:min-h-[300px] sm:gap-6 sm:py-0">
-                                            <PlusIcon className="w-5 h-5 sm:w-12 sm:h-12 text-muted/30 stroke-[1] group-hover:text-blood group-hover:scale-110 transition-all duration-500" />
-                                            <span className="text-[10px] font-gothic text-muted group-hover:text-bone uppercase tracking-[0.2em] transition-colors">Create New</span>
+                                        <div 
+                                            onClick={openModal} 
+                                            className="
+                                                group relative w-full cursor-pointer 
+                                                rounded-sm border border-dashed border-border bg-void/50 
+                                                transition-all duration-500 hover:border-blood hover:bg-void 
+                                                flex flex-row items-center justify-center gap-3 
+                                                h-auto py-3 min-h-0 
+                                                sm:flex-col sm:h-auto sm:aspect-3/4 sm:min-h-75 sm:gap-6 sm:py-0
+                                            "
+                                        >
+                                            <PlusIcon className="w-5 h-5 sm:w-12 sm:h-12 text-muted/30 stroke-1 group-hover:text-blood group-hover:scale-110 transition-all duration-500" />
+                                            <span className="text-[10px] font-gothic text-muted group-hover:text-bone uppercase tracking-[0.2em] transition-colors">
+                                                Create New
+                                            </span>
                                         </div>
                                     )}
 

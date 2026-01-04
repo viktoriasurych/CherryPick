@@ -1,26 +1,22 @@
 import { Link, useLocation } from 'react-router-dom';
-
-// 👇 Два кроки назад
 import artworkService from '../../services/artworkService';
 
 import { 
     HomeIcon, RectangleStackIcon, ChartBarIcon, Squares2X2Icon,
-    PlusIcon, BookmarkIcon, DocumentTextIcon, ClockIcon, PaintBrushIcon
+    PlusIcon, BookmarkIcon, DocumentTextIcon, ClockIcon 
 } from '@heroicons/react/24/outline';
 
-// 👇 Правильні шляхи
 import defaultCollectionImg from '../../assets/default-collection.png';
 import defaultArtImg from '../../assets/default-art.png';
 
 const Sidebar = ({ recentProjects = [], recentCollections = [], isOpen, onClose, onOpenCollectionModal }) => {
     const location = useLocation();
 
-    // Англійські назви пунктів
     const menuItems = [
-        { name: 'Home', path: '/', icon: HomeIcon },
-        { name: 'Session', path: '/session', icon: ClockIcon },
+        // { name: 'Home', path: '/', icon: HomeIcon },
         { name: 'Archive', path: '/projects', icon: RectangleStackIcon },
-        { name: 'Grimoires', path: '/collections', icon: Squares2X2Icon }, // Колекції = Гримуари
+        { name: 'Grimoires', path: '/collections', icon: Squares2X2Icon },
+        { name: 'Session', path: '/session', icon: ClockIcon },
         { name: 'Notes', path: '/notes', icon: DocumentTextIcon },
         { name: 'Saved', path: '/saved', icon: BookmarkIcon },
         { name: 'Stats', path: '/stats', icon: ChartBarIcon },
@@ -52,10 +48,19 @@ const Sidebar = ({ recentProjects = [], recentCollections = [], isOpen, onClose,
             shrink-0 overflow-y-auto overflow-x-hidden font-mono
         `}>
             <div className="p-4 flex flex-col h-full w-64"> 
-                {/* Навігація */}
+                
                 <nav className="space-y-1 mb-8">
                     {menuItems.map((item) => {
-                        const isActive = location.pathname === item.path;
+                        let isActive = false;
+
+                        if (item.name === 'Session') {
+                            isActive = location.pathname.includes('session');
+                        } else if (item.path === '/') {
+                            isActive = location.pathname === '/';
+                        } else {
+                            isActive = location.pathname.startsWith(item.path) && !location.pathname.includes('session');
+                        }
+
                         return (
                             <Link
                                 key={item.path}
@@ -64,7 +69,7 @@ const Sidebar = ({ recentProjects = [], recentCollections = [], isOpen, onClose,
                                 className={`
                                     flex items-center gap-3 px-3 py-2.5 rounded-sm text-xs uppercase tracking-widest transition-all
                                     ${isActive 
-                                        ? 'bg-blood/10 text-blood font-bold border-l-2 border-blood pl-[10px]' // Активна: з червоною лінією зліва
+                                        ? 'bg-blood/10 text-blood font-bold border-l-2 border-blood pl-2.5' 
                                         : 'text-muted hover:bg-charcoal hover:text-bone border-l-2 border-transparent'
                                     }
                                 `}
@@ -76,7 +81,7 @@ const Sidebar = ({ recentProjects = [], recentCollections = [], isOpen, onClose,
                     })}
                 </nav>
 
-                {/* 1. Останні проєкти (Recent Works) */}
+                {/* проєкти */}
                 <div className="mb-6">
                     <div className="flex items-center justify-between px-3 mb-3 border-b border-border pb-1">
                         <span className="text-[9px] font-bold text-muted/50 uppercase tracking-[0.2em] whitespace-nowrap">
@@ -89,7 +94,7 @@ const Sidebar = ({ recentProjects = [], recentCollections = [], isOpen, onClose,
 
                     <div className="space-y-1">
                         {recentProjects.length === 0 && <div className="px-3 text-[10px] text-muted italic">The void is empty...</div>}
-                        {recentProjects.slice(0, 5).map((project) => (
+                        {recentProjects.slice(0, 3).map((project) => (
                             <Link
                                 key={project.id}
                                 to={`/projects/${project.id}`}
@@ -107,7 +112,7 @@ const Sidebar = ({ recentProjects = [], recentCollections = [], isOpen, onClose,
                     </div>
                 </div>
 
-                {/* 2. Останні колекції (Grimoires) */}
+                {/* колекції */}
                 <div className="flex flex-col grow overflow-hidden">
                     <div className="flex items-center justify-between px-3 mb-3 border-b border-border pb-1">
                         <span className="text-[9px] font-bold text-muted/50 uppercase tracking-[0.2em] whitespace-nowrap">
@@ -131,7 +136,7 @@ const Sidebar = ({ recentProjects = [], recentCollections = [], isOpen, onClose,
                                     className="flex items-center gap-3 px-3 py-1.5 rounded-sm hover:bg-charcoal group transition-all"
                                 >
                                     <div className="w-5 h-5 rounded-sm bg-ash border border-border shrink-0 overflow-hidden group-hover:border-blood transition-colors">
-                                        {renderThumbnail(col.cover_image, true)}
+                                        {renderThumbnail(col.cover_image || col.latest_image, true)}
                                     </div>
                                     <span className="text-xs text-muted group-hover:text-bone truncate font-medium transition-colors">
                                         {col.title}

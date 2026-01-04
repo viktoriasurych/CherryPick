@@ -14,9 +14,9 @@ export function SortableItem(props) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1, // Напівпрозорість, коли тягнеш
+    opacity: isDragging ? 0.5 : 1,
     cursor: 'grab',
-    touchAction: 'none' // Важливо для мобільних
+    touchAction: 'none'
   };
 
   return (

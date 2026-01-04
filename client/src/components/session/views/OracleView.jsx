@@ -9,7 +9,7 @@ const OracleView = ({ quote, onClose }) => {
                 Ritual Complete
             </h3>
 
-            {/* БУЛЬБАШКА */}
+            {/* бульбашка */}
             <div className="
                 relative 
                 bg-black/40             
@@ -19,28 +19,26 @@ const OracleView = ({ quote, onClose }) => {
                 shadow-lg
                 mb-0 z-10
             ">
-                <p className="font-gothic text-bone text-sm md:text-base tracking-wide leading-relaxed break-words">
+                <p className="font-gothic text-bone text-sm md:text-base tracking-wide leading-relaxed wrap-break-word">
                     “{quote}”
                 </p>
 
-                {/* Хвостик бульбашки */}
+                {/* хвостик бульбашки */}
                 <div className="
                     absolute 
                     top-full left-1/2 -translate-x-1/2 
-                    border-[12px] border-transparent   
+                    border-12 border-transparent   
                     border-t-blood/50                  
                     drop-shadow-sm
                 "></div>
             </div>
 
-            {/* 👇 ВИПРАВЛЕНО: Зменшив висоту (h-24 та h-32), щоб кіт став меншим */}
             <img 
                 src={catOracleGif} 
                 alt="Oracle" 
                 className="h-24 md:h-32 object-contain mb-8 mt-3 contrast-110 drop-shadow-xl relative z-0" 
             />
 
-            {/* Кнопка з обводкою */}
             <button 
                 onClick={onClose}
                 className="

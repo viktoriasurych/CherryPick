@@ -25,7 +25,6 @@ const EmptyState = ({
                 {message}
             </p>
             
-            {/* Рендеримо кнопку, якщо є дія */}
             {(actionLabel && (actionLink || onAction)) && (
                 actionLink ? (
                     <Link 
