@@ -53,14 +53,14 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
             
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-void p-3 rounded-sm border border-border flex flex-col justify-center gap-1">
-                    <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Genesis</span>
+                    <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">start</span>
                     <span className="text-xs font-bold text-bone truncate">
                         {formatFuzzyDate(artwork.started_year, artwork.started_month, artwork.started_day) || '—'}
                     </span>
                 </div>
 
                 <div className="bg-void p-3 rounded-sm border border-border flex flex-col justify-center gap-1">
-                    <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Conclusion</span>
+                    <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Finish</span>
                     <span className={`text-xs font-bold truncate ${artwork.finished_year ? 'text-blood' : 'text-bone'}`}>
                         {formatFuzzyDate(artwork.finished_year, artwork.finished_month, artwork.finished_day) || '—'}
                     </span>

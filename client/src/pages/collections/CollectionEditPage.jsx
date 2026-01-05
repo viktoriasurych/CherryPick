@@ -278,7 +278,7 @@ const CollectionEditPage = () => {
                 <div className="lg:col-span-2">
                     <div className="flex justify-between items-center mb-6 border-b border-border pb-2">
                         <h3 className="text-xs font-bold text-bone uppercase tracking-[0.2em]">
-                            Artifacts <span className="text-muted ml-2">({items.length})</span>
+                        Artworks <span className="text-muted ml-2">({items.length})</span>
                         </h3>
                         <span className="text-[10px] text-muted flex items-center gap-1">
                             Drag <Bars2Icon className="w-3 h-3"/> to reorder

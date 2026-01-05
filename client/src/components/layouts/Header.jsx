@@ -115,7 +115,7 @@ const Header = ({ user, logout, isSidebarOpen, setIsSidebarOpen }) => {
                                 <MagnifyingGlassIcon className="w-4 h-4 text-muted shrink-0" />
                                 <input
                                     type="text"
-                                    placeholder="Search..."
+                                    placeholder="Search for an artist or collection.."
                                     className="bg-transparent border-none outline-none text-xs ml-2 w-full text-bone placeholder-muted/50 font-mono min-w-0"
                                     value={searchQuery}
                                     onChange={(e) => {
@@ -148,7 +148,7 @@ const Header = ({ user, logout, isSidebarOpen, setIsSidebarOpen }) => {
 
                                     {!isSearching && !hasResults && searchQuery.length >= 2 && (
                                         <div className="p-4 text-center text-xs text-muted/50 font-mono">
-                                            No artifacts found.
+                                            No artworks found.
                                         </div>
                                     )}
 

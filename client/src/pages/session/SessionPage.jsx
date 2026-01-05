@@ -77,11 +77,6 @@ const SessionPage = () => {
         return (
             <div className="min-h-screen bg-void flex flex-col text-bone font-mono">
                 <PageTitle title="The Void" />
-                <header className="flex items-center px-4 py-4 border-b border-white/10">
-                     <Link to="/projects" className="text-muted hover:text-bone transition flex items-center gap-2 text-xs uppercase tracking-widest">
-                        <ArrowLeftIcon className="w-4 h-4" /> Archives
-                     </Link>
-                </header>
                 <div className="flex-1 flex flex-col items-center justify-center p-4 text-center -mt-10 animate-in fade-in duration-700"> 
                     <img src={sleepingCatGif} alt="Void" className="h-32 md:h-40 object-contain mb-6 opacity-80" />
                     <h1 className="text-xl font-gothic text-blood uppercase tracking-widest mb-6">No Active Sessions</h1>

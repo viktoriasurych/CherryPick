@@ -172,8 +172,8 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
                         </div>
                     )}
 
-                    <FuzzyDateInput label="Genesis Date" value={formData.started} onChange={(val) => handleChange('started', val)} error={errors.started}/>
-                    {(formData.status === 'FINISHED' || formData.status === 'DROPPED') && <FuzzyDateInput label="Conclusion Date" value={formData.finished} onChange={(val) => handleChange('finished', val)} error={errors.finished}/>}
+                    <FuzzyDateInput label="Start Date" value={formData.started} onChange={(val) => handleChange('started', val)} error={errors.started}/>
+                    {(formData.status === 'FINISHED' || formData.status === 'DROPPED') && <FuzzyDateInput label="Finish Date" value={formData.finished} onChange={(val) => handleChange('finished', val)} error={errors.finished}/>}
                     <div>
                         <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">History / Lore</label>
                         <textarea className="w-full bg-void border border-border p-3 text-bone text-sm rounded-sm focus:border-blood outline-none transition h-32 resize-none placeholder-muted/20" value={formData.description} placeholder="Tell the story of this art..." onChange={(e) => handleChange('description', e.target.value)}/>

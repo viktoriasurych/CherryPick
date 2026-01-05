@@ -94,7 +94,7 @@ const StatsPage = () => {
                             <SectionTitle>General Metrics</SectionTitle>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <KpiCard icon={ClockIcon} label="Total Time Spent" value={`${global.kpi.total_time}h`} />
-                                <KpiCard icon={Square3Stack3DIcon} label="Total Artifacts" value={global.kpi.total_works} />
+                                <KpiCard icon={Square3Stack3DIcon} label="Total Artworks" value={global.kpi.total_works} />
                                 <KpiCard icon={Squares2X2Icon} label="Total Collections" value={global.kpi.total_collections} />
                             </div>
                         </section>
@@ -140,7 +140,7 @@ const StatsPage = () => {
                             <SectionTitle>Summary of {selectedYear}</SectionTitle>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <KpiCard icon={ClockIcon} label={`Time in ${selectedYear}`} value={`${yearly.kpi.total_time}h`} />
-                                <KpiCard icon={Square3Stack3DIcon} label={`Artifacts in ${selectedYear}`} value={yearly.kpi.works_count} />
+                                <KpiCard icon={Square3Stack3DIcon} label={`Artworks in ${selectedYear}`} value={yearly.kpi.works_count} />
                                 <KpiCard icon={Squares2X2Icon} label={`Collections in ${selectedYear}`} value={yearly.kpi.collections_count} />
                             </div>
                         </section>

@@ -335,7 +335,7 @@ const CollectionDetailsPage = () => {
                     <div className="text-center py-20 text-muted opacity-40 font-mono uppercase tracking-widest flex flex-col items-center gap-3">
                         <div className="w-8 h-px bg-blood/50 mb-2"></div>
                         The Void is Empty
-                        {isOwner && <Link to="/projects" className="text-[10px] text-blood hover:text-white border-b border-blood/30 pb-0.5 transition-colors">Add Artifacts</Link>}
+                        {isOwner && <Link to="/projects" className="text-[10px] text-blood hover:text-white border-b border-blood/30 pb-0.5 transition-colors">Add Artworks</Link>}
                     </div>
                 )}
             </div>

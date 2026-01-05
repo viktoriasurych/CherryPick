@@ -127,7 +127,7 @@ const StatsSection = ({ userId, isOwner, privacySettings, onPrivacyChange }) => 
                 <SectionHeader title="Total Activity" action={<VisibilityToggle blockKey="show_kpi_stats" />} />
                 {(isOwner || privacySettings.show_kpi_stats) ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <StatCard icon={Square3Stack3DIcon} label="Artifacts" value={overview.total_works} />
+                        <StatCard icon={Square3Stack3DIcon} label="Artworks" value={overview.total_works} />
                         <StatCard icon={Squares2X2Icon} label="Collections" value={overview.total_collections} />
                         <StatCard icon={ClockIcon} label="Hours Spent" value={overview.total_time} />
                         <StatCard icon={FireIcon} label="Current Streak" value={`${overview.current_streak || 0} days`} />
