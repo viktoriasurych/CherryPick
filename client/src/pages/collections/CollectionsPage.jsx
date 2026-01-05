@@ -52,7 +52,7 @@ const CollectionsPage = () => {
 
     return (
         <div className="relative min-h-screen pb-20 font-mono text-bone">
-            <PageTitle title="Grimoires" />
+            <PageTitle title="Collections" />
 
             <div className="max-w-480 mx-auto p-4 md:p-8">
                 
@@ -70,7 +70,7 @@ const CollectionsPage = () => {
                 />
 
                 {loading ? (
-                    <Loader text="Summoning Grimoires..." />
+                    <Loader text="Summoning Collections..." />
                 ) : (
                     <>
                         {/* сцена 1: нічого за пошуком */}

@@ -6,7 +6,7 @@ const OracleView = ({ quote, onClose }) => {
         <div className="flex flex-col items-center justify-center text-center relative animate-in fade-in zoom-in duration-500 px-6 py-8 bg-ash/90 backdrop-blur-md border border-border rounded-sm shadow-2xl shadow-black w-full max-w-md">
             
             <h3 className="font-gothic text-blood text-xl uppercase tracking-[0.2em] mb-6 drop-shadow-md">
-                Ritual Complete
+            Session Complete
             </h3>
 
             {/* бульбашка */}

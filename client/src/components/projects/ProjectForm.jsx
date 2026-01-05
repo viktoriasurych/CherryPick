@@ -113,7 +113,7 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
             isOpen: true,
             type: 'DELETE_PROJECT',
             title: "Destroy Creation?",
-            message: "This grimoire page will be burned. This action cannot be undone.",
+            message: "This collection page will be burned. This action cannot be undone.",
             confirmText: "Burn It"
         });
     };
@@ -156,7 +156,7 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
         >
              <div className="space-y-6 lg:col-span-1 font-mono">
                 <div className="bg-ash border border-border p-6 rounded-sm space-y-5 shadow-xl">
-                    <h3 className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-2 border-b border-border pb-2">Codex Details</h3>
+                    <h3 className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-2 border-b border-border pb-2">Artwork Details</h3>
                     <Input label="Project Title" value={formData.title} onChange={(e) => handleChange('title', e.target.value)} error={errors.title} placeholder="Untitled..."/>
                     
                     {!isCreateMode && (
@@ -193,7 +193,7 @@ const ProjectForm = ({ initialData, onSubmit, title, isLoading, onDelete, galler
             <div className="lg:col-span-2 space-y-6 font-mono">
                 <div className="bg-ash border border-border p-6 rounded-sm shadow-xl">
                     <header className="flex justify-between items-center mb-6 border-b border-border pb-2">
-                        <h3 className="text-[10px] font-bold text-muted uppercase tracking-[0.2em]">Main Grimoire Cover</h3>
+                        <h3 className="text-[10px] font-bold text-muted uppercase tracking-[0.2em]">Main Collection Cover</h3>
                         {initialData && formData.image_path !== initialData.image_path && !previewUrl && (
                             <span className="text-blood text-[9px] animate-pulse uppercase tracking-tighter">● Selected from history</span>
                         )}

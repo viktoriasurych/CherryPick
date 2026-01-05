@@ -57,7 +57,7 @@ const ResetPasswordPage = () => {
                 <div className="max-w-md w-full text-center p-8 border border-blood/30 bg-ash/10 rounded-sm shadow-[0_0_30px_rgba(0,0,0,0.5)]">
                     <h2 className="text-xl font-gothic text-blood mb-4 tracking-widest uppercase">Link Invalid</h2>
                     <p className="mb-8 text-muted text-xs leading-relaxed">
-                        This ritual scroll has crumbled to dust.<br/>
+                        This session scroll has crumbled to dust.<br/>
                         The link is either expired or incomplete.
                     </p>
                     <Link 

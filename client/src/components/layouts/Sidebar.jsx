@@ -14,12 +14,12 @@ const Sidebar = ({ recentProjects = [], recentCollections = [], isOpen, onClose,
 
     const menuItems = [
         // { name: 'Home', path: '/', icon: HomeIcon },
-        { name: 'Archive', path: '/projects', icon: RectangleStackIcon },
-        { name: 'Grimoires', path: '/collections', icon: Squares2X2Icon },
         { name: 'Session', path: '/session', icon: ClockIcon },
-        { name: 'Notes', path: '/notes', icon: DocumentTextIcon },
+        { name: 'Archive', path: '/projects', icon: RectangleStackIcon },
+        { name: 'Collections', path: '/collections', icon: Squares2X2Icon },
         { name: 'Saved', path: '/saved', icon: BookmarkIcon },
         { name: 'Stats', path: '/stats', icon: ChartBarIcon },
+        { name: 'Notes', path: '/notes', icon: DocumentTextIcon },
     ];
 
     const renderThumbnail = (imagePath, isCollection = false) => {
@@ -116,7 +116,7 @@ const Sidebar = ({ recentProjects = [], recentCollections = [], isOpen, onClose,
                 <div className="flex flex-col grow overflow-hidden">
                     <div className="flex items-center justify-between px-3 mb-3 border-b border-border pb-1">
                         <span className="text-[9px] font-bold text-muted/50 uppercase tracking-[0.2em] whitespace-nowrap">
-                            Grimoires
+                        Collections
                         </span>
                         <button 
                             onClick={(e) => { e.preventDefault(); onClose(); onOpenCollectionModal(); }} 

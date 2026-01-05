@@ -172,7 +172,7 @@ const ProfilePage = () => {
                             <Link to="/profile/edit" className="block w-full pt-4">
                                 <button className="w-full flex items-center justify-center gap-2 bg-ash border border-border hover:border-blood text-bone py-3 rounded-sm text-[10px] font-bold uppercase tracking-[0.2em] transition-all group shadow-lg shadow-black/50 hover:bg-void">
                                     <PencilSquareIcon className="w-4 h-4 text-blood group-hover:scale-110 transition-transform" />
-                                    Edit Codex
+                                    Edit Artwork
                                 </button>
                             </Link>
                         )}

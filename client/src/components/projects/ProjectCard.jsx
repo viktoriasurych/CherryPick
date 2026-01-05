@@ -15,7 +15,6 @@ const ProjectCard = ({ project }) => {
     };
 
     const getFooterInfo = () => {
-       
         if (project.status === 'FINISHED' && project.finished_year) {
             return {
                 label: 'Ended',
@@ -28,7 +27,7 @@ const ProjectCard = ({ project }) => {
             return {
                 label: 'Updated',
                 date: formatDate(project.last_session_date), 
-                className: 'text-bone font-bold'
+                className: 'text-muted/60'
             };
         }
 
@@ -50,7 +49,7 @@ const ProjectCard = ({ project }) => {
                 shadow-lg shadow-black/40 hover:shadow-[0_0_20px_rgba(159,18,57,0.2)] flex-col h-full
             "
         >
-            <div className="aspect-4/3 w-full bg-black relative overflow-hidden flex items-center justify-center border-b border-border/30">
+            <div className="aspect-4/3 w-full bg-black relative overflow-hidden flex items-center justify-center border-b border-border/30 shrink-0">
                 <img 
                     src={artworkService.getImageUrl(project.image_path)} 
                     alt={project.title} 
@@ -67,26 +66,34 @@ const ProjectCard = ({ project }) => {
                 </div>
             </div>
 
-            <div className="p-5 flex flex-col grow">
-                <h3 className="text-sm font-bold text-bone group-hover:text-blood transition-colors truncate mb-3 uppercase tracking-wide font-mono">
+            <div className="p-5 flex flex-col flex-1">
+                <h3 className="text-sm font-bold text-bone group-hover:text-blood transition-colors truncate mb-2 uppercase tracking-wide font-mono">
                     {project.title}
                 </h3>
                 
-                <div className="flex items-center flex-wrap gap-2 text-[10px] text-muted mb-4 font-mono min-h-5">
+                <div className="flex items-center flex-wrap gap-2 text-[10px] text-muted mb-3 font-mono">
                     {project.genre_name && (
-                        <span className="bg-ash px-1.5 py-0.5 rounded-sm border border-border/50 truncate max-w-25 hover:text-bone transition-colors hover:border-border">
+                        <span className="bg-ash px-1.5 py-0.5 rounded-sm border border-border/50 hover:text-bone transition-colors hover:border-border whitespace-normal text-center">
                             {project.genre_name}
                         </span>
                     )}
                     {project.genre_name && project.style_name && <span className="text-muted/40 font-bold text-xs">•</span>}
                     {project.style_name && (
-                        <span className="bg-ash px-1.5 py-0.5 rounded-sm border border-border/50 truncate max-w-25 hover:text-bone transition-colors hover:border-border">
+                        <span className="bg-ash px-1.5 py-0.5 rounded-sm border border-border/50 hover:text-bone transition-colors hover:border-border whitespace-normal text-center">
                             {project.style_name}
                         </span>
                     )}
                 </div>
 
-                <div className="mt-auto pt-3 border-t border-border/30 flex justify-between items-end">
+                {project.description ? (
+                    <p className="text-[10px] text-muted/70 line-clamp-2 leading-relaxed font-mono mb-3 min-h-[2.5em]">
+                        {project.description}
+                    </p>
+                ) : (
+                    <div className="min-h-[2.5em] mb-3"></div>
+                )}
+
+                <div className="mt-auto pt-3 border-t border-border/30 flex justify-between items-center">
                     <div className={`text-[9px] font-mono uppercase tracking-widest ${footerInfo.className}`}>
                         {footerInfo.label}: {footerInfo.date}
                     </div>

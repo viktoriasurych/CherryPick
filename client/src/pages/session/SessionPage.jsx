@@ -84,7 +84,7 @@ const SessionPage = () => {
                 </header>
                 <div className="flex-1 flex flex-col items-center justify-center p-4 text-center -mt-10 animate-in fade-in duration-700"> 
                     <img src={sleepingCatGif} alt="Void" className="h-32 md:h-40 object-contain mb-6 opacity-80" />
-                    <h1 className="text-xl font-gothic text-blood uppercase tracking-widest mb-6">No Active Rituals</h1>
+                    <h1 className="text-xl font-gothic text-blood uppercase tracking-widest mb-6">No Active Sessions</h1>
                     <Link to="/projects" className="text-xs font-bold text-bone border border-white/20 px-8 py-3 hover:bg-white/5 hover:border-white/40 transition-all uppercase tracking-widest rounded-sm">
                         Select a Project
                     </Link>
@@ -105,7 +105,7 @@ const SessionPage = () => {
 
     return (
         <div className="min-h-screen bg-void text-bone flex flex-col font-mono pb-10 md:pb-0 overflow-x-hidden">
-            <PageTitle title={`Ritual | ${displayArtwork.title}`} />
+            <PageTitle title={`Session | ${displayArtwork.title}`} />
 
             <header className="w-full border-b border-white/10 sticky top-0 z-30 bg-void/95 backdrop-blur-sm">
                 <div className="w-full max-w-480 mx-auto px-4 py-3">

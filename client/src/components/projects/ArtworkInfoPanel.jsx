@@ -6,6 +6,11 @@ import {
 import { formatFuzzyDate } from '../../utils/formatters';
 
 const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
+    const navigate = useNavigate();
+
+    const goToFilter = (filterType, value) => {
+        navigate(`/projects?${filterType}=${value}`);
+    };
 
     const parseList = (idsStr, namesStr) => {
         if (!idsStr || !namesStr) return [];
@@ -30,7 +35,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                 transition-all duration-300
                 hover:border-blood hover:text-bone hover:shadow-[0_0_10px_rgba(159,18,57,0.2)]
                 select-none
-                max-w-full truncate
+                whitespace-normal wrap-break-word leading-tight text-center
             "
         >
             {label}
@@ -47,7 +52,6 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-                
                 <div className="bg-void p-3 rounded-sm border border-border flex flex-col justify-center gap-1">
                     <span className="text-[9px] text-muted uppercase tracking-widest font-bold opacity-60">Genesis</span>
                     <span className="text-xs font-bold text-bone truncate">
@@ -72,7 +76,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                             <IdentificationIcon className="w-4 h-4 text-muted" />
                             <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Genre</span>
                         </div>
-                        <div className="truncate">
+                        <div className="flex flex-wrap">
                             {artwork.genre_id ? (
                                 <MetaChip label={artwork.genre_name} onClick={() => goToFilter('genre_ids', artwork.genre_id)} />
                             ) : <span className="text-xs text-muted/30 italic">—</span>}
@@ -85,7 +89,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                             <PaintBrushIcon className="w-4 h-4 text-muted" />
                             <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Style</span>
                         </div>
-                        <div className="truncate">
+                        <div className="flex flex-wrap">
                             {artwork.style_id ? (
                                 <MetaChip label={artwork.style_name} onClick={() => goToFilter('style_ids', artwork.style_id)} />
                             ) : <span className="text-xs text-muted/30 italic">—</span>}
@@ -138,7 +142,7 @@ const ArtworkInfoPanel = ({ artwork, showEditButton = false }) => {
                         to={`/projects/${artwork.id}/edit`} 
                         className="block w-full bg-transparent hover:bg-ash text-muted hover:text-white font-bold py-3 rounded-sm border border-border hover:border-blood transition text-center text-xs uppercase tracking-widest"
                     >
-                        Edit Codex
+                        Edit Artwork
                     </Link>
                 </div>
             )}

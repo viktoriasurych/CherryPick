@@ -190,7 +190,7 @@ const SaveFormView = ({
 
             <div className="mt-6 pt-4 border-t border-white/10 shrink-0">
                 <Button 
-                    text={errorMsg ? "Fix Timer Error" : "Save Ritual"} 
+                    text={errorMsg ? "Fix Timer Error" : "Save session"} 
                     disabled={!!errorMsg}
                     className={`
                         w-full py-3 font-gothic tracking-[0.2em] uppercase text-xs shadow-lg rounded-sm transition-all

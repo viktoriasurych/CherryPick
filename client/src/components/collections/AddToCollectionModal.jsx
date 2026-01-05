@@ -30,7 +30,7 @@ const AddToCollectionModal = ({ isOpen, onClose, artworkId, artworkImage }) => {
             setCollections(allCols);
             setSelectedIds(new Set(existingIds)); 
         } catch (error) {
-            console.error("Error loading grimoires:", error);
+            console.error("Error loading collections:", error);
         } finally {
             setLoading(false);
         }
@@ -84,7 +84,7 @@ const AddToCollectionModal = ({ isOpen, onClose, artworkId, artworkImage }) => {
                     <div className="p-4 border-b border-border flex justify-between items-center bg-deep">
                         <h3 className="text-bone font-bold flex items-center gap-2 uppercase tracking-wider text-sm">
                             <BookmarkIcon className="w-5 h-5 text-blood" /> 
-                            Add to Grimoire
+                            Add to Collection
                         </h3>
                         <button onClick={onClose} className="hover:rotate-90 transition-transform duration-300">
                             <XMarkIcon className="w-5 h-5 text-muted hover:text-blood" />
@@ -95,7 +95,7 @@ const AddToCollectionModal = ({ isOpen, onClose, artworkId, artworkImage }) => {
                         
                         <div className="flex items-center gap-3 p-2 mb-2 bg-charcoal/50 rounded-sm mx-2 border border-border/50">
                             <img src={artworkImage} alt="" className="w-10 h-10 rounded-sm object-cover opacity-80" />
-                            <span className="text-[10px] uppercase tracking-widest text-muted">Select grimoires to haunt...</span>
+                            <span className="text-[10px] uppercase tracking-widest text-muted">Select collections to haunt...</span>
                         </div>
 
                         <div className="px-2 mb-2">
@@ -170,7 +170,7 @@ const AddToCollectionModal = ({ isOpen, onClose, artworkId, artworkImage }) => {
                                 transition-all duration-300 text-[10px] uppercase tracking-widest font-bold
                             "
                         >
-                            <PlusIcon className="w-3 h-3" /> Forge New Grimoire
+                            <PlusIcon className="w-3 h-3" /> Forge New Collection
                         </button>
                     </div>
                 </div>

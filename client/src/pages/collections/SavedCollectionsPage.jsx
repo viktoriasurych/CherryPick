@@ -76,12 +76,12 @@ const SavedCollectionsPage = () => {
 
     return (
         <div className="relative min-h-screen pb-20 font-mono text-bone">
-            <PageTitle title="Saved Archives" />
+            <PageTitle title="Saved Collections" />
 
             <div className="max-w-480 mx-auto p-4 md:p-8">
                 
                 <CollectionToolbar 
-                    title="Saved Archives"
+                    title="Saved Collections"
                     subTitle={loading ? 'Retrieving...' : `${collections.length} Collections Saved`}
                     search={search}
                     setSearch={setSearch}
@@ -94,7 +94,7 @@ const SavedCollectionsPage = () => {
                 />
 
                 {loading ? (
-                    <Loader text="Loading Saved Archives..." />
+                    <Loader text="Loading Saved Collections..." />
                 ) : (
                     <>
                         {processedItems.length === 0 && collections.length > 0 && (
@@ -109,7 +109,7 @@ const SavedCollectionsPage = () => {
 
                         {collections.length === 0 && (
                             <EmptyState 
-                                title="No Archives Saved"
+                                title="No Collections Saved"
                                 message="Save interesting collections to find them here later."
                                 icon={BookmarkIcon}
                                 actionLabel="Explore Archives"

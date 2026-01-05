@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'; // 👇 Додали useSearchParams
 import { 
     AdjustmentsHorizontalIcon, 
     PlusIcon, 
@@ -12,7 +12,6 @@ import FilterSidebar from '../../components/layouts/FilterSidebar';
 import ProjectCard from '../../components/projects/ProjectCard';
 import SortDropdown from '../../components/ui/SortDropdown';
 import EmptyState from '../../components/ui/EmptyState';
-
 import Loader from '../../components/ui/Loader'; 
 import PageTitle from '../../components/shared/PageTitle'; 
 
@@ -21,6 +20,8 @@ const ProjectsPage = () => {
     const [loading, setLoading] = useState(true);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    const [searchParams] = useSearchParams();
 
     const emptyFilters = { 
         status: [], genre_ids: [], style_ids: [], material_ids: [], tag_ids: [], 
@@ -52,25 +53,58 @@ const ProjectsPage = () => {
             setIsFilterOpen(true);
             navigate(location.pathname, { replace: true, state: {} });
             loadProjects(newFilters, searchQuery);
+            return;
         }
+
+        const newFilters = { ...emptyFilters };
+        let hasUrlFilters = false;
+
+        const parseIds = (paramName) => {
+            const val = searchParams.get(paramName);
+            if (val) {
+                hasUrlFilters = true;
+                return val.split(',').map(Number);
+            }
+            return [];
+        };
+
+        newFilters.genre_ids = parseIds('genre_ids');
+        newFilters.style_ids = parseIds('style_ids');
+        newFilters.material_ids = parseIds('material_ids');
+        newFilters.tag_ids = parseIds('tag_ids');
+        
+        const statusVal = searchParams.get('status');
+        if (statusVal) {
+            newFilters.status = statusVal.split(',');
+            hasUrlFilters = true;
+        }
+
+        if (hasUrlFilters) {
+            setFilters(newFilters);
+            setIsFilterOpen(true);
+            loadProjects(newFilters, searchQuery);
+        } else {
+            loadProjects(emptyFilters, searchQuery);
+        }
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [location.state]);
+    }, [location.search]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (!location.state?.applyFilter) {
+            if (!location.state?.applyFilter && !location.search) {
                 loadProjects(filters, searchQuery);
+            } else if (searchQuery) {
+                 loadProjects(filters, searchQuery);
             }
         }, 500);
         return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchQuery]); 
 
     useEffect(() => {
-        if (!location.state?.applyFilter) {
-            loadProjects(filters, searchQuery);
+        if (!location.state?.applyFilter && !location.search) {
+             loadProjects(filters, searchQuery);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters, sortConfig]);
 
     const handleSortChange = (val) => setSortConfig(p => ({ ...p, by: val }));
@@ -84,6 +118,7 @@ const ProjectsPage = () => {
     const handleResetFilters = () => {
         setFilters(emptyFilters);
         setSearchQuery('');
+        navigate('/projects'); 
         loadProjects(emptyFilters, '');
     };
 

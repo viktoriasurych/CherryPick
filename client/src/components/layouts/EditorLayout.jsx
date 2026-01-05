@@ -75,7 +75,7 @@ const EditorLayout = ({ title, backLink, isSaving, hasChanges, onSave, children,
                 isOpen={showExitConfirm}
                 onClose={() => setShowExitConfirm(false)}
                 onConfirm={confirmExit}
-                title="Abandon Ritual?"
+                title="Abandon session?"
                 message="You have unsaved changes. Leaving now will cause them to be lost in the void forever."
                 confirmText="Leave Anyway"
             />

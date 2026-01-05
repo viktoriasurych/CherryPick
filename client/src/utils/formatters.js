@@ -27,7 +27,7 @@ export const toLocalISO = (dateStringOrObject) => {
 };
 
 export const formatHeatmapTooltip = (value) => {
-    if (!value || !value.count) return 'No rituals found';
+    if (!value || !value.count) return 'No sessions found';
     return `${value.date}: ${formatDuration(Number(value.count))}`;
 };
 

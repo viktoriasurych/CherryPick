@@ -149,7 +149,7 @@ const ProfileEditPage = () => {
             <PageTitle title="Edit profile" />
 
             <EditorLayout
-                title="Edit Codex"
+                title="Edit Artwork"
                 backLink="/profile"
                 isSaving={isSaving}
                 hasChanges={hasChanges}
@@ -216,7 +216,7 @@ const ProfileEditPage = () => {
 
                         <div>
                             <div className="flex justify-between mb-1">
-                                <label className="block text-[10px] text-muted uppercase font-bold tracking-widest">Bio / Codex</label>
+                                <label className="block text-[10px] text-muted uppercase font-bold tracking-widest">Bio / Artwork</label>
                                 <span className="text-[10px] text-muted font-mono">{formData.bio.length} / {RULES.USER?.BIO?.MAX || 500}</span>
                             </div>
                             <textarea 

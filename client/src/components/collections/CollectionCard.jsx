@@ -98,7 +98,7 @@ const CollectionCard = ({ collection, onUnsave }) => {
                                 Access Denied
                             </p>
                             <p className="text-muted/60 text-[9px] uppercase tracking-wider">
-                                Private Grimoire
+                                Private Collection
                             </p>
                         </div>
                         

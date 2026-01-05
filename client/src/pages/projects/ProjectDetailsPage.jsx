@@ -88,8 +88,8 @@ const ProjectDetailsPage = () => {
 
     const PROJECT_TABS = [
         { id: 'INFO', label: 'Details' },
-        { id: 'HISTORY', label: 'Rituals' },
-        { id: 'COLLECTIONS', label: 'Grimoires' }
+        { id: 'HISTORY', label: 'Sessions' },
+        { id: 'COLLECTIONS', label: 'Collections' }
     ];
 
     const fetchAllData = async (isSilent = false) => {
@@ -363,12 +363,12 @@ const ProjectDetailsPage = () => {
                                         className="w-full flex items-center justify-center gap-2 bg-void hover:bg-ash text-bone border border-border hover:border-blood py-3 rounded-sm transition group shadow-md mb-4"
                                     >
                                         <BookmarkIcon className="w-4 h-4 group-hover:text-blood transition-colors" />
-                                        <span className="font-bold text-xs uppercase tracking-widest group-hover:text-white">Manage Grimoires</span>
+                                        <span className="font-bold text-xs uppercase tracking-widest group-hover:text-white">Manage Collections</span>
                                     </button>
                                 ) : (
                                     <div className="p-4 bg-void border border-border rounded-sm mb-4 flex gap-3 items-center">
                                         <InformationCircleIcon className="w-5 h-5 text-muted shrink-0" />
-                                        <span className="text-xs text-muted">Grimoire management is only available for finished rituals.</span>
+                                        <span className="text-xs text-muted">Collection management is only available for finished session.</span>
                                     </div>
                                 )}
 
@@ -391,7 +391,7 @@ const ProjectDetailsPage = () => {
                                         ))
                                     ) : (
                                         <div className="text-center text-muted/40 py-6 border border-dashed border-border rounded-sm text-xs italic tracking-wider">
-                                            Not recorded in any Grimoire
+                                            Not recorded in any Collection
                                         </div>
                                     )}
                                 </div>
@@ -406,7 +406,7 @@ const ProjectDetailsPage = () => {
                 onClose={() => setStatusConfirmOpen(false)}
                 onConfirm={handleConfirmStatusChange}
                 title="Alter Reality?"
-                message={`Resuming this ritual will remove it from ${inCollections.length} Grimoires automatically. Proceed?`}
+                message={`Resuming this session will remove it from ${inCollections.length} Collections automatically. Proceed?`}
                 confirmText="Resume"
             />
 

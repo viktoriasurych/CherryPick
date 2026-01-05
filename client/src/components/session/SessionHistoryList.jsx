@@ -23,7 +23,7 @@ const SessionHistoryList = ({ history, onImageClick }) => {
     if (history.length === 0) {
         return (
             <div className="text-center py-12 text-muted italic border border-dashed border-border rounded-sm text-xs tracking-wider">
-                No rituals recorded yet.
+                No sessions recorded yet.
             </div>
         );
     }
