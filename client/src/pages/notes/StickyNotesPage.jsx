@@ -176,7 +176,7 @@ const StickyNotesPage = () => {
             <div className="p-6 border-b border-border flex items-center justify-between shrink-0 bg-deep/50 backdrop-blur-sm">
                 <h2 className="text-blood font-bold font-gothic tracking-widest text-xl flex items-center gap-3">
                     <Bars3BottomLeftIcon className="w-6 h-6"/>
-                    ARCHIVES
+                    NOTES
                 </h2>
                 <button 
                     onClick={createNote} 

@@ -14,6 +14,8 @@ import { PhotoIcon, CloudArrowUpIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@
 import defaultAvatar from '../../assets/default-avatar.png';
 import RULES from '../../config/validationRules.json';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 const ProfileEditPage = () => {
     const { user, login } = useAuth(); 
     const navigate = useNavigate();
@@ -136,9 +138,18 @@ const ProfileEditPage = () => {
         }
     };
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    
-    const displayAvatar = previewUrl || (user?.avatar_url && !isAvatarDeleted ? `${apiUrl}${user.avatar_url}` : defaultAvatar);
+    const getAvatarUrl = () => {
+        if (previewUrl) return previewUrl;
+        if (isAvatarDeleted) return defaultAvatar; 
+        if (!user?.avatar_url) return defaultAvatar;
+
+        if (user.avatar_url.startsWith('http')) return user.avatar_url;
+
+        const cleanPath = user.avatar_url.startsWith('/') ? user.avatar_url : `/${user.avatar_url}`;
+        return `${API_URL}${cleanPath}`;
+    };
+
+    const displayAvatar = getAvatarUrl();
 
     if (isLoading) {
         return <Loader />;

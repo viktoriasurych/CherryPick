@@ -1,3 +1,4 @@
+import { memo } from 'react'; // 1. Додано імпорт memo
 import { Link } from 'react-router-dom';
 import artworkService from '../../services/artworkService';
 import { ART_STATUSES } from '../../config/constants';
@@ -15,10 +16,32 @@ const ProjectCard = ({ project }) => {
     };
 
     const getFooterInfo = () => {
-        if (project.status === 'FINISHED' && project.finished_year) {
+        if (project.status === 'FINISHED') {
             return {
                 label: 'Ended',
-                date: formatFuzzyDate(project.finished_year, project.finished_month, project.finished_day),
+                date: project.finished_year 
+                    ? formatFuzzyDate(project.finished_year, project.finished_month, project.finished_day)
+                    : formatDate(project.created_date),
+                className: 'text-muted/60'
+            };
+        }
+
+        if (project.status === 'DROPPED') {
+            return {
+                label: 'Dropped',
+                date: project.finished_year 
+                    ? formatFuzzyDate(project.finished_year, project.finished_month, project.finished_day)
+                    : (project.last_session_date ? formatDate(project.last_session_date) : formatDate(project.created_date)),
+                className: 'text-muted/60'
+            };
+        }
+
+        if (project.status === 'ON_HOLD') {
+            return {
+                label: 'Paused',
+                date: project.last_session_date 
+                    ? formatDate(project.last_session_date) 
+                    : (project.finished_year ? formatFuzzyDate(project.finished_year, project.finished_month, project.finished_day) : formatDate(project.created_date)),
                 className: 'text-muted/60'
             };
         }
@@ -27,6 +50,14 @@ const ProjectCard = ({ project }) => {
             return {
                 label: 'Updated',
                 date: formatDate(project.last_session_date), 
+                className: 'text-muted/60'
+            };
+        }
+
+        if (project.started_year) {
+            return {
+                label: 'Started',
+                date: formatFuzzyDate(project.started_year, project.started_month, project.started_day),
                 className: 'text-muted/60'
             };
         }
@@ -54,7 +85,8 @@ const ProjectCard = ({ project }) => {
                     src={artworkService.getImageUrl(project.image_path)} 
                     alt={project.title} 
                     className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition duration-700 ease-in-out" 
-                    loading="lazy"
+                    loading="lazy"      // Вже було (супер)
+                    decoding="async"    // 2. Додано для плавності скролу
                 />
                 <div className={`
                     absolute top-3 right-3 px-2 py-1 
@@ -71,28 +103,28 @@ const ProjectCard = ({ project }) => {
                     {project.title}
                 </h3>
                 
-                <div className="flex items-center flex-wrap gap-2 text-[10px] text-muted mb-3 font-mono">
+                <div className="h-6 overflow-hidden flex items-center flex-wrap gap-2 text-[10px] text-muted mb-3 font-mono">
                     {project.genre_name && (
-                        <span className="bg-ash px-1.5 py-0.5 rounded-sm border border-border/50 hover:text-bone transition-colors hover:border-border whitespace-normal text-center">
+                        <span className="bg-ash px-1.5 py-0.5 rounded-sm border border-border/50 hover:text-bone transition-colors hover:border-border whitespace-nowrap">
                             {project.genre_name}
                         </span>
                     )}
                     {project.genre_name && project.style_name && <span className="text-muted/40 font-bold text-xs">•</span>}
                     {project.style_name && (
-                        <span className="bg-ash px-1.5 py-0.5 rounded-sm border border-border/50 hover:text-bone transition-colors hover:border-border whitespace-normal text-center">
+                        <span className="bg-ash px-1.5 py-0.5 rounded-sm border border-border/50 hover:text-bone transition-colors hover:border-border whitespace-nowrap">
                             {project.style_name}
                         </span>
                     )}
                 </div>
 
                 {project.description ? (
-                    <p className="text-[10px] text-muted/70 line-clamp-2 leading-relaxed font-mono mb-3 min-h-[2.5em]">
+                    <p className="text-[10px] text-muted/70 line-clamp-2 leading-relaxed font-mono mb-3 h-[2.5em] overflow-hidden">
                         {project.description}
                     </p>
                 ) : (
-                    <div className="min-h-[2.5em] mb-3"></div>
+                    <div className="h-[2.5em] mb-3"></div>
                 )}
-
+                
                 <div className="mt-auto pt-3 border-t border-border/30 flex justify-between items-center">
                     <div className={`text-[9px] font-mono uppercase tracking-widest ${footerInfo.className}`}>
                         {footerInfo.label}: {footerInfo.date}
@@ -103,4 +135,5 @@ const ProjectCard = ({ project }) => {
     );
 };
 
-export default ProjectCard;
+// 3. Експорт обгорнуто в memo для оптимізації
+export default memo(ProjectCard);

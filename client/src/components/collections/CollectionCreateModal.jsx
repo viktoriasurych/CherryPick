@@ -129,20 +129,38 @@ const CollectionCreateModal = ({ isOpen, onClose, onCreate }) => {
                                 />
                             </div>
 
-                            <div className="flex items-center gap-3 p-3 bg-ash/50 border border-border rounded-sm">
-                                <input 
-                                    type="checkbox" 
-                                    id="isPublic"
-                                    checked={formData.is_public}
-                                    onChange={(e) => setFormData({...formData, is_public: e.target.checked})}
-                                    className="w-4 h-4 accent-blood bg-void border-border rounded-sm cursor-pointer"
-                                />
-                                <label htmlFor="isPublic" className="cursor-pointer select-none">
-                                    <span className="block text-sm font-bold text-bone font-mono">Public Archive</span>
-                                    <span className="block text-[10px] text-muted font-mono">Visible to everyone on your profile</span>
-                                </label>
-                            </div>
-
+                            <div className="flex items-center gap-4 p-4 bg-ash/20 border border-border/50 rounded-sm hover:border-blood/50 transition-colors group cursor-pointer">
+    <div className="relative flex items-center">
+        <input 
+            type="checkbox" 
+            id="isPublic"
+            checked={formData.is_public}
+            onChange={(e) => setFormData({...formData, is_public: e.target.checked})}
+            className="peer appearance-none w-5 h-5 border border-border bg-void checked:bg-blood checked:border-blood transition-all cursor-pointer rounded-sm"
+        />
+        <svg 
+            className="absolute w-3.5 h-3.5 pointer-events-none hidden peer-checked:block stroke-void outline-none left-0.5 top-0.5" 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="4" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+        >
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+    </div>
+    
+    <label htmlFor="isPublic" className="cursor-pointer select-none flex-1">
+        <span className="block text-xs font-bold text-bone font-mono uppercase tracking-widest group-hover:text-blood transition-colors">
+            Public Archive
+        </span>
+        <span className="block text-[10px] text-muted font-mono leading-tight mt-1 italic">
+            Visible to everyone on your profile
+        </span>
+    </label>
+</div>
                             <div className="flex gap-4 pt-4 border-t border-border/50">
                                 <button 
                                     type="button" 

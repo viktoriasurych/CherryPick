@@ -32,20 +32,22 @@ const AuthPage = () => {
         onSuccess: async (tokenResponse) => {
             try {
                 setLoading(true);
+                console.log("Відправляємо токен на сервер...");
+    
                 const res = await api.post('/auth/google', { 
-                    token: tokenResponse.access_token, 
-                    type: 'access_token' 
+                    token: tokenResponse.access_token 
                 });
+                
                 login(res.data.token, res.data.user);
                 navigate('/projects');
             } catch (e) {
-                console.error("Google Auth Error:", e);
-                setErrors({ general: "Google Login Failed." });
+                console.error("Помилка на стороні сервера:", e.response?.data || e.message);
+                setErrors({ general: e.response?.data?.message || "Google Login Failed" });
             } finally {
                 setLoading(false);
             }
         },
-        onError: () => setErrors({ general: 'Google Login Failed' }),
+        onError: (error) => console.log('Login Failed:', error)
     });
 
     const handleChange = (e) => {

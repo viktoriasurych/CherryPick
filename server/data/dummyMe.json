@@ -1,0 +1,199 @@
+  [
+      {
+      "nickname": "viktoria",
+      "display_name": "Вікторія",
+      "email": "viktoria@cherrypick.art",
+      "password_hash": "dummy_hash_789",
+      "bio": "The past is never dead. It's not even past.",
+      "created_at": "2025-01-01 12:00:00",
+      "avatar_url": "uploads/me_avatar.jpg",
+      "location": "Volochysk, Ukraine",
+      "social_instagram": "vkk_toria_",
+
+      "sticky_notes": [
+        { "title": "Ideas", "content": "Draw a cyberpunk cat.\nFinish the commission for Alex.", "color": "yellow" },
+        { "title": "Buy List", "content": "New brushes (size 0, 2)\nAcrylic paint set\nCanvas 50x70", "color": "pink" },
+        { "title": "Motivation", "content": "Done is better than perfect.", "color": "blue" },
+        { "title": "Exhibition", "content": "Submit application before Dec 20th.", "color": "green" },
+        { "title": "Quick Sketch", "content": "Remember to practice hands everyday!", "color": "purple" }
+      ],
+
+
+      "artworks": [
+        { 
+          "title": "Свято Івана Купала", "status": "FINISHED", "description": "Зображено святкування Івана Купала. Ми бачимо ключові атрибути цього свята: хлопець стрибає через очищувальне вогнище, дівчина пускає вінок на воду, на задньому плані водять хороводи.", 
+          "year": 2019, "month": 1, "day": 16, "genre": "Genre painting (Everyday life)", "style": "Realism", 
+          "image_path": "uploads/me_1.jpg", "materials": ["Gouache", "Wood panel"], "tags": ["Ukraine"] 
+        },
+        { 
+          "title": "Богородиця з Немовлям", "status": "ON_HOLD", "started_year": 2020, "year": 2021, "genre": "Religious genre", "style": "Folk", 
+          "image_path": "uploads/me_2.jpg", 
+          "materials": ["Acrylic", "Wood panel"],
+          "gallery": [
+            { "image_path": "uploads/me_3.jpg", "description": "Detail" },
+            { "image_path": "uploads/me_4.jpg", "description": "Detail" }
+          ]
+        },
+        { "title": "Got7", "status": "FINISHED", "year": 2021, "month": 10, "day": 16, "style": "Hyperrealism (Photorealism)", "image_path": "uploads/me_5.jpg", "materials": ["Gouache"], "tags": ["got7"] },
+        { "title": "Park Jin-young", "status": "FINISHED", "year": 2022, "month": 7, "day": 3, "genre": "Portrait", "style": "Hyperrealism (Photorealism)", "image_path": "uploads/me_6.jpg", "materials": ["Gouache"], "tags": ["got7"] },
+        { "title": "Племінник", "status": "FINISHED", "year": 2020, "month": 7, "day": 28, "genre": "Portrait", "style": "Hyperrealism (Photorealism)", "image_path": "uploads/me_7.jpg", "materials": ["Gouache"]},
+        { 
+          "title": "Лісова мавка", "status": "FINISHED", "year": 2021, "month": 12, "day": 27, "genre": "Fantasy", "style": "Symbolism", 
+          "description": "Ця пророча картина, створена напередодні повномасштабної війни, є глибокою алегорією українського спротиву, виконаною в жанрі містичного символізму. У центрі композиції — велична постать Мавки-войовниці в багатій козацькій накидці, яка втілює незламну Душу України: права рука стискає шаблю для захисту рідної землі, ліва тримає червоний мак — символ пам’яті про полеглих героїв. Сюжет сповнений гострих смислових контрастів: ліворуч — заплямована кров’ю береза (уособлення росії) з вісником смерті вороном, праворуч — лелека як надія на життя та відродження, а біля ніг — кіт із впольованою мишею, що підкреслює тотальну мобілізацію та готовність кожного, навіть найменшого, нищити шкідників і боронити свій дім.",
+          "image_path": "uploads/me_8.jpg", "materials": ["Gouache"], "tags": ["Ukraine"]
+        },
+        { 
+          "title": "Аліса в країні чудес", "status": "FINISHED", "year": 2021, "month": 8, "day": 11, "genre": "Fantasy", "style": "Surrealism", 
+          "description": "Робота дуже деталізована, яскрава, заповнена під зав'язку (майже немає порожнього місця)", "image_path": "uploads/me_9.jpg", 
+          "materials": ["Gouache"],
+          "gallery": [
+            { "image_path": "uploads/me_10.jpg", "description": "Detail" },
+            { "image_path": "uploads/me_11.jpg", "description": "Detail" },
+            { "image_path": "uploads/me_12.jpg", "description": "Detail" }
+          ]
+        },
+        { 
+          "title": "Кіт Степан", "status": "FINISHED", "year": 2022, "month": 5, "day": 31, "genre": "Still life", "style": "Symbolism", 
+          "description": "Цей глибокий натюрморт-маніфест літа 2022 року зображує кота Степана на портреті Бандери серед атрибутів мистецького спротиву: книги Стуса, прапора УПА та символів знищення ворожого корабля. Червона нитка символічно пов’язує ці історичні маркери з особистим простором vbnwz, де творчість стає зброєю, а буденна кава стоїть на хроніках війни.",
+          "image_path": "uploads/me_13.jpg", "materials": ["Acrylic", "Canvas"], "tags": ["Ukraine"],
+          "gallery": [
+            { "image_path": "uploads/me_14.jpg", "description": "Detail" },
+            { "image_path": "uploads/me_15.jpg", "description": "Detail" },
+            { "image_path": "uploads/me_16.jpg", "description": "Detail" },
+            { "image_path": "uploads/me_17.jpg", "description": "Detail" }
+          ]
+        },
+        { 
+          "title": "Арт по грі Rusty lake", "status": "FINISHED", "year": 2020, "month": 8, "day": 9, 
+          "style": "Surrealism", "image_path": "uploads/me_18.jpg", "materials": ["Gouache"], "tags": ["rustylake"],
+          "gallery": [ { "image_path": "uploads/me_19.jpg", "description": "Detail" } ] 
+        },
+        { 
+          "title": "Розпис (Rusty lake)", "status": "FINISHED", "year": 2023, "month": 3, "day": 28, 
+          "style": "Surrealism", "image_path": "uploads/me_20.jpg", "materials": ["Acrylic"], "tags": ["rustylake"],
+          "gallery": [ { "image_path": "uploads/me_21.jpg", "description": "Detail" } ] 
+        },
+        { "title": "[Point Of View: U]", "status": "FINISHED", "year": 2021, "month": 7, "day": 18, "image_path": "uploads/me_22.jpg", "materials": ["Colored pencils"], "tags": ["got7"] },
+        { "title": "[I can do it, you can do it]", "status": "FINISHED", "year": 2021, "month": 3, "day": 11, "image_path": "uploads/me_23.jpg", "materials": ["Gouache"], "tags": ["got7"] },
+        { "title": "Квіти (закладки)", "status": "FINISHED", "year": 2020, "month": 6, "day": 8, "image_path": "uploads/me_24.jpg", "materials": ["Gouache"], "tags": ["закладки"] },
+        { 
+          "title": "Родичі чоловіка одержимі мною (закладка)", "status": "FINISHED", "year": 2024, "month": 7, "day": 13, 
+          "image_path": "uploads/me_25.jpg", "materials": ["Gouache"], "tags": ["myinlawsareobsessedwithme"] 
+        },
+        { 
+          "title": "Родичі чоловіка одержимі мною (портрет)", "status": "FINISHED", "year": 2024, "month": 7, "day": 13,
+          "genre": "Portrait", 
+          "image_path": "uploads/me_26.jpg", "materials": ["Acrylic", "Canvas"], "tags": ["myinlawsareobsessedwithme"] 
+        },
+        { 
+          "title": "(репродукція) Свято Івана Купала", "status": "SKETCH", 
+          "started_year": 2022, "started_month": 8, "genre": "Genre painting (Everyday life)", "style": "Realism", "image_path": "uploads/me_27.jpg", "materials": ["Gouache", "Wood panel"], "tags": ["Ukraine"] 
+        },
+
+        { 
+          "title": "бо плач не дав..", "status": "DROPPED", 
+          "started_year": 2022, "started_month": 3, "style": "Symbolism", "image_path": "uploads/me_50.jpg", "tags": ["Ukraine"] 
+        },
+
+        { "title": "Фігурки (Rusty lake)", "status": "FINISHED", "year": 2025, "month": 11, "image_path": "uploads/me_28.jpg", "materials": ["Paper"], "tags": ["rustylake"]},
+        { 
+          "title": "Сім'я шпигуна", "status": "FINISHED", "year": 2025, "month": 4, "day": 27, "genre": "Portrait",
+          "image_path": "uploads/me_29.jpg",
+          "materials": ["Gouache"], "tags": ["spyxfamily"],
+          "sessions": [
+            { "date": "2025-04-21 20:00", "duration": 2400 },
+            { "date": "2025-04-22 15:00", "duration": 4000, "photo": "uploads/me_30.jpg" },
+            { "date": "2025-04-24 15:00", "duration": 8500, "photo": "uploads/me_31.jpg" },
+            { "date": "2025-04-24 22:00", "duration": 2100 },
+            { "date": "2025-04-25 14:00", "duration": 9600, "photo": "uploads/me_32.jpg" },
+            { "date": "2025-04-27 10:00", "duration": 5900 }
+          ]
+        },
+        { 
+          "title": "Нанамі Кенто", "status": "FINISHED", "year": 2025, "month": 11, "day": 24, "genre": "Portrait",
+          "image_path": "uploads/me_33.jpg",
+          "materials": ["Gouache"], "tags": ["jujutsukaisen"],
+          "sessions": [
+            { "date": "2025-11-23 20:00", "duration": 4000, "photo": "uploads/me_34.jpg" },
+            { "date": "2025-11-24 10:00", "duration": 8500, "photo": "uploads/me_35.jpg" },
+            { "date": "2025-11-24 22:00", "duration": 5900 }
+          ]
+        },
+        { 
+          "title": "-", "status": "FINISHED", "year": 2025, "month": 8, "day": 19, "genre": "Portrait", "style": "Symbolism",
+          "image_path": "uploads/me_36.jpg",
+          "materials": ["Gouache"],
+          "sessions": [
+            { "date": "2025-08-10 20:00", "duration": 2400 },
+            { "date": "2025-08-12 15:00", "duration": 4000, "photo": "uploads/me_37.jpg" },
+            { "date": "2025-08-12 22:00", "duration": 2000 },
+            { "date": "2025-08-13 22:00", "duration": 1000 },
+            { "date": "2025-08-15 14:00", "duration": 9600, "photo": "uploads/me_38.jpg" },
+            { "date": "2025-08-19 10:00", "duration": 10966 }
+          ]
+        },
+        { 
+          "title": "Гадес та Персефона", "status": "IN_PROGRESS", "started_year": 2025, "started_month": 8,
+          "genre": "Mythological genre", "style": "Symbolism", 
+          "description": "Масштабна робота, натхненна міфами.",
+          "image_path": "uploads/me_43.jpg", "materials": ["Acrylic", "Canvas"],
+          "gallery": [
+            { "image_path": "uploads/me_40.jpg", "description": "Detail" },
+            { "image_path": "uploads/me_42.jpg", "description": "Detail" },
+            { "image_path": "uploads/me_43.jpg", "description": "Detail" }
+          ],
+          "sessions": [
+            { "date": "2025-08-20 22:00", "duration": 5400, "notes": "пошук матеріалів", "photo": "uploads/me_40.jpg" },
+            { "date": "2025-08-21 02:20", "duration": 4000, "notes": "створення композиції", "photo": "uploads/me_41.jpg"},
+            { "date": "2025-08-21 20:00", "duration": 7500, "notes": "скетч", "photo": "uploads/me_42.jpg"},
+            { "date": "2025-08-23 22:00", "duration": 1500, "notes": "кольоровий скетч", "photo": "uploads/me_43.jpg" },
+            { "date": "2025-08-25 14:00", "duration": 2000, "notes": "перенесення на полотно", "photo": "uploads/me_44.jpg"  },
+            { "date": "2025-09-26 10:00", "duration": 10966, "notes": "перший шар кольору"},
+            { "date": "2025-10-10 20:00", "duration": 7600, "notes": "фон", "photo": "uploads/me_45.jpg"  },
+            { "date": "2025-10-11 17:00", "duration": 5000 },
+            { "date": "2025-10-12 22:00", "duration": 4300 },
+            { "date": "2025-11-12 20:00", "duration": 10000 }
+          ]
+        }
+      ],
+      "collections": [
+        {
+          "title": "Котики та Вайб", "type": "MOODBOARD", "is_public": 1, "cover_image": "uploads/me_13.jpg", 
+          "description": "Котики, казки та особливий настрій.",
+          "items": [
+            { "title": "Свято Івана Купала" },
+            { "title": "Лісова мавка" },
+            { "title": "Кіт Степан" },
+            { "title": "Аліса в країні чудес" },
+            { "title": "-" }
+          ]
+        },
+        {
+          "title": "Rusty Lake Fanart", "type": "SERIES", "is_public": 1, "cover_image": "uploads/me_18.jpg",
+          "description": "Серія робіт за мотивами ігор Rusty Lake.",
+          "items": [ 
+            { "title": "Арт по грі Rusty lake" }, 
+            { "title": "Розпис (Rusty lake)" },
+            { "title": "Фігурки (Rusty lake)" }
+          ]
+        },
+        {
+          "title": "Родичі чоловіка одержимі мною", "type": "SERIES", "is_public": 1, "cover_image": "uploads/me_26.jpg",
+          "description": "Фанарт по манхві. Закладка та повноцінний портрет.",
+          "items": [ 
+            { "title": "Родичі чоловіка одержимі мною (закладка)" }, 
+            { "title": "Родичі чоловіка одержимі мною (портрет)" }
+          ]
+        },
+        {
+          "title": "Душа України", "type": "EXHIBITION", "is_public": 1, "cover_image": "uploads/me_8.jpg",
+          "description": "Художні рефлексії на тему української ідентичності та спротиву.",
+          "items": [
+            { "title": "Свято Івана Купала", "layout": "CENTER", "context": "Традиції, що живуть у віках." },
+            { "title": "Лісова мавка", "layout": "LEFT_TEXT", "context": "Алегорія українського спротиву." },
+            { "title": "Кіт Степан", "layout": "RIGHT_TEXT", "context": "Сучасний символ стійкості." }
+          ]
+        }
+      ]
+    }
+  ]

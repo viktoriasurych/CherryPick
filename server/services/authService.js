@@ -6,7 +6,8 @@ const { OAuth2Client } = require('google-auth-library');
 const userDAO = require('../dao/userDAO');
 const emailService = require('./emailService');
 const { validatePassword } = require('../utils/validation'); 
-const { generateNickname } = require('../utils/helpers');   
+const { generateNickname } = require('../utils/helpers');    
+const axios = require('axios')
 
 const SECRET_KEY = process.env.JWT_SECRET || 'fallback_secret';
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -15,7 +16,7 @@ class AuthService {
     
     async register(nickname, email, password) {
         const existingUser = await userDAO.findByEmail(email);
-        if (existingUser) throw new Error('Цей email вже зайнятий!');
+        if (existingUser) throw new Error('This email is already taken!');
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await userDAO.create(nickname, email, hashedPassword, nickname);
@@ -26,14 +27,14 @@ class AuthService {
 
     async login(email, password) {
         const user = await userDAO.findByEmail(email);
-        if (!user) throw new Error('Користувача з таким email не існує');
+        if (!user) throw new Error('User with this email does not exist');
 
         if (!user.password_hash) {
-            throw new Error('Цей акаунт створено через Google. Увійдіть через Google або скористайтеся відновленням паролю.');
+            throw new Error('This account was created via Google. Please sign in with Google or use password recovery.');
         }
 
         const isMatch = await bcrypt.compare(password, user.password_hash);
-        if (!isMatch) throw new Error('Невірний пароль');
+        if (!isMatch) throw new Error('Invalid password');
 
         const token = this.generateToken(user);
         return { 
@@ -48,12 +49,32 @@ class AuthService {
     }
 
     async googleLogin(googleToken) {
-        const ticket = await client.verifyIdToken({
-            idToken: googleToken,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        });
-        
-        const { email, name, sub: googleId } = ticket.getPayload();
+        let payload;
+
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken: googleToken,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            payload = ticket.getPayload();
+        } catch (error) {
+            try {
+                const response = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo`, {
+                    headers: { Authorization: `Bearer ${googleToken}` }
+                });
+                payload = {
+                    email: response.data.email,
+                    name: response.data.name,
+                    sub: response.data.sub,
+                    picture: response.data.picture
+                };
+            } catch (axiosError) {
+                console.error("Google Token Verification Failed:", axiosError.message);
+                throw new Error('Invalid Google token');
+            }
+        }
+
+        const { email, name, sub: googleId } = payload;
 
         let user = await userDAO.findByGoogleId(googleId);
 
@@ -78,14 +99,23 @@ class AuthService {
         }
 
         const token = this.generateToken(user);
-        return { token, user };
+        return { 
+            token, 
+            user: {
+                id: user.id,
+                nickname: user.nickname,
+                email: user.email,
+                display_name: user.display_name,
+                avatar_url: user.avatar_url
+            } 
+        };
     }
 
     async forgotPassword(email) {
         const user = await userDAO.findByEmail(email);
         
         if (!user) {
-            return "Інструкції надіслано (якщо email існує)"; 
+            return "Instructions sent (if email exists)"; 
         }
 
         const token = crypto.randomBytes(32).toString('hex');
@@ -94,20 +124,20 @@ class AuthService {
         const sent = await emailService.sendResetEmail(email, token);
         
         if (!sent) {
-            throw new Error("Помилка відправки email сервісом");
+            throw new Error("Error sending email via service");
         }
         
-        return "Інструкції надіслано на пошту";
+        return "Instructions sent to email";
     }
 
     async resetPassword(email, token, newPassword) {
 
         const record = await userDAO.findResetToken(email, token);
-        if (!record) throw new Error("Невірний або прострочений токен");
+        if (!record) throw new Error("Invalid or expired token");
 
         const now = new Date();
         const expires = new Date(record.expires_at);
-        if (now > expires) throw new Error("Час дії посилання вичерпано");
+        if (now > expires) throw new Error("Link expired");
 
         const newHash = await bcrypt.hash(newPassword, 10);
         
@@ -115,7 +145,7 @@ class AuthService {
         
         await userDAO.deleteResetToken(email);
 
-        return "Пароль успішно змінено";
+        return "Password successfully changed";
     }
 
     generateToken(user) {

@@ -1,0 +1,63 @@
+[
+    {
+      "nickname": "vangogh",
+      "display_name": "Vincent van Gogh",
+      "email": "vincent@cherrypick.art",
+      "password_hash": "dummy_hash_123",
+      "bio": "I dream my painting and I paint my dream.",
+      "avatar_url": "uploads/vg_avatar.jpg",
+      "location": "Arles, Rusty Lake",
+      "social_website": "https://en.wikipedia.org/wiki/Vincent_van_Gogh",
+      "show_heatmap_stats": 0,
+      "artworks": [
+        { "title": "The Starry Night", "year": 1889, "genre": "Landscape", "style": "Post-Impressionism", "status": "FINISHED", "description": "View from the asylum window.", "image_path": "uploads/vg_1.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Night", "Stars", "Blue", "Swirls"] },
+        { "title": "Sunflowers", "year": 1888, "genre": "Still life", "style": "Post-Impressionism", "status": "FINISHED", "description": "Yellow is the color of happiness.", "image_path": "uploads/vg_2.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Flowers", "Yellow", "Vase"] },
+        { "title": "The Bedroom", "year": 1888, "genre": "Interior", "style": "Post-Impressionism", "status": "FINISHED", "description": "My room in Arles.", "image_path": "uploads/vg_3.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Room", "Home", "Comfort"] },
+        { "title": "Self-Portrait", "year": 1889, "genre": "Self-portrait", "style": "Post-Impressionism", "status": "FINISHED", "description": "Looking at myself.", "image_path": "uploads/vg_4.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Face", "Beard", "Blue"] },
+        { "title": "The Potato Eaters", "year": 1885, "genre": "Genre painting (Everyday life)", "style": "Realism", "status": "FINISHED", "description": "Peasants eating potatoes.", "image_path": "uploads/vg_5.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Dark", "People", "Dinner"] },
+        { "title": "Cafe Terrace at Night", "year": 1888, "genre": "Cityscape (Veduta)", "style": "Post-Impressionism", "status": "FINISHED", "description": "The night is more alive than the day.", "image_path": "uploads/vg_6.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Night", "Cafe", "City"] },
+        { "title": "Wheat Field with Crows", "year": 1890, "genre": "Landscape", "style": "Post-Impressionism", "status": "FINISHED", "description": "Sadness and extreme loneliness.", "image_path": "uploads/vg_7.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Field", "Birds", "Nature"] },
+        { "title": "Almond Blossoms", "year": 1890, "genre": "Landscape", "style": "Post-Impressionism", "status": "FINISHED", "description": "For my nephew.", "image_path": "uploads/vg_8.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Flowers", "Spring", "Blue"] },
+        { "title": "Irises", "year": 1889, "genre": "Still life", "style": "Post-Impressionism", "status": "FINISHED", "description": "A lightning conductor for my illness.", "image_path": "uploads/vg_9.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Flowers", "Garden"] },
+        { "title": "Portrait of Dr. Gachet", "year": 1890, "genre": "Portrait", "style": "Post-Impressionism", "status": "FINISHED", "description": "The heart-broken expression of our time.", "image_path": "uploads/vg_10.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Doctor", "Man", "Melancholy"] },
+        { "title": "The Night Café", "year": 1888, "genre": "Interior", "style": "Post-Impressionism", "status": "FINISHED", "description": "A place where one can ruin oneself.", "image_path": "uploads/vg_11.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Cafe", "Red", "Green"] },
+        { "title": "Starry Night Over the Rhone", "year": 1888, "genre": "Landscape", "style": "Post-Impressionism", "status": "FINISHED", "description": "The stars are sparkling.", "image_path": "uploads/vg_12.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Night", "Water", "Lights"] },
+        { "title": "The Yellow House", "year": 1888, "genre": "Cityscape (Veduta)", "style": "Post-Impressionism", "status": "FINISHED", "description": "My studio in Arles.", "image_path": "uploads/vg_13.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["House", "Street", "Day"] },
+        { "title": "Church at Auvers", "year": 1890, "genre": "Landscape", "style": "Post-Impressionism", "status": "FINISHED", "description": "The building appears violet.", "image_path": "uploads/vg_14.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Church", "Architecture"] },
+        { "title": "The Sower", "year": 1888, "genre": "Landscape", "style": "Post-Impressionism", "status": "FINISHED", "description": "With the sun as a halo.", "image_path": "uploads/vg_15.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Field", "Sun", "Man"] },
+        { "title": "Red Vineyards at Arles", "year": 1888, "genre": "Landscape", "style": "Post-Impressionism", "status": "FINISHED", "description": "The only painting sold during my life.", "image_path": "uploads/vg_16.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Vineyard", "Red", "Autumn"] },
+        { "title": "Skull of a Skeleton with Burning Cigarette", "year": 1886, "genre": "Vanitas", "style": "Realism", "status": "FINISHED", "description": "A joke on anatomy class.", "image_path": "uploads/vg_17.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Skull", "Dark", "Humor"] },
+        { "title": "Wheat Field with Cypresses", "year": 1889, "genre": "Landscape", "style": "Post-Impressionism", "status": "FINISHED", "description": "It is as beautiful as lines.", "image_path": "uploads/vg_18.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Field", "Trees", "Clouds"] },
+        { "title": "Portrait of Postman Roulin", "year": 1888, "genre": "Portrait", "style": "Post-Impressionism", "status": "FINISHED", "description": "A man more Socratic than Socrates.", "image_path": "uploads/vg_19.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Man", "Beard", "Uniform"] },
+        { "title": "Roots", "year": 1890, "genre": "Landscape", "style": "Post-Impressionism", "status": "FINISHED", "description": "My last painting.", "image_path": "uploads/vg_20.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Nature", "Abstract", "Green"] }
+      ]
+    },
+    {
+      "nickname": "kobzar",
+      "display_name": "Taras Shevchenko",
+      "email": "taras@cherrypick.art",
+      "password_hash": "dummy_hash_456",
+      "bio": "Boritesya – poborete!",
+      "avatar_url": "uploads/sh_avatar.jpg",
+      "location": "Kyiv, Ukraine",
+      "social_website": "https://en.wikipedia.org/wiki/Taras_Shevchenko",
+      "show_heatmap_stats": 0,
+      "artworks": [
+        { "title": "Kateryna", "year": 1842, "genre": "Realism", "style": "Romanticism", "status": "FINISHED", "description": "Oil on canvas.", "image_path": "uploads/sh_1.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Poetry", "Woman", "Tragedy"] },
+        { "title": "Self-portrait (Young)", "year": 1840, "genre": "Self-portrait", "style": "Romanticism", "status": "FINISHED", "description": "My first oil self-portrait.", "image_path": "uploads/sh_2.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Young", "Face"] },
+        { "title": "Peasant Family", "year": 1843, "genre": "Genre painting (Everyday life)", "style": "Realism", "status": "FINISHED", "description": "Ukrainian life.", "image_path": "uploads/sh_3.jpg", "materials": ["Oil paint", "Canvas"], "tags": ["Family", "Ukraine", "Village"] },
+        { "title": "Gypsy Fortune Teller", "year": 1841, "genre": "Genre painting (Everyday life)", "style": "Romanticism", "status": "FINISHED", "description": "Watercolor.", "image_path": "uploads/sh_4.jpg", "materials": ["Watercolor", "Paper"], "tags": ["Gypsy", "Magic"] },
+        { "title": "Maria", "year": 1840, "genre": "Portrait", "style": "Realism", "status": "FINISHED", "description": "Drawing from poem.", "image_path": "uploads/sh_5.jpg", "materials": ["Pencil", "Paper"], "tags": ["Poetry", "Sketch"] },
+        { "title": "King Lear", "year": 1843, "genre": "Historical genre", "style": "Realism", "status": "FINISHED", "description": "Illustration for Shakespeare.", "image_path": "uploads/sh_6.jpg", "materials": ["Ink", "Paper"], "tags": ["Literature", "Drama"] },
+        { "title": "Robinson Crusoe", "year": 1856, "genre": "Historical genre", "style": "Realism", "status": "FINISHED", "description": "Illustration.", "image_path": "uploads/sh_7.jpg", "materials": ["Sepia", "Paper"], "tags": ["Literature", "Illustration"] },
+        { "title": "In Prison", "year": 1857, "genre": "Genre painting (Everyday life)", "style": "Realism", "status": "FINISHED", "description": "Sketches from exile.", "image_path": "uploads/sh_8.jpg", "materials": ["Pencil", "Paper"], "tags": ["Exile", "Dark"] },
+        { "title": "Fire in the Steppe", "year": 1848, "genre": "Landscape", "style": "Realism", "status": "FINISHED", "description": "Aral Sea expedition.", "image_path": "uploads/sh_9.jpg", "materials": ["Watercolor", "Paper"], "tags": ["Nature", "Fire", "Expedition"] },
+        { "title": "Moonlit Night on Kos-Aral", "year": 1849, "genre": "Landscape", "style": "Realism", "status": "FINISHED", "description": "Night view.", "image_path": "uploads/sh_10.jpg", "materials": ["Watercolor", "Paper"], "tags": ["Night", "Sea", "Moon"] },
+        { "title": "Kazakh Boy Playing with a Cat", "year": 1856, "genre": "Genre painting (Everyday life)", "style": "Realism", "status": "FINISHED", "description": "Sepia.", "image_path": "uploads/sh_11.jpg", "materials": ["Sepia", "Paper"], "tags": ["Boy", "Cat", "Life"] },
+        { "title": "Self-portrait with a Candle", "year": 1860, "genre": "Self-portrait", "style": "Realism", "status": "FINISHED", "description": "Etching.", "image_path": "uploads/sh_12.jpg", "materials": ["Etching", "Paper"], "tags": ["Light", "Face"] },
+        { "title": "Old Oaks", "year": 1860, "genre": "Landscape", "style": "Realism", "status": "FINISHED", "description": "Etching.", "image_path": "uploads/sh_13.jpg", "materials": ["Etching", "Paper"], "tags": ["Trees", "Nature"] },
+        { "title": "Virginia", "year": 1858, "genre": "Portrait", "style": "Realism", "status": "FINISHED", "description": "Portrait of actor Ira Aldridge.", "image_path": "uploads/sh_14.jpg", "materials": ["Pencil", "Paper"], "tags": ["Actor", "Friend"] },
+        { "title": "Death of Bohdan Khmelnytsky", "year": 1837, "genre": "Historical genre", "style": "Romanticism", "status": "FINISHED", "description": "Sketch on the theme of history of Ukraine.", "image_path": "uploads/sh_15.jpg", "materials": ["Ink", "Paper"], "tags": ["History", "Ukraine", "Sketch"] }
+      ]
+    }
+  ]

@@ -96,11 +96,20 @@ class ArtworkDAO {
 
             const sortMap = {
                 'title': 'a.title',
-                'created': 'a.created_date',
                 'status': 'a.status',
                 
+                // 👇 Твоя "хитра" логіка сортування за часом створення (Started -> Finished -> DB Date)
+                'created': `COALESCE(
+                    (printf('%04d-%02d-%02d', a.started_year, a.started_month, a.started_day)), 
+                    (printf('%04d-%02d-%02d', a.finished_year, a.finished_month, a.finished_day)),
+                    a.created_date
+                )`,
+                
+                // Логіка для "Оновлено" (Sessions -> Finished -> Started -> DB Date)
                 'updated': `COALESCE(
                     (SELECT MAX(created_at) FROM sessions WHERE artwork_id = a.id), 
+                    (printf('%04d-%02d-%02d', a.finished_year, a.finished_month, a.finished_day)),
+                    (printf('%04d-%02d-%02d', a.started_year, a.started_month, a.started_day)),
                     a.created_date
                 )` 
             };

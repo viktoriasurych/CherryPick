@@ -35,7 +35,7 @@ const ChartContainer = ({ title, children }) => (
         <h4 className="text-xs font-bold text-muted uppercase tracking-widest mb-6 text-center border-b border-border/30 pb-2 font-mono">
             {title}
         </h4>
-        <div className="flex-1 w-full min-h-75 flex items-center justify-center">
+        <div className="flex-1 w-full min-h-75 flex items-center justify-center overflow-hidden">
             {children}
         </div>
     </div>
@@ -49,8 +49,8 @@ const StatsPage = () => {
     const [activeTab, setActiveTab] = useState('GLOBAL'); 
 
     const STATS_TABS = [
-        { id: 'GLOBAL', label: (<div className="flex items-center gap-2"><GlobeAltIcon className="w-4 h-4" /><span>Global Overview</span></div>) },
-        { id: 'YEARLY', label: (<div className="flex items-center gap-2"><CalendarDaysIcon className="w-4 h-4" /><span>Yearly Timeline</span></div>) }
+        { id: 'GLOBAL', label: (<div className="flex items-center gap-2"><GlobeAltIcon className="w-4 h-4" /><span>Global</span></div>) },
+        { id: 'YEARLY', label: (<div className="flex items-center gap-2"><CalendarDaysIcon className="w-4 h-4" /><span>Yearly</span></div>) }
     ];
 
     useEffect(() => {
@@ -76,16 +76,26 @@ const StatsPage = () => {
     const tabTitle = activeTab === 'GLOBAL' ? 'Statistics' : `Stats ${selectedYear}`;
 
     return (
-        <div className="min-h-screen pb-20 font-mono text-bone bg-void">
+        // ДОДАНО overflow-x-hidden сюди, щоб сторінка не скролилась вбік
+        <div className="min-h-screen pb-20 font-mono text-bone bg-void overflow-x-hidden">
             <PageTitle title={tabTitle} />
 
-            <div className="max-w-480 mx-auto p-4 md:p-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 border-b border-border/50 pb-6 gap-6">
+            {/* ВИПРАВЛЕНО ТУТ: max-w-480 не існує. Замінено на w-full max-w-7xl */}
+            <div className="w-full max-w-7xl mx-auto p-4 md:p-8">
+                
+                {/* HEADER: Flex-col для мобільного, щоб заголовок і таби були один під одним */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 border-b border-border/50 pb-6 gap-6 w-full">
                     <div>
                         <h1 className="text-4xl font-bold text-blood font-gothic tracking-wide mb-2">Statistics</h1>
                         <p className="text-[10px] text-muted uppercase tracking-[0.3em] font-bold">Analytica & Insights</p>
                     </div>
-                    <div className="w-full md:w-auto"><Tabs items={STATS_TABS} activeId={activeTab} onChange={setActiveTab} /></div>
+                    
+                    {/* TABS CONTAINER: Захист від розтягування */}
+                    <div className="w-full md:w-auto overflow-x-auto max-w-full">
+                         <div className="min-w-max">
+                            <Tabs items={STATS_TABS} activeId={activeTab} onChange={setActiveTab} />
+                         </div>
+                    </div>
                 </div>
 
                 {activeTab === 'GLOBAL' && (
@@ -126,9 +136,11 @@ const StatsPage = () => {
 
                 {activeTab === 'YEARLY' && (
                     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex justify-between items-center bg-ash border border-border/50 p-4 rounded-sm shadow-md">
+                        
+                        {/* YEAR SELECTOR: flex-col для мобільного */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-ash border border-border/50 p-4 rounded-sm shadow-md w-full">
                             <h2 className="text-lg font-bold text-bone font-gothic tracking-wide uppercase">Year Overview</h2>
-                            <div className="w-40">
+                            <div className="w-full sm:w-40">
                                 <Select 
                                     options={yearOptions} 
                                     value={selectedYear} 
@@ -136,6 +148,7 @@ const StatsPage = () => {
                                 />
                             </div>
                         </div>
+
                         <section>
                             <SectionTitle>Summary of {selectedYear}</SectionTitle>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -154,7 +167,7 @@ const StatsPage = () => {
                                 <div className="bg-ash border border-border/50 p-6 rounded-sm shadow-lg shadow-black/50 overflow-x-auto">
                                     <h4 className="text-xs font-bold text-muted uppercase tracking-widest mb-6 text-center font-mono">Daily Activity Map</h4>
                                     
-                                    <div className="min-w-200 w-full">
+                                    <div className="min-w-full w-full">
                                         <MyCalendarHeatmap year={selectedYear} values={yearly.heatmap} />
                                     </div>
                                 </div>

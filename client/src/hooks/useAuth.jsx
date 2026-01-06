@@ -1,5 +1,6 @@
 import { useState, useContext, createContext, useEffect } from 'react';
 import api from '../api/axios';
+import Loader from '../components/ui/Loader';
 
 const AuthContext = createContext(null);
 
@@ -8,6 +9,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('token');
@@ -48,6 +50,7 @@ export const AuthProvider = ({ children }) => {
         delete api.defaults.headers.common['Authorization'];
         setUser(null);
     };
+
     const updateUser = (newData) => {
         setUser(prev => {
             const updated = { ...prev, ...newData };
@@ -59,9 +62,7 @@ export const AuthProvider = ({ children }) => {
     return (
         <AuthContext.Provider value={{ user, isAuth: !!user, login, logout, updateUser, loading }}>
             {loading ? (
-                <div className="min-h-screen bg-black flex items-center justify-center text-rose-700 font-bold font-mono tracking-widest uppercase animate-pulse">
-                    Summoning User...
-                </div>
+                <Loader />
             ) : (
                 children
             )}

@@ -1,0 +1,63 @@
+[
+    {
+      "owner_email": "vincent@cherrypick.art",
+      "title": "Yellow & Blue Studies",
+      "description": "Exploring the contrast between the warmth of the sun and the cold of the night.",
+      "type": "MOODBOARD",
+      "is_public": 1,
+      "cover_image": "uploads/vg_1.jpg",
+      "items": [
+        { "title": "The Starry Night" },
+        { "title": "Sunflowers" },
+        { "title": "The Yellow House" },
+        { "title": "Irises" },
+        { "title": "Wheat Field with Crows" },
+        { "title": "Almond Blossoms" }
+      ]
+    },
+    {
+      "owner_email": "vincent@cherrypick.art",
+      "title": "Life in Arles",
+      "description": "My most productive period. The light here is different.",
+      "type": "SERIES",
+      "is_public": 1,
+      "cover_image": "uploads/vg_6.jpg",
+      "items": [
+        { "title": "The Bedroom" },
+        { "title": "Cafe Terrace at Night" },
+        { "title": "The Night Café" },
+        { "title": "Portrait of Postman Roulin" },
+        { "title": "Red Vineyards at Arles" }
+      ]
+    },
+    {
+      "owner_email": "taras@cherrypick.art",
+      "title": "Soul of the Nation",
+      "description": "Historical sketches and portraits of Ukrainian life.",
+      "type": "EXHIBITION",
+      "is_public": 1,
+      "cover_image": "uploads/sh_1.jpg",
+      "items": [
+        { 
+          "title": "Kateryna", 
+          "layout": "LEFT_TEXT", 
+          "context": "Based on my poem. A symbol of betrayed trust and tragic fate." 
+        },
+        { 
+          "title": "Death of Bohdan Khmelnytsky", 
+          "layout": "RIGHT_TEXT", 
+          "context": "A crucial moment in our history. The sketch captures the weight of the loss." 
+        },
+        { 
+          "title": "Peasant Family", 
+          "layout": "CENTER", 
+          "context": "The simple, quiet dignity of Ukrainian family life under the sun." 
+        },
+        { 
+          "title": "Fire in the Steppe", 
+          "layout": "LEFT_TEXT", 
+          "context": "The raw power of nature witnessed during the Aral Sea expedition." 
+        }
+      ]
+    }
+  ]

@@ -78,7 +78,7 @@ const SavedCollectionsPage = () => {
         <div className="relative min-h-screen pb-20 font-mono text-bone">
             <PageTitle title="Saved Collections" />
 
-            <div className="max-w-480 mx-auto p-4 md:p-8">
+            <div className="max-w-480 mx-auto p-2 md:p-8">
                 
                 <CollectionToolbar 
                     title="Saved Collections"

@@ -38,7 +38,7 @@ class StickyNoteDAO {
             const { title, content, color } = data;
             const sql = `
                 UPDATE sticky_notes 
-                SET title = ?, content = ?, color = ?, updated_at = CURRENT_TIMESTAMP
+                SET title = ?, content = ?, color = ?, updated_at = datetime('now', 'localtime')
                 WHERE id = ?
             `;
             db.run(sql, [title, content, color, id], function(err) {

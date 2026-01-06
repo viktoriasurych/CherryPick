@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'; // 👇 Додали useSearchParams
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
     AdjustmentsHorizontalIcon, 
     PlusIcon, 
@@ -11,116 +11,100 @@ import artworkService from '../../services/artworkService';
 import FilterSidebar from '../../components/layouts/FilterSidebar';
 import ProjectCard from '../../components/projects/ProjectCard';
 import SortDropdown from '../../components/ui/SortDropdown';
+import Pagination from '../../components/ui/Pagination';
 import EmptyState from '../../components/ui/EmptyState';
 import Loader from '../../components/ui/Loader'; 
 import PageTitle from '../../components/shared/PageTitle'; 
+
+const EMPTY_FILTERS = { 
+    status: [], genre_ids: [], style_ids: [], material_ids: [], tag_ids: [], 
+    yearFrom: '', yearTo: '' 
+};
 
 const ProjectsPage = () => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 11;
 
     const [searchParams] = useSearchParams();
-
-    const emptyFilters = { 
-        status: [], genre_ids: [], style_ids: [], material_ids: [], tag_ids: [], 
-        yearFrom: '', yearTo: '' 
-    };
-
-    const [filters, setFilters] = useState(emptyFilters);
-    const [sortConfig, setSortConfig] = useState({ by: 'updated', dir: 'DESC' });
+    const [filters, setFilters] = useState(EMPTY_FILTERS);
+    const [sortConfig, setSortConfig] = useState({ by: 'created', dir: 'DESC' });
 
     const location = useLocation();
     const navigate = useNavigate();
+    
+    const abortControllerRef = useRef(null);
 
-    const loadProjects = async (currentFilters = filters, query = searchQuery) => {
+    const loadProjects = useCallback(async (currentFilters, query, sort) => {
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+
         try {
             setLoading(true);
-            const data = await artworkService.getAll({ ...currentFilters, search: query }, sortConfig);
+            
+            const data = await artworkService.getAll(
+                { ...currentFilters, search: query }, 
+                sort,
+                { signal: abortControllerRef.current.signal } 
+            );
+            
             setProjects(data);
         } catch (error) {
-            console.error("Load error:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (location.state?.applyFilter) {
-            const newFilters = { ...emptyFilters, ...location.state.applyFilter };
-            setFilters(newFilters);
-            setIsFilterOpen(true);
-            navigate(location.pathname, { replace: true, state: {} });
-            loadProjects(newFilters, searchQuery);
-            return;
-        }
-
-        const newFilters = { ...emptyFilters };
-        let hasUrlFilters = false;
-
-        const parseIds = (paramName) => {
-            const val = searchParams.get(paramName);
-            if (val) {
-                hasUrlFilters = true;
-                return val.split(',').map(Number);
+            if (error.name !== 'CanceledError' && error.code !== 'ERR_CANCELED') {
+                console.error("Load error:", error);
             }
-            return [];
-        };
-
-        newFilters.genre_ids = parseIds('genre_ids');
-        newFilters.style_ids = parseIds('style_ids');
-        newFilters.material_ids = parseIds('material_ids');
-        newFilters.tag_ids = parseIds('tag_ids');
-        
-        const statusVal = searchParams.get('status');
-        if (statusVal) {
-            newFilters.status = statusVal.split(',');
-            hasUrlFilters = true;
+        } finally {
+            if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+                setLoading(false);
+            }
         }
-
-        if (hasUrlFilters) {
-            setFilters(newFilters);
-            setIsFilterOpen(true);
-            loadProjects(newFilters, searchQuery);
-        } else {
-            loadProjects(emptyFilters, searchQuery);
-        }
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [location.search]);
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (!location.state?.applyFilter && !location.search) {
-                loadProjects(filters, searchQuery);
-            } else if (searchQuery) {
-                 loadProjects(filters, searchQuery);
+            loadProjects(filters, searchQuery, sortConfig);
+        }, 400); 
+
+        return () => {
+            clearTimeout(timer);
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
             }
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [searchQuery]); 
+        };
+    }, [filters, searchQuery, sortConfig, loadProjects]); 
 
     useEffect(() => {
-        if (!location.state?.applyFilter && !location.search) {
-             loadProjects(filters, searchQuery);
+        if (location.state?.applyFilter) {
+            setFilters({ ...EMPTY_FILTERS, ...location.state.applyFilter });
+            setIsFilterOpen(true);
+            navigate(location.pathname, { replace: true, state: {} });
         }
-    }, [filters, sortConfig]);
+    }, [location.state, navigate, location.pathname]);
 
     const handleSortChange = (val) => setSortConfig(p => ({ ...p, by: val }));
     const toggleSortDir = () => setSortConfig(p => ({ ...p, dir: p.dir === 'ASC' ? 'DESC' : 'ASC' }));
 
     const handleApplyFilters = () => { 
-        loadProjects(filters, searchQuery); 
+        loadProjects(filters, searchQuery, sortConfig); 
         if (window.innerWidth < 768) setIsFilterOpen(false); 
     };
 
     const handleResetFilters = () => {
-        setFilters(emptyFilters);
+        setFilters(EMPTY_FILTERS);
         setSearchQuery('');
-        navigate('/projects'); 
-        loadProjects(emptyFilters, '');
+        setCurrentPage(1);
+        if (location.search) navigate('/projects'); 
     };
+
+    const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+    const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+    const currentProjects = projects.slice(indexOfFirstItem, indexOfLastItem);
 
     const activeFiltersCount = 
         filters.status.length + filters.genre_ids.length + filters.style_ids.length + 
@@ -141,10 +125,9 @@ const ProjectsPage = () => {
             <PageTitle title="Archive" />
             
             <div className={`flex-1 p-4 md:p-8 transition-all duration-300 ease-in-out ${isFilterOpen ? 'mr-0 md:mr-80' : ''}`}>
-                <div className="max-w-480 mx-auto">
+                <div className="max-w-7xl mx-auto"> 
                     
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 border-b border-border/50 pb-6 gap-6">
-                        
                         <div className="flex flex-col gap-4 w-full md:max-w-xl">
                             <div>
                                 <h1 className="text-4xl font-bold text-blood font-gothic tracking-wide">Archives</h1>
@@ -158,7 +141,10 @@ const ProjectsPage = () => {
                                 <input 
                                     type="text"
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setCurrentPage(1); 
+                                    }}
                                     placeholder="Search by title..."
                                     className="w-full bg-void border border-border rounded-sm py-2 pl-10 pr-4 text-xs text-bone outline-none focus:border-blood focus:shadow-[0_0_15px_rgba(159,18,57,0.1)] transition-all h-10 placeholder-muted/40"
                                 />
@@ -194,12 +180,10 @@ const ProjectsPage = () => {
                         </div>
                     </div>
 
-                    {/* контент */}
-                    {loading ? (
+                    {loading && projects.length === 0 ? (
                         <Loader text="Summoning archives..." />
                     ) : (
                         <>
-                            {/* сцена 1: пусто через фільтри */}
                             {projects.length === 0 && hasActiveFilters && (
                                 <EmptyState 
                                     title="Silence..."
@@ -210,22 +194,8 @@ const ProjectsPage = () => {
                                 />
                             )}
 
-                            {/* сцена 2: нема картин взагалі */}
-                            {projects.length === 0 && !hasActiveFilters && (
-                                <EmptyState 
-                                    title="The Archive is Empty"
-                                    message="Start your journey by creating the first project."
-                                    actionLabel="Create First Project"
-                                    actionLink="/projects/new"
-                                    icon={PlusIcon}
-                                />
-                            )}
-
-                            {/* сцена 3: проєкти */}
-                            {projects.length > 0 && (
+                             {projects.length === 0 && !hasActiveFilters && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500 items-stretch">
-                                    
-                                    {/* + */}
                                     <Link 
                                         to="/projects/new" 
                                         className="
@@ -244,12 +214,51 @@ const ProjectsPage = () => {
                                             New Project
                                         </span>
                                     </Link>
-
-                                    {/* спсиок */}
-                                    {projects.map(project => (
-                                        <ProjectCard key={project.id} project={project} />
-                                    ))}
                                 </div>
+                            )}
+
+                            {projects.length > 0 && (
+                                <>
+                                    <div 
+                                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500 items-stretch"
+                                        style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 300px' }}
+                                    > 
+                                        <Link 
+                                            to="/projects/new" 
+                                            className="
+                                                group relative w-full
+                                                h-auto py-3 flex flex-row
+                                                sm:h-auto sm:aspect-3/4 sm:flex-col sm:py-0
+                                                items-center justify-center gap-4 sm:gap-6
+                                                bg-void/50 border border-dashed border-border 
+                                                hover:border-blood hover:bg-void
+                                                rounded-sm transition-all duration-500 cursor-pointer
+                                                sm:min-h-50
+                                            "
+                                        >
+                                            <PlusIcon className="w-5 h-5 sm:w-12 sm:h-12 text-muted/30 stroke-1 group-hover:text-blood group-hover:scale-110 transition-all duration-500" />
+                                            <span className="text-[10px] font-gothic text-muted group-hover:text-bone uppercase tracking-[0.2em] transition-colors">
+                                                New Project
+                                            </span>
+                                        </Link>
+
+                                        {currentProjects.map(project => (
+                                            <ProjectCard key={project.id} project={project} />
+                                        ))}
+                                    </div>
+
+                                    {projects.length > ITEMS_PER_PAGE && (
+                                        <Pagination 
+                                            totalItems={projects.length}
+                                            itemsPerPage={ITEMS_PER_PAGE}
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => {
+                                                setCurrentPage(page);
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                        />
+                                    )}
+                                </>
                             )}
                         </>
                     )}

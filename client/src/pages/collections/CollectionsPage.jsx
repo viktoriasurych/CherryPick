@@ -54,7 +54,7 @@ const CollectionsPage = () => {
         <div className="relative min-h-screen pb-20 font-mono text-bone">
             <PageTitle title="Collections" />
 
-            <div className="max-w-480 mx-auto p-4 md:p-8">
+            <div className="max-w-480 mx-auto p-2 md:p-8">
                 
                 <CollectionToolbar 
                     title="My Collections"
@@ -96,48 +96,48 @@ const CollectionsPage = () => {
                         )}
 
                         {/* сцена 3: колекції */}
-                        {(processedItems.length > 0 || (currentPage === 1 && !search && filterType === 'ALL' && collections.length > 0)) && (
+                        {(processedItems.length > 0 || (currentPage === 1 && !search && filterType === 'ALL')) && (
                             <>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500 items-stretch">
-                                    
-                                    {currentPage === 1 && !search && filterType === 'ALL' && (
-                                        <div 
-                                            onClick={openModal} 
-                                            className="
-                                                group relative w-full cursor-pointer 
-                                                rounded-sm border border-dashed border-border bg-void/50 
-                                                transition-all duration-500 hover:border-blood hover:bg-void 
-                                                flex flex-row items-center justify-center gap-3 
-                                                h-auto py-3 min-h-0 
-                                                sm:flex-col sm:h-auto sm:aspect-3/4 sm:min-h-75 sm:gap-6 sm:py-0
-                                            "
-                                        >
-                                            <PlusIcon className="w-5 h-5 sm:w-12 sm:h-12 text-muted/30 stroke-1 group-hover:text-blood group-hover:scale-110 transition-all duration-500" />
-                                            <span className="text-[10px] font-gothic text-muted group-hover:text-bone uppercase tracking-[0.2em] transition-colors">
-                                                Create New
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {currentItems.map(col => (
-                                        <CollectionCard key={col.id} collection={col} />
-                                    ))}
+            
+                                  {!search && filterType === 'ALL' && (
+                                <div 
+                                onClick={openModal} 
+                                className="
+                                group relative w-full cursor-pointer 
+                                rounded-sm border border-dashed border-border bg-void/50 
+                                transition-all duration-500 hover:border-blood hover:bg-void 
+                                flex flex-row items-center justify-center gap-3 
+                                h-auto py-3 min-h-0 
+                                sm:flex-col sm:h-auto sm:aspect-3/4 sm:min-h-75 sm:gap-6 sm:py-0
+                            "
+                               >
+                                    <PlusIcon className="w-5 h-5 sm:w-12 sm:h-12 text-muted/30 stroke-1 group-hover:text-blood group-hover:scale-110 transition-all duration-500" />
+                                    <span className="text-[10px] font-gothic text-muted group-hover:text-bone uppercase tracking-[0.2em] transition-colors">
+                                        Create New
+                                    </span>
                                 </div>
+                            )}
 
-                                {processedItems.length > ITEMS_PER_PAGE && (
-                                    <Pagination 
-                                        totalItems={processedItems.length}
-                                        itemsPerPage={ITEMS_PER_PAGE}
-                                        currentPage={currentPage}
-                                        onPageChange={(page) => {
-                                            setCurrentPage(page);
-                                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                                        }}
-                                    />
-                                )}
-                            </>
+                            {currentItems.map(col => (
+                                <CollectionCard key={col.id} collection={col} />
+                            ))}
+                        </div>
+
+                        {processedItems.length > ITEMS_PER_PAGE && (
+                            <Pagination 
+                                totalItems={processedItems.length}
+                                itemsPerPage={ITEMS_PER_PAGE}
+                                currentPage={currentPage}
+                                onPageChange={(page) => {
+                                    setCurrentPage(page);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                            />
                         )}
                     </>
+                )}
+                </>
                 )}
 
                 <CreateModal />

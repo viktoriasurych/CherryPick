@@ -5,7 +5,7 @@ const useCollectionFilters = (items) => {
     const [filterType, setFilterType] = useState('ALL');
     const [sortConfig, setSortConfig] = useState({ key: 'created_at', dir: 'DESC' });
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 8;
+    const ITEMS_PER_PAGE = 7;
 
     useEffect(() => {
         setCurrentPage(1);
