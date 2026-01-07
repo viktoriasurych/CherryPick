@@ -3,7 +3,7 @@
       "nickname": "viktoria",
       "display_name": "Вікторія",
       "email": "viktoria@cherrypick.art",
-      "password_hash": "dummy_hash_789",
+      "password_hash": "123456",
       "bio": "The past is never dead. It's not even past.",
       "created_at": "2025-01-01 12:00:00",
       "avatar_url": "uploads/me_avatar.jpg",
