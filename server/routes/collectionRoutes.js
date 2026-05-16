@@ -4,6 +4,7 @@ const collectionController = require('../controllers/collectionController');
 const authMiddleware = require('../middleware/authMiddleware'); 
 const optionalAuthMiddleware = require('../middleware/optionalAuthMiddleware'); 
 const upload = require('../middleware/fileUpload');
+const optimizeImage = require('../middleware/optimizeImage'); 
 
 // Публічні колекції
 router.get('/public', collectionController.getPublic);
@@ -19,7 +20,8 @@ router.delete('/:id/save', authMiddleware, collectionController.unsave);
 router.post('/:id/items', authMiddleware, collectionController.addItem);
 router.delete('/:id/items/:artId', authMiddleware, collectionController.removeItem);
 router.put('/:id/batch', authMiddleware, collectionController.updateBatch);
-router.post('/:id/cover', authMiddleware, upload.single('image'), collectionController.uploadCover);
+router.post('/:id/cover', authMiddleware, upload.single('image'), optimizeImage, collectionController.uploadCover);
+
 router.delete('/:id/cover', authMiddleware, collectionController.deleteCover);
 router.delete('/:id', authMiddleware, collectionController.delete);
 router.put('/:id', authMiddleware, collectionController.update);
