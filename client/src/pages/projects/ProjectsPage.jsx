@@ -31,7 +31,7 @@ const ProjectsPage = () => {
 
     const [searchParams] = useSearchParams();
     const [filters, setFilters] = useState(EMPTY_FILTERS);
-    const [sortConfig, setSortConfig] = useState({ by: 'created', dir: 'DESC' });
+    const [sortConfig, setSortConfig] = useState({ by: 'updated', dir: 'DESC' });
 
     const location = useLocation();
     const navigate = useNavigate();

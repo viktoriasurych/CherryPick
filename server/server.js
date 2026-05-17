@@ -14,6 +14,7 @@ const userRoutes = require('./routes/userRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const stickyNoteRoutes = require('./routes/stickyNoteRoutes')
 const quoteRouter = require('./routes/quoteRouter');
+const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 const PORT = 3000;
@@ -34,6 +35,8 @@ app.use('/api/search', searchRoutes);
 app.use('/api/sticky-notes', stickyNoteRoutes);
 
 app.use('/api/quotes', quoteRouter);
+
+app.use('/api/ai', aiRoutes);
 
 // тестові маршрути
 app.get('/api', (req, res) => {

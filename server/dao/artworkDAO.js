@@ -94,22 +94,21 @@ class ArtworkDAO {
                 params.push(filters.yearTo);
             }
 
+            // 👇 Оновлена і чітка логіка сортування
             const sortMap = {
                 'title': 'a.title',
                 'status': 'a.status',
                 
-                // 👇 Твоя "хитра" логіка сортування за часом створення (Started -> Finished -> DB Date)
+                // Хронологія створення артів (історія)
                 'created': `COALESCE(
-                    (printf('%04d-%02d-%02d', a.started_year, a.started_month, a.started_day)), 
-                    (printf('%04d-%02d-%02d', a.finished_year, a.finished_month, a.finished_day)),
+                    CASE WHEN a.finished_year IS NOT NULL THEN printf('%04d-%02d-%02d', a.finished_year, COALESCE(a.finished_month, 1), COALESCE(a.finished_day, 1)) END,
+                    CASE WHEN a.started_year IS NOT NULL THEN printf('%04d-%02d-%02d', a.started_year, COALESCE(a.started_month, 1), COALESCE(a.started_day, 1)) END,
                     a.created_date
                 )`,
                 
-                // Логіка для "Оновлено" (Sessions -> Finished -> Started -> DB Date)
+                // Останні активності (робочий стіл)
                 'updated': `COALESCE(
                     (SELECT MAX(created_at) FROM sessions WHERE artwork_id = a.id), 
-                    (printf('%04d-%02d-%02d', a.finished_year, a.finished_month, a.finished_day)),
-                    (printf('%04d-%02d-%02d', a.started_year, a.started_month, a.started_day)),
                     a.created_date
                 )` 
             };

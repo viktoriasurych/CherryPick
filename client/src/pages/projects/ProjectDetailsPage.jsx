@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
     BookmarkIcon, InformationCircleIcon, 
-    Squares2X2Icon, PencilSquareIcon, PlayIcon, ChevronDownIcon
+    Squares2X2Icon, PencilSquareIcon, PlayIcon, ChevronDownIcon,
+    EyeIcon, SparklesIcon
 } from '@heroicons/react/24/outline';
 
 import artworkService from '../../services/artworkService';
@@ -19,6 +20,10 @@ import { ART_STATUSES } from '../../config/constants';
 import Loader from '../../components/ui/Loader'; 
 import PageTitle from '../../components/shared/PageTitle'; 
 import BackButton from '../../components/ui/BackButton';
+
+// Імпортуємо твої гіфки котиків
+import catMeow from '../../assets/cat-meow.gif';
+import catWait from '../../assets/cat-wait.gif';
 
 const ITEMS_PER_LOAD = 5; 
 
@@ -84,12 +89,18 @@ const ProjectDetailsPage = () => {
     const [isStatusConfirmOpen, setStatusConfirmOpen] = useState(false);
     const [pendingStatus, setPendingStatus] = useState(null);
 
+    // Стейт для ШІ (Містер Черрі)
+    const [aiAnalysis, setAiAnalysis] = useState(null);
+    const [isAiLoading, setIsAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
+
     const fileInputRef = useRef(null);
 
     const PROJECT_TABS = [
         { id: 'INFO', label: 'Details' },
         { id: 'HISTORY', label: 'Sessions' },
-        { id: 'COLLECTIONS', label: 'Collections' }
+        { id: 'COLLECTIONS', label: 'Collections' },
+        { id: 'ANALYTICS', label: 'Analytics' }
     ];
 
     const fetchAllData = async (isSilent = false) => {
@@ -118,7 +129,7 @@ const ProjectDetailsPage = () => {
         } catch (error) {
             console.error("Load error:", error);
         } finally {
-            setLoading(false);
+            if (!isSilent) setLoading(false);
         }
     };
 
@@ -188,6 +199,33 @@ const ProjectDetailsPage = () => {
         const h = Math.floor(total / 3600);
         const m = Math.floor((total % 3600) / 60);
         return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    };
+
+    const handleAwakenEye = async () => {
+        if (!artwork?.image_path) return;
+        try {
+            setIsAiLoading(true);
+            setAiError(null);
+            
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:3000/api/ai/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ imagePath: artwork.image_path })
+            });
+
+            if (!response.ok) throw new Error('Mr. Cherry is sleeping... Try again later.');
+            
+            const data = await response.json();
+            setAiAnalysis(data);
+        } catch (err) {
+            setAiError(err.message);
+        } finally {
+            setIsAiLoading(false);
+        }
     };
 
     if (loading) return <Loader />;
@@ -337,7 +375,8 @@ const ProjectDetailsPage = () => {
                         </div>
                     )}
                     
-                    <div className="mb-6">
+                    {/* Розширили відступи між назвами сторінок (gap-5) */}
+                    <div className="mb-6 [&>div]:gap-5">
                         <Tabs items={PROJECT_TABS} activeId={activeTab} onChange={setActiveTab} />
                     </div>
 
@@ -395,6 +434,78 @@ const ProjectDetailsPage = () => {
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                        )}
+
+                        {/* ВКЛАДКА ANALYTICS */}
+                        {activeTab === 'ANALYTICS' && (
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                {!aiAnalysis && !isAiLoading && (
+                                    <div className="flex flex-col items-center justify-center py-16 px-4 border border-dashed border-border rounded-sm bg-void/50 text-center">
+                                        {/* Вирівняли по висоті (h-24), ширина стає автоматично вірною під 256x143 */}
+                                        <div className="h-24 flex items-center justify-center mb-4">
+                                            <img src={catMeow} alt="Mr. Cherry Meowing" className="w-44 h-24 object-contain select-none pointer-events-none" />
+                                        </div>
+                                        <h3 className="text-bone font-gothic text-xl mb-2 tracking-widest uppercase">Consult Mr. Cherry</h3>
+                                        <p className="text-xs text-muted mb-6 max-w-md">
+                                            Let Mr. Cherry scan your current progress. He will analyze composition, mood shifts, and provide structured, constructive critique.
+                                        </p>
+                                        <button 
+                                            onClick={handleAwakenEye}
+                                            className="bg-blood text-white px-6 py-2 rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-transparent hover:text-blood border border-blood transition-all shadow-[0_0_15px_rgba(159,18,57,0.3)]"
+                                        >
+                                            Ask Mr. Cherry
+                                        </button>
+                                        {aiError && <p className="text-blood text-xs mt-4">{aiError}</p>}
+                                    </div>
+                                )}
+
+                                {isAiLoading && (
+                                    <div className="flex flex-col items-center justify-center py-16 px-4 border border-border rounded-sm bg-void text-center">
+                                        {/* Точно така ж висота контейнера (h-24) і розмір квадрата (w-24 h-24), щоб блоки були один в один */}
+                                        <div className="h-24 flex items-center justify-center mb-4">
+                                            <img src={catWait} alt="Mr. Cherry is walking" className="w-24 h-24 object-contain select-none pointer-events-none" />
+                                        </div>
+                                        <span className="text-blood font-mono tracking-[0.2em] uppercase text-xs animate-pulse">Mr. Cherry is inspecting...</span>
+                                    </div>
+                                )}
+
+                                {aiAnalysis && !isAiLoading && (
+                                    <div className="space-y-4">
+                                        {/* Перша плашка — Рожева/Blood */}
+                                        <div className="bg-void border border-border p-5 rounded-sm relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-blood"></div>
+                                            <h4 className="text-[10px] font-bold text-blood uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                                <EyeIcon className="w-4 h-4 text-blood" /> The Vibe
+                                            </h4>
+                                            <p className="text-bone text-xs leading-relaxed">{aiAnalysis.vibe}</p>
+                                        </div>
+                                        
+                                        {/* Друга плашка — Аш */}
+                                        <div className="bg-void border border-border p-5 rounded-sm relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-ash"></div>
+                                            <h4 className="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                                <BookmarkIcon className="w-4 h-4 text-muted" /> The Core
+                                            </h4>
+                                            <p className="text-bone text-xs leading-relaxed">{aiAnalysis.core}</p>
+                                        </div>
+
+                                        {/* Третя плашка — Біла/Bone */}
+                                        <div className="bg-void border border-border p-5 rounded-sm relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-bone"></div>
+                                            <h4 className="text-[10px] font-bold text-bone uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                                <SparklesIcon className="w-4 h-4 text-bone" /> The Spark
+                                            </h4>
+                                            <p className="text-bone text-xs leading-relaxed">{aiAnalysis.spark}</p>
+                                        </div>
+                                        
+                                        <div className="text-center pt-2">
+                                            <button onClick={() => setAiAnalysis(null)} className="text-[9px] text-muted hover:text-blood uppercase tracking-widest transition-colors underline decoration-border hover:decoration-blood underline-offset-4">
+                                                Clear Analysis History
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
